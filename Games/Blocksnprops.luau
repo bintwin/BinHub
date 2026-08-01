@@ -59,11 +59,13 @@ end)
 VisualsTab:CreateTextSection("Player ESP")
 
 local PlayerESP = { 
+    TeamCheck = false,
+    UseTeamColor = false,
+    
     Box = false, BoxColor = Color3.fromRGB(255, 255, 255),
     Name = false, NameColor = Color3.fromRGB(255, 255, 255),
     Skeleton = false, SkeletonColor = Color3.fromRGB(255, 255, 255),
-    SkeletonThickness = 1,
-    TeamCheck = false
+    SkeletonThickness = 1
 }
 local Drawings = { Players = {}, Props = {}, Prediction = {} }
 
@@ -71,27 +73,33 @@ VisualsTab:CreateToggle("Team Check", false, function(state)
     PlayerESP.TeamCheck = state
 end, "Visuals_TeamCheck")
 
-VisualsTab:CreateToggle("Box ESP", false, function(state)
+VisualsTab:CreateToggle("Use Team Color", false, function(state)
+    PlayerESP.UseTeamColor = state
+end, "Visuals_UseTeamColor")
+
+VisualsTab:CreateTextSection("Box ESP")
+VisualsTab:CreateToggle("Enable Box ESP", false, function(state)
     PlayerESP.Box = state
 end, "Visuals_PlayerBox")
 VisualsTab:CreateColorPicker("Box Color", Color3.fromRGB(255, 255, 255), function(color)
     PlayerESP.BoxColor = color
 end, "Visuals_PlayerBoxColor")
 
-VisualsTab:CreateToggle("Nametag ESP", false, function(state)
+VisualsTab:CreateTextSection("Nametag ESP")
+VisualsTab:CreateToggle("Enable Nametag", false, function(state)
     PlayerESP.Name = state
 end, "Visuals_PlayerName")
 VisualsTab:CreateColorPicker("Nametag Color", Color3.fromRGB(255, 255, 255), function(color)
     PlayerESP.NameColor = color
 end, "Visuals_PlayerNameColor")
 
-VisualsTab:CreateToggle("Skeleton ESP", false, function(state)
+VisualsTab:CreateTextSection("Skeleton ESP")
+VisualsTab:CreateToggle("Enable Skeleton", false, function(state)
     PlayerESP.Skeleton = state
 end, "Visuals_PlayerSkeleton")
 VisualsTab:CreateColorPicker("Skeleton Color", Color3.fromRGB(255, 255, 255), function(color)
     PlayerESP.SkeletonColor = color
 end, "Visuals_PlayerSkeletonColor")
-
 VisualsTab:CreateSlider("Skeleton Thickness", 1, 10, 1, function(val)
     PlayerESP.SkeletonThickness = val
 end, "Visuals_PlayerSkeletonThick")
@@ -206,18 +214,25 @@ getgenv().ESPLoop = RunService.RenderStepped:Connect(function()
                     local height = math.abs(top2D.Y - bottom2D.Y)
                     local width = height * 0.65
                     
+                    local function getPlayerColor(baseColor)
+                        if PlayerESP.UseTeamColor and player.Team then
+                            return player.TeamColor.Color
+                        end
+                        return baseColor
+                    end
+                    
                     draws.Box.Visible = PlayerESP.Box
                     if PlayerESP.Box then
                         draws.Box.Size = Vector2.new(width, height)
                         draws.Box.Position = Vector2.new(pos.X - width/2, top2D.Y)
-                        draws.Box.Color = PlayerESP.BoxColor
+                        draws.Box.Color = getPlayerColor(PlayerESP.BoxColor)
                     end
                     
                     draws.Name.Visible = PlayerESP.Name
                     if PlayerESP.Name then
                         draws.Name.Text = player.Name
                         draws.Name.Position = Vector2.new(pos.X, top2D.Y - 20)
-                        draws.Name.Color = PlayerESP.NameColor
+                        draws.Name.Color = getPlayerColor(PlayerESP.NameColor)
                     end
                     
                     if PlayerESP.Skeleton then
@@ -252,7 +267,7 @@ getgenv().ESPLoop = RunService.RenderStepped:Connect(function()
                                     draws.Skeleton[i].Visible = true
                                     draws.Skeleton[i].From = Vector2.new(pos1.X, pos1.Y)
                                     draws.Skeleton[i].To = Vector2.new(pos2.X, pos2.Y)
-                                    draws.Skeleton[i].Color = PlayerESP.SkeletonColor
+                                    draws.Skeleton[i].Color = getPlayerColor(PlayerESP.SkeletonColor)
                                     draws.Skeleton[i].Thickness = PlayerESP.SkeletonThickness
                                 else
                                     draws.Skeleton[i].Visible = false
