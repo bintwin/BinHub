@@ -244,7 +244,7 @@ function UILibrary:CreateWindow(options)
     local isDraggingAny = false
     
     local Mouse = game.Players.LocalPlayer:GetMouse()
-    local function createResizer(name, size, pos, cursorId, isHorizontal, isNegative)
+    local function createResizer(name, size, pos, cursorId, resizeType, isNegative)
         local Resizer = Instance.new("TextButton")
         Resizer.Name = name
         Resizer.Size = size
@@ -281,7 +281,7 @@ function UILibrary:CreateWindow(options)
                 local currentMouse = UserInputService:GetMouseLocation()
                 local delta = currentMouse - dragStartMouse
                 
-                if isHorizontal then
+                if resizeType == "Horizontal" then
                     if isNegative then
                         local newWidth = math.max(400, dragStartSize.X.Offset - delta.X)
                         local diff = newWidth - dragStartSize.X.Offset
@@ -291,7 +291,7 @@ function UILibrary:CreateWindow(options)
                         local newWidth = math.max(400, dragStartSize.X.Offset + delta.X)
                         MainFrame.Size = UDim2.new(0, newWidth, 0, MainFrame.Size.Y.Offset)
                     end
-                else
+                elseif resizeType == "Vertical" then
                     if isNegative then
                         local newHeight = math.max(300, dragStartSize.Y.Offset - delta.Y)
                         local diff = newHeight - dragStartSize.Y.Offset
@@ -301,6 +301,10 @@ function UILibrary:CreateWindow(options)
                         local newHeight = math.max(300, dragStartSize.Y.Offset + delta.Y)
                         MainFrame.Size = UDim2.new(0, MainFrame.Size.X.Offset, 0, newHeight)
                     end
+                elseif resizeType == "Corner" then
+                    local newWidth = math.max(400, dragStartSize.X.Offset + delta.X)
+                    local newHeight = math.max(300, dragStartSize.Y.Offset + delta.Y)
+                    MainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
                 end
             end
         end)
@@ -310,10 +314,11 @@ function UILibrary:CreateWindow(options)
         table.insert(WindowConnections, moveConn)
     end
     
-    createResizer("RightResize", UDim2.new(0, 5, 1, 0), UDim2.new(1, -5, 0, 0), "130851509084818", true, false)
-    createResizer("LeftResize", UDim2.new(0, 5, 1, 0), UDim2.new(0, 0, 0, 0), "130851509084818", true, true)
-    createResizer("BottomResize", UDim2.new(1, 0, 0, 5), UDim2.new(0, 0, 1, -5), "106139089446755", false, false)
-    createResizer("TopResize", UDim2.new(1, 0, 0, 5), UDim2.new(0, 0, 0, 0), "106139089446755", false, true)
+    createResizer("RightResize", UDim2.new(0, 5, 1, -10), UDim2.new(1, -5, 0, 0), "130851509084818", "Horizontal", false)
+    createResizer("LeftResize", UDim2.new(0, 5, 1, 0), UDim2.new(0, 0, 0, 0), "130851509084818", "Horizontal", true)
+    createResizer("BottomResize", UDim2.new(1, -10, 0, 5), UDim2.new(0, 0, 1, -5), "106139089446755", "Vertical", false)
+    createResizer("TopResize", UDim2.new(1, 0, 0, 5), UDim2.new(0, 0, 0, 0), "106139089446755", "Vertical", true)
+    createResizer("CornerResize", UDim2.new(0, 15, 0, 15), UDim2.new(1, -15, 1, -15), "109840226463996", "Corner", false)
     
     local SidebarLine = Instance.new("Frame")
     SidebarLine.Size = UDim2.new(0, 1, 1, 0)
@@ -443,6 +448,51 @@ function UILibrary:CreateWindow(options)
     ContentArea.BackgroundTransparency = 1
     ContentArea.Parent = ContentWrapper
 
+    local SidebarResizer = Instance.new("TextButton")
+    SidebarResizer.Name = "SidebarResizer"
+    SidebarResizer.Size = UDim2.new(0, 10, 1, 0)
+    SidebarResizer.Position = UDim2.new(1, -5, 0, 0)
+    SidebarResizer.BackgroundTransparency = 1
+    SidebarResizer.Text = ""
+    SidebarResizer.ZIndex = 101
+    SidebarResizer.Parent = Sidebar
+    
+    local sbResizing = false
+    local sbDragStartMouse = nil
+    local sbDragStartSize = nil
+    
+    local sbDownConn = SidebarResizer.InputBegan:Connect(function(input)
+        if not isMinimized and input.UserInputType == Enum.UserInputType.MouseButton1 then
+            sbResizing = true
+            isDraggingAny = "130851509084818" -- Horizontal resize cursor
+            sbDragStartMouse = UserInputService:GetMouseLocation()
+            sbDragStartSize = Sidebar.Size
+        end
+    end)
+    
+    local sbUpConn = UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 and sbResizing then
+            sbResizing = false
+            isDraggingAny = false
+        end
+    end)
+    
+    local sbMoveConn = UserInputService.InputChanged:Connect(function(input)
+        if not isMinimized and sbResizing and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local currentMouse = UserInputService:GetMouseLocation()
+            local delta = currentMouse - sbDragStartMouse
+            
+            local newWidth = math.clamp(sbDragStartSize.X.Offset + delta.X, 100, 300)
+            Sidebar.Size = UDim2.new(0, newWidth, 1, 0)
+            ContentArea.Position = UDim2.new(0, newWidth, 0, 0)
+            ContentArea.Size = UDim2.new(1, -newWidth, 1, 0)
+        end
+    end)
+    
+    table.insert(WindowConnections, sbDownConn)
+    table.insert(WindowConnections, sbUpConn)
+    table.insert(WindowConnections, sbMoveConn)
+
     local WindowObj = {
         CurrentTab = nil,
         Tabs = {}
@@ -499,6 +549,8 @@ function UILibrary:CreateWindow(options)
         TabContent.BackgroundTransparency = 1
         TabContent.ScrollBarThickness = 2
         TabContent.BorderSizePixel = 0
+        TabContent.AutomaticCanvasSize = Enum.AutomaticSize.Y
+        TabContent.CanvasSize = UDim2.new(0, 0, 0, 0)
         TabContent.Visible = false
         TabContent.Parent = ContentArea
         
@@ -559,9 +611,7 @@ function UILibrary:CreateWindow(options)
             firstTab = false
         end
         
-        TabContent.ChildAdded:Connect(function()
-            TabContent.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y + 20)
-        end)
+        -- Using AutomaticCanvasSize instead of ChildAdded for proper scrolling
         
         local Elements = {}
         

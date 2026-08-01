@@ -33,20 +33,33 @@ end, "Player_JumpPower")
 -- Visuals Tab Setup
 VisualsTab:CreateTextSection("Player ESP")
 
-local PlayerESP = { Box = false, Name = false, Skeleton = false }
+local PlayerESP = { 
+    Box = false, BoxColor = Color3.fromRGB(255, 255, 255),
+    Name = false, NameColor = Color3.fromRGB(255, 255, 255),
+    Skeleton = false, SkeletonColor = Color3.fromRGB(255, 255, 255)
+}
 local Drawings = { Players = {}, Props = {}, Prediction = {} }
 
 VisualsTab:CreateToggle("Box ESP", false, function(state)
     PlayerESP.Box = state
 end, "Visuals_PlayerBox")
+VisualsTab:CreateColorPicker("Box Color", Color3.fromRGB(255, 255, 255), function(color)
+    PlayerESP.BoxColor = color
+end, "Visuals_PlayerBoxColor")
 
 VisualsTab:CreateToggle("Nametag ESP", false, function(state)
     PlayerESP.Name = state
 end, "Visuals_PlayerName")
+VisualsTab:CreateColorPicker("Nametag Color", Color3.fromRGB(255, 255, 255), function(color)
+    PlayerESP.NameColor = color
+end, "Visuals_PlayerNameColor")
 
 VisualsTab:CreateToggle("Skeleton ESP", false, function(state)
     PlayerESP.Skeleton = state
 end, "Visuals_PlayerSkeleton")
+VisualsTab:CreateColorPicker("Skeleton Color", Color3.fromRGB(255, 255, 255), function(color)
+    PlayerESP.SkeletonColor = color
+end, "Visuals_PlayerSkeletonColor")
 
 VisualsTab:CreateTextSection("Prop ESP")
 
@@ -148,32 +161,52 @@ getgenv().ESPLoop = RunService.RenderStepped:Connect(function()
             if root and head and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 and (PlayerESP.Box or PlayerESP.Name or PlayerESP.Skeleton) then
                 local pos, onScreen = Camera:WorldToViewportPoint(root.Position)
                 if onScreen then
-                    -- Box Math
-                    local headPos = Camera:WorldToViewportPoint(head.Position + Vector3.new(0, 0.5, 0))
-                    local legPos = Camera:WorldToViewportPoint(root.Position - Vector3.new(0, 3, 0))
-                    local height = math.abs(headPos.Y - legPos.Y)
-                    local width = height / 2
+                    -- Box Math using proper top and bottom bounds
+                    local rootPos = root.Position
+                    local top3D = rootPos + Vector3.new(0, 3, 0)
+                    local bottom3D = rootPos - Vector3.new(0, 3.5, 0)
+                    local top2D = Camera:WorldToViewportPoint(top3D)
+                    local bottom2D = Camera:WorldToViewportPoint(bottom3D)
+                    
+                    local height = math.abs(top2D.Y - bottom2D.Y)
+                    local width = height * 0.65
                     
                     draws.Box.Visible = PlayerESP.Box
                     if PlayerESP.Box then
                         draws.Box.Size = Vector2.new(width, height)
-                        draws.Box.Position = Vector2.new(pos.X - width/2, headPos.Y)
+                        draws.Box.Position = Vector2.new(pos.X - width/2, top2D.Y)
+                        draws.Box.Color = PlayerESP.BoxColor
                     end
                     
                     draws.Name.Visible = PlayerESP.Name
                     if PlayerESP.Name then
                         draws.Name.Text = player.Name
-                        draws.Name.Position = Vector2.new(pos.X, headPos.Y - 20)
+                        draws.Name.Position = Vector2.new(pos.X, top2D.Y - 20)
+                        draws.Name.Color = PlayerESP.NameColor
                     end
                     
                     if PlayerESP.Skeleton then
-                        local joints = {
-                            {"Head", "UpperTorso"}, {"UpperTorso", "LowerTorso"},
-                            {"UpperTorso", "LeftUpperArm"}, {"LeftUpperArm", "LeftLowerArm"}, {"LeftLowerArm", "LeftHand"},
-                            {"UpperTorso", "RightUpperArm"}, {"RightUpperArm", "RightLowerArm"}, {"RightLowerArm", "RightHand"},
-                            {"LowerTorso", "LeftUpperLeg"}, {"LeftUpperLeg", "LeftLowerLeg"}, {"LeftLowerLeg", "LeftFoot"},
-                            {"LowerTorso", "RightUpperLeg"}, {"RightUpperLeg", "RightLowerLeg"}, {"RightLowerLeg", "RightFoot"}
-                        }
+                        local joints = {}
+                        if char:FindFirstChild("UpperTorso") then
+                            -- R15
+                            joints = {
+                                {"Head", "UpperTorso"}, {"UpperTorso", "LowerTorso"},
+                                {"UpperTorso", "LeftUpperArm"}, {"LeftUpperArm", "LeftLowerArm"}, {"LeftLowerArm", "LeftHand"},
+                                {"UpperTorso", "RightUpperArm"}, {"RightUpperArm", "RightLowerArm"}, {"RightLowerArm", "RightHand"},
+                                {"LowerTorso", "LeftUpperLeg"}, {"LeftUpperLeg", "LeftLowerLeg"}, {"LeftLowerLeg", "LeftFoot"},
+                                {"LowerTorso", "RightUpperLeg"}, {"RightUpperLeg", "RightLowerLeg"}, {"RightLowerLeg", "RightFoot"}
+                            }
+                        else
+                            -- R6
+                            joints = {
+                                {"Head", "Torso"},
+                                {"Torso", "Left Arm"},
+                                {"Torso", "Right Arm"},
+                                {"Torso", "Left Leg"},
+                                {"Torso", "Right Leg"}
+                            }
+                        end
+                        
                         for i, v in ipairs(joints) do
                             local p1 = char:FindFirstChild(v[1])
                             local p2 = char:FindFirstChild(v[2])
@@ -184,6 +217,7 @@ getgenv().ESPLoop = RunService.RenderStepped:Connect(function()
                                     draws.Skeleton[i].Visible = true
                                     draws.Skeleton[i].From = Vector2.new(pos1.X, pos1.Y)
                                     draws.Skeleton[i].To = Vector2.new(pos2.X, pos2.Y)
+                                    draws.Skeleton[i].Color = PlayerESP.SkeletonColor
                                 else
                                     draws.Skeleton[i].Visible = false
                                 end
