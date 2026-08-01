@@ -268,17 +268,22 @@ getgenv().ESPLoop = RunService.RenderStepped:Connect(function()
             end
         end
         
-        if PropESP.Predict and prop:IsA("BasePart") and prop.Velocity.Magnitude > 5 then
+        if PropESP.Predict and prop:IsA("BasePart") and prop.AssemblyLinearVelocity.Magnitude > 5 then
             local currentPos = prop.Position
-            local currentVel = prop.Velocity
+            local currentVel = prop.AssemblyLinearVelocity
+            
+            -- Detect if projectile has custom straight-line velocity physics
             local grav = Vector3.new(0, -workspace.Gravity, 0)
+            if prop:FindFirstChildWhichIsA("BodyVelocity") or prop:FindFirstChildWhichIsA("LinearVelocity") or prop:FindFirstChildWhichIsA("VectorForce") then
+                grav = Vector3.new(0, 0, 0)
+            end
             
             local dt = 0.05
             local maxTime = 3
             
             local rayParams = RaycastParams.new()
             rayParams.FilterType = Enum.RaycastFilterType.Exclude
-            local ignoreList = {prop}
+            local ignoreList = {workspace:FindFirstChild("Projectiles") or prop}
             if LocalPlayer.Character then table.insert(ignoreList, LocalPlayer.Character) end
             rayParams.FilterDescendantsInstances = ignoreList
             
@@ -292,7 +297,7 @@ getgenv().ESPLoop = RunService.RenderStepped:Connect(function()
                 if res then
                     local screenPos, onScreen = Camera:WorldToViewportPoint(res.Position)
                     if onScreen then
-                        local circle = createDrawing("Circle", {Radius = 15, Position = Vector2.new(screenPos.X, screenPos.Y), Color = Color3.fromRGB(255, 50, 50), Filled = true, Transparency = 0.6, Visible = true})
+                        local circle = createDrawing("Circle", {Radius = 15, Position = Vector2.new(screenPos.X, screenPos.Y), Color = Color3.fromRGB(255, 0, 0), Filled = true, Transparency = 1, Visible = true})
                         table.insert(Drawings.Prediction, circle)
                         
                         local outline = createDrawing("Circle", {Radius = 15, Position = Vector2.new(screenPos.X, screenPos.Y), Color = Color3.fromRGB(255, 255, 255), Filled = false, Thickness = 2, Transparency = 1, Visible = true})
@@ -339,4 +344,27 @@ end)
 SettingsTab:CreateButton("Clear Config", function()
     -- An example button
     print("Clearing Config is not yet implemented")
+end)
+
+Window:OnClose(function()
+    if getgenv().ESPLoop then
+        getgenv().ESPLoop:Disconnect()
+        getgenv().ESPLoop = nil
+    end
+    if getgenv().PropSpawnConn then
+        getgenv().PropSpawnConn:Disconnect()
+        getgenv().PropSpawnConn = nil
+    end
+    
+    for _, draws in pairs(Drawings.Players) do
+        if draws.Box then draws.Box:Remove() end
+        if draws.Name then draws.Name:Remove() end
+        for i=1, 15 do
+            if draws.Skeleton[i] then draws.Skeleton[i]:Remove() end
+        end
+    end
+    Drawings.Players = {}
+    
+    clearDrawings(Drawings.Props)
+    clearDrawings(Drawings.Prediction)
 end)

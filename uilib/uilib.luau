@@ -87,6 +87,7 @@ function UILibrary:CreateWindow(options)
     end)
     
     local WindowConnections = {toggleConnection}
+    local OnCloseCallback = nil
     
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "Main"
@@ -188,6 +189,7 @@ function UILibrary:CreateWindow(options)
     CloseBtn.Parent = Topbar
     
     CloseBtn.MouseButton1Click:Connect(function()
+        if OnCloseCallback then OnCloseCallback() end
         for _, conn in ipairs(WindowConnections) do
             if conn and conn.Connected then
                 conn:Disconnect()
@@ -250,6 +252,7 @@ function UILibrary:CreateWindow(options)
         Resizer.Name = name
         Resizer.Size = size
         Resizer.Position = pos
+        Resizer.AnchorPoint = Vector2.new(pos.X.Scale, pos.Y.Scale)
         Resizer.BackgroundTransparency = 1
         Resizer.Text = ""
         Resizer.ZIndex = 100
@@ -336,11 +339,10 @@ function UILibrary:CreateWindow(options)
         table.insert(WindowConnections, moveConn)
     end
     
-    createResizer("RightResize", UDim2.new(0, 10, 1, -15), UDim2.new(1, -10, 0, 0), "130851509084818", "Horizontal", false)
-    createResizer("LeftResize", UDim2.new(0, 10, 1, 0), UDim2.new(0, 0, 0, 0), "130851509084818", "Horizontal", true)
-    createResizer("BottomResize", UDim2.new(1, -15, 0, 10), UDim2.new(0, 0, 1, -10), "106139089446755", "Vertical", false)
-    createResizer("TopResize", UDim2.new(1, 0, 0, 10), UDim2.new(0, 0, 0, 0), "106139089446755", "Vertical", true)
-    createResizer("CornerResize", UDim2.new(0, 15, 0, 15), UDim2.new(1, -15, 1, -15), "109840226463996", "Corner", false)
+    createResizer("RightResize", UDim2.new(0, 15, 1, -20), UDim2.new(1, 0, 0, 0), "130851509084818", "Horizontal", false)
+    createResizer("LeftResize", UDim2.new(0, 15, 1, 0), UDim2.new(0, 0, 0, 0), "130851509084818", "Horizontal", true)
+    createResizer("BottomResize", UDim2.new(1, -20, 0, 15), UDim2.new(0, 0, 1, 0), "106139089446755", "Vertical", false)
+    createResizer("CornerResize", UDim2.new(0, 20, 0, 20), UDim2.new(1, 0, 1, 0), "109840226463996", "Corner", false)
     
     local SidebarLine = Instance.new("Frame")
     SidebarLine.Size = UDim2.new(0, 1, 1, 0)
@@ -378,39 +380,37 @@ function UILibrary:CreateWindow(options)
     CustomCursor.Visible = false
     CustomCursor.Parent = gui
     
-    local hoverCheckConn = UserInputService.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement then
-            local pos = UserInputService:GetMouseLocation()
-            local mx, my = pos.X, pos.Y
+    local cursorUpdateConn = game:GetService("RunService").RenderStepped:Connect(function()
+        local pos = UserInputService:GetMouseLocation()
+        local mx, my = pos.X, pos.Y
+        
+        local activeCursor = nil
+        
+        if isDraggingAny then
+            activeCursor = isDraggingAny
+        elseif hoveringCursorId and not isMinimized then
+            activeCursor = hoveringCursorId
+        end
+        
+        if activeCursor then
+            UserInputService.MouseIconEnabled = false
             
-            local activeCursor = nil
-            
-            if isDraggingAny then
-                activeCursor = isDraggingAny
-            elseif hoveringCursorId and not isMinimized then
-                activeCursor = hoveringCursorId
-            end
-            
-            if activeCursor then
-                UserInputService.MouseIconEnabled = false
-                
-                if activeCursor == "106139089446755" then
-                    CustomCursor.Image = "rbxassetid://130851509084818"
-                    CustomCursor.Rotation = 90
-                else
-                    CustomCursor.Image = "rbxassetid://" .. activeCursor
-                    CustomCursor.Rotation = 0
-                end
-                
-                CustomCursor.Position = UDim2.new(0, mx - 16, 0, my - 16)
-                CustomCursor.Visible = true
+            if activeCursor == "106139089446755" then
+                CustomCursor.Image = "rbxassetid://130851509084818"
+                CustomCursor.Rotation = 90
             else
-                UserInputService.MouseIconEnabled = true
-                CustomCursor.Visible = false
+                CustomCursor.Image = "rbxassetid://" .. activeCursor
+                CustomCursor.Rotation = 0
             end
+            
+            CustomCursor.Position = UDim2.new(0, mx - 16, 0, my - 16)
+            CustomCursor.Visible = true
+        else
+            UserInputService.MouseIconEnabled = true
+            CustomCursor.Visible = false
         end
     end)
-    table.insert(WindowConnections, hoverCheckConn)
+    table.insert(WindowConnections, cursorUpdateConn)
 
     local ProfileFrame = Instance.new("Frame")
     ProfileFrame.Name = "Profile"
@@ -516,6 +516,10 @@ function UILibrary:CreateWindow(options)
         CurrentTab = nil,
         Tabs = {}
     }
+    
+    function WindowObj:OnClose(callback)
+        OnCloseCallback = callback
+    end
     local firstTab = true
     
     function WindowObj:CreateTab(name, iconId)
