@@ -241,6 +241,8 @@ function UILibrary:CreateWindow(options)
     Sidebar.BackgroundTransparency = 1
     Sidebar.Parent = ContentWrapper
     
+    local isDraggingAny = false
+    
     local Mouse = game.Players.LocalPlayer:GetMouse()
     local function createResizer(name, size, pos, cursorId, isHorizontal, isNegative)
         local Resizer = Instance.new("TextButton")
@@ -260,6 +262,7 @@ function UILibrary:CreateWindow(options)
         local downConn = Resizer.InputBegan:Connect(function(input)
             if not isMinimized and input.UserInputType == Enum.UserInputType.MouseButton1 then
                 resizing = true
+                isDraggingAny = cursorId
                 dragStartMouse = UserInputService:GetMouseLocation()
                 dragStartSize = MainFrame.Size
                 dragStartPos = MainFrame.Position
@@ -269,6 +272,7 @@ function UILibrary:CreateWindow(options)
         local upConn = UserInputService.InputEnded:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 and resizing then
                 resizing = false
+                isDraggingAny = false
             end
         end)
         
@@ -325,7 +329,13 @@ function UILibrary:CreateWindow(options)
     TabContainer.BackgroundTransparency = 1
     TabContainer.BorderSizePixel = 0
     TabContainer.ScrollBarThickness = 0
+    TabContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    TabContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
     TabContainer.Parent = Sidebar
+    
+    local TabContainerPadding = Instance.new("UIPadding")
+    TabContainerPadding.PaddingTop = UDim.new(0, 15)
+    TabContainerPadding.Parent = TabContainer
     
     local TabList = Instance.new("UIListLayout")
     TabList.SortOrder = Enum.SortOrder.LayoutOrder
@@ -341,24 +351,16 @@ function UILibrary:CreateWindow(options)
     CustomCursor.Visible = false
     CustomCursor.Parent = gui
     
-    local isDraggingAny = false
-    
     local hoverCheckConn = UserInputService.InputChanged:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement then
             local pos = UserInputService:GetMouseLocation()
             local mx, my = pos.X, pos.Y
             
-            local isCurrentlyResizing = false
             local activeCursor = nil
             
-            -- Check if we are actively resizing right now
-            if UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
-                -- Need to determine which cursor to show based on what we are resizing
-                -- Since resizing state is local to each resizer, we'll just evaluate it globally based on mouse position
-            end
-            
-            -- Evaluate hover math
-            if not isMinimized then
+            if isDraggingAny then
+                activeCursor = isDraggingAny
+            elseif not isMinimized then
                 local fx, fy = MainFrame.AbsolutePosition.X, MainFrame.AbsolutePosition.Y
                 local fw, fh = MainFrame.AbsoluteSize.X, MainFrame.AbsoluteSize.Y
                 local edge = 5
@@ -578,6 +580,8 @@ function UILibrary:CreateWindow(options)
         function Elements:CreateButton(name, callback)
             local ButtonFrame = Instance.new("Frame")
             ButtonFrame.Size = UDim2.new(1, -6, 0, 35)
+            ButtonFrame.BackgroundTransparency = 1
+            
             local Btn = Instance.new("TextButton")
             Btn.Size = UDim2.new(1, 0, 1, 0)
             Btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
@@ -585,8 +589,13 @@ function UILibrary:CreateWindow(options)
             Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
             Btn.TextSize = 13
             Btn.Font = Enum.Font.Gotham
+            Btn.TextXAlignment = Enum.TextXAlignment.Left
             Btn.Parent = ButtonFrame
             ButtonFrame.Parent = TabContent
+            
+            local BtnPadding = Instance.new("UIPadding")
+            BtnPadding.PaddingLeft = UDim.new(0, 10)
+            BtnPadding.Parent = Btn
             
             local BtnCorner = Instance.new("UICorner")
             BtnCorner.CornerRadius = UDim.new(0, 6)
