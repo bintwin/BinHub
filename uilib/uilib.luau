@@ -242,6 +242,7 @@ function UILibrary:CreateWindow(options)
     Sidebar.Parent = ContentWrapper
     
     local isDraggingAny = false
+    local hoveringCursorId = nil
     
     local Mouse = game.Players.LocalPlayer:GetMouse()
     local function createResizer(name, size, pos, cursorId, resizeType, isNegative)
@@ -258,6 +259,13 @@ function UILibrary:CreateWindow(options)
         local dragStartMouse = nil
         local dragStartSize = nil
         local dragStartPos = nil
+        
+        Resizer.MouseEnter:Connect(function()
+            if not isDraggingAny then hoveringCursorId = cursorId end
+        end)
+        Resizer.MouseLeave:Connect(function()
+            if hoveringCursorId == cursorId then hoveringCursorId = nil end
+        end)
         
         local downConn = Resizer.InputBegan:Connect(function(input)
             if not isMinimized and input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -287,9 +295,20 @@ function UILibrary:CreateWindow(options)
                         local diff = newWidth - dragStartSize.X.Offset
                         MainFrame.Size = UDim2.new(0, newWidth, 0, MainFrame.Size.Y.Offset)
                         MainFrame.Position = UDim2.new(0, dragStartPos.X.Offset - diff, 0, MainFrame.Position.Y.Offset)
+                        
+                        -- Update ContentArea and Sidebar Line position if sidebar is wider than remaining space
+                        local sbWidth = Sidebar.Size.X.Offset
+                        if sbWidth > newWidth - 100 then
+                            Sidebar.Size = UDim2.new(0, newWidth - 100, 1, 0)
+                            sbWidth = newWidth - 100
+                        end
+                        ContentArea.Size = UDim2.new(1, -sbWidth, 1, 0)
                     else
                         local newWidth = math.max(400, dragStartSize.X.Offset + delta.X)
                         MainFrame.Size = UDim2.new(0, newWidth, 0, MainFrame.Size.Y.Offset)
+                        
+                        local sbWidth = Sidebar.Size.X.Offset
+                        ContentArea.Size = UDim2.new(1, -sbWidth, 1, 0)
                     end
                 elseif resizeType == "Vertical" then
                     if isNegative then
@@ -305,6 +324,9 @@ function UILibrary:CreateWindow(options)
                     local newWidth = math.max(400, dragStartSize.X.Offset + delta.X)
                     local newHeight = math.max(300, dragStartSize.Y.Offset + delta.Y)
                     MainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
+                    
+                    local sbWidth = Sidebar.Size.X.Offset
+                    ContentArea.Size = UDim2.new(1, -sbWidth, 1, 0)
                 end
             end
         end)
@@ -314,10 +336,10 @@ function UILibrary:CreateWindow(options)
         table.insert(WindowConnections, moveConn)
     end
     
-    createResizer("RightResize", UDim2.new(0, 5, 1, -10), UDim2.new(1, -5, 0, 0), "130851509084818", "Horizontal", false)
-    createResizer("LeftResize", UDim2.new(0, 5, 1, 0), UDim2.new(0, 0, 0, 0), "130851509084818", "Horizontal", true)
-    createResizer("BottomResize", UDim2.new(1, -10, 0, 5), UDim2.new(0, 0, 1, -5), "106139089446755", "Vertical", false)
-    createResizer("TopResize", UDim2.new(1, 0, 0, 5), UDim2.new(0, 0, 0, 0), "106139089446755", "Vertical", true)
+    createResizer("RightResize", UDim2.new(0, 10, 1, -15), UDim2.new(1, -10, 0, 0), "130851509084818", "Horizontal", false)
+    createResizer("LeftResize", UDim2.new(0, 10, 1, 0), UDim2.new(0, 0, 0, 0), "130851509084818", "Horizontal", true)
+    createResizer("BottomResize", UDim2.new(1, -15, 0, 10), UDim2.new(0, 0, 1, -10), "106139089446755", "Vertical", false)
+    createResizer("TopResize", UDim2.new(1, 0, 0, 10), UDim2.new(0, 0, 0, 0), "106139089446755", "Vertical", true)
     createResizer("CornerResize", UDim2.new(0, 15, 0, 15), UDim2.new(1, -15, 1, -15), "109840226463996", "Corner", false)
     
     local SidebarLine = Instance.new("Frame")
@@ -365,20 +387,8 @@ function UILibrary:CreateWindow(options)
             
             if isDraggingAny then
                 activeCursor = isDraggingAny
-            elseif not isMinimized then
-                local fx, fy = MainFrame.AbsolutePosition.X, MainFrame.AbsolutePosition.Y
-                local fw, fh = MainFrame.AbsoluteSize.X, MainFrame.AbsoluteSize.Y
-                local edge = 5
-                
-                if mx >= fx and mx <= fx + edge and my >= fy and my <= fy + fh then
-                    activeCursor = "130851509084818"
-                elseif mx >= fx + fw - edge and mx <= fx + fw and my >= fy and my <= fy + fh then
-                    activeCursor = "130851509084818"
-                elseif mx >= fx and mx <= fx + fw and my >= fy and my <= fy + edge then
-                    activeCursor = "106139089446755"
-                elseif mx >= fx and mx <= fx + fw and my >= fy + fh - edge and my <= fy + fh then
-                    activeCursor = "106139089446755"
-                end
+            elseif hoveringCursorId and not isMinimized then
+                activeCursor = hoveringCursorId
             end
             
             if activeCursor then
@@ -407,6 +417,7 @@ function UILibrary:CreateWindow(options)
     ProfileFrame.Size = UDim2.new(1, 0, 0, 50)
     ProfileFrame.Position = UDim2.new(0, 0, 1, -50)
     ProfileFrame.BackgroundTransparency = 1
+    ProfileFrame.ClipsDescendants = true
     ProfileFrame.Parent = Sidebar
     
     local Avatar = Instance.new("ImageLabel")
@@ -423,7 +434,8 @@ function UILibrary:CreateWindow(options)
     ProfileName.Size = UDim2.new(1, -50, 0, 15)
     ProfileName.Position = UDim2.new(0, 45, 0.5, -15)
     ProfileName.BackgroundTransparency = 1
-    ProfileName.Text = string.sub(game.Players.LocalPlayer.Name, 1, 8) .. "..."
+    ProfileName.Text = game.Players.LocalPlayer.Name
+    ProfileName.TextTruncate = Enum.TextTruncate.AtEnd
     ProfileName.TextColor3 = Color3.fromRGB(255, 255, 255)
     ProfileName.TextSize = 13
     ProfileName.Font = Enum.Font.GothamBold
@@ -468,6 +480,13 @@ function UILibrary:CreateWindow(options)
             sbDragStartMouse = UserInputService:GetMouseLocation()
             sbDragStartSize = Sidebar.Size
         end
+    end)
+    
+    SidebarResizer.MouseEnter:Connect(function()
+        if not isDraggingAny then hoveringCursorId = "130851509084818" end
+    end)
+    SidebarResizer.MouseLeave:Connect(function()
+        if hoveringCursorId == "130851509084818" then hoveringCursorId = nil end
     end)
     
     local sbUpConn = UserInputService.InputEnded:Connect(function(input)

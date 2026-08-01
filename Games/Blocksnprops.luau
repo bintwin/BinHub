@@ -269,17 +269,46 @@ getgenv().ESPLoop = RunService.RenderStepped:Connect(function()
         end
         
         if PropESP.Predict and prop:IsA("BasePart") and prop.Velocity.Magnitude > 5 then
-            local pPos = prop.Position
-            local pVel = prop.Velocity
+            local currentPos = prop.Position
+            local currentVel = prop.Velocity
             local grav = Vector3.new(0, -workspace.Gravity, 0)
             
-            for t = 0.1, 2, 0.1 do
-                local futurePos = pPos + (pVel * t) + (0.5 * grav * t * t)
-                local screenPos, onScreen = Camera:WorldToViewportPoint(futurePos)
-                if onScreen then
-                    local dot = createDrawing("Square", {Size = Vector2.new(4, 4), Position = Vector2.new(screenPos.X-2, screenPos.Y-2), Color = Color3.fromRGB(0, 255, 0), Filled = true, Visible = true})
-                    table.insert(Drawings.Prediction, dot)
+            local dt = 0.05
+            local maxTime = 3
+            
+            local rayParams = RaycastParams.new()
+            rayParams.FilterType = Enum.RaycastFilterType.Exclude
+            local ignoreList = {prop}
+            if LocalPlayer.Character then table.insert(ignoreList, LocalPlayer.Character) end
+            rayParams.FilterDescendantsInstances = ignoreList
+            
+            for t = 0, maxTime, dt do
+                local nextPos = currentPos + currentVel * dt + 0.5 * grav * dt * dt
+                local nextVel = currentVel + grav * dt
+                
+                local dir = nextPos - currentPos
+                local res = workspace:Raycast(currentPos, dir, rayParams)
+                
+                if res then
+                    local screenPos, onScreen = Camera:WorldToViewportPoint(res.Position)
+                    if onScreen then
+                        local circle = createDrawing("Circle", {Radius = 15, Position = Vector2.new(screenPos.X, screenPos.Y), Color = Color3.fromRGB(255, 50, 50), Filled = true, Transparency = 0.6, Visible = true})
+                        table.insert(Drawings.Prediction, circle)
+                        
+                        local outline = createDrawing("Circle", {Radius = 15, Position = Vector2.new(screenPos.X, screenPos.Y), Color = Color3.fromRGB(255, 255, 255), Filled = false, Thickness = 2, Transparency = 1, Visible = true})
+                        table.insert(Drawings.Prediction, outline)
+                    end
+                    break
+                else
+                    local screenPos, onScreen = Camera:WorldToViewportPoint(nextPos)
+                    if onScreen then
+                        local dot = createDrawing("Square", {Size = Vector2.new(6, 6), Position = Vector2.new(screenPos.X-3, screenPos.Y-3), Color = Color3.fromRGB(0, 255, 0), Filled = true, Transparency = 1, Visible = true})
+                        table.insert(Drawings.Prediction, dot)
+                    end
                 end
+                
+                currentPos = nextPos
+                currentVel = nextVel
             end
         end
     end
