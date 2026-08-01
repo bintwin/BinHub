@@ -376,7 +376,15 @@ function UILibrary:CreateWindow(options)
             
             if activeCursor then
                 UserInputService.MouseIconEnabled = false
-                CustomCursor.Image = "rbxassetid://" .. activeCursor
+                
+                if activeCursor == "106139089446755" then
+                    CustomCursor.Image = "rbxassetid://130851509084818"
+                    CustomCursor.Rotation = 90
+                else
+                    CustomCursor.Image = "rbxassetid://" .. activeCursor
+                    CustomCursor.Rotation = 0
+                end
+                
                 CustomCursor.Position = UDim2.new(0, mx - 16, 0, my - 16)
                 CustomCursor.Visible = true
             else
