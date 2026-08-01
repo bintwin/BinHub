@@ -10,10 +10,12 @@ local Window = UILibrary:CreateWindow({
     Name = "BinHUb - Blocks n Props"
 })
 
+print("DEBUG: Window created")
 local PlayerTab = Window:CreateTab("Player", "user")
 local VisualsTab = Window:CreateTab("Visuals", "view")
 local MiscTab = Window:CreateTab("Misc", "box")
 local SettingsTab = Window:CreateTab("Settings", "settings")
+print("DEBUG: Tabs created")
 
 -- Player Tab
 PlayerTab:CreateTextSection("Local Player")
@@ -120,6 +122,7 @@ end, "Visuals_PlayerSkeletonColor")
 VisualsTab:CreateSlider("Skeleton Thickness", 1, 10, 1, function(val)
     PlayerESP.SkeletonThickness = val
 end, "Visuals_PlayerSkeletonThick")
+print("DEBUG: Visuals tab created")
 
 VisualsTab:CreateTextSection("Prop ESP")
 
