@@ -256,37 +256,18 @@ function UILibrary:CreateWindow(options)
         local dragStartSize = nil
         local dragStartPos = nil
         
-        local enterConn = Resizer.MouseEnter:Connect(function()
-            if not isMinimized and not resizing then
-                UserInputService.MouseIconEnabled = false
-                CustomCursor.Image = "rbxassetid://" .. cursorId
-                CustomCursor.Visible = true
-            end
-        end)
-        local leaveConn = Resizer.MouseLeave:Connect(function()
-            if not isMinimized and not resizing then
-                UserInputService.MouseIconEnabled = true
-                CustomCursor.Visible = false
-            end
-        end)
-        
         local downConn = Resizer.InputBegan:Connect(function(input)
             if not isMinimized and input.UserInputType == Enum.UserInputType.MouseButton1 then
                 resizing = true
                 dragStartMouse = UserInputService:GetMouseLocation()
                 dragStartSize = MainFrame.Size
                 dragStartPos = MainFrame.Position
-                UserInputService.MouseIconEnabled = false
-                CustomCursor.Image = "rbxassetid://" .. cursorId
-                CustomCursor.Visible = true
             end
         end)
         
         local upConn = UserInputService.InputEnded:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 and resizing then
                 resizing = false
-                UserInputService.MouseIconEnabled = true
-                CustomCursor.Visible = false
             end
         end)
         
@@ -319,8 +300,6 @@ function UILibrary:CreateWindow(options)
             end
         end)
         
-        table.insert(WindowConnections, enterConn)
-        table.insert(WindowConnections, leaveConn)
         table.insert(WindowConnections, downConn)
         table.insert(WindowConnections, upConn)
         table.insert(WindowConnections, moveConn)
@@ -361,12 +340,51 @@ function UILibrary:CreateWindow(options)
     CustomCursor.Visible = false
     CustomCursor.Parent = gui
     
-    UserInputService.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement and CustomCursor.Visible then
+    local isDraggingAny = false
+    
+    local hoverCheckConn = UserInputService.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
             local pos = UserInputService:GetMouseLocation()
-            CustomCursor.Position = UDim2.new(0, pos.X - 16, 0, pos.Y - 16)
+            local mx, my = pos.X, pos.Y
+            
+            local isCurrentlyResizing = false
+            local activeCursor = nil
+            
+            -- Check if we are actively resizing right now
+            if UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
+                -- Need to determine which cursor to show based on what we are resizing
+                -- Since resizing state is local to each resizer, we'll just evaluate it globally based on mouse position
+            end
+            
+            -- Evaluate hover math
+            if not isMinimized then
+                local fx, fy = MainFrame.AbsolutePosition.X, MainFrame.AbsolutePosition.Y
+                local fw, fh = MainFrame.AbsoluteSize.X, MainFrame.AbsoluteSize.Y
+                local edge = 5
+                
+                if mx >= fx and mx <= fx + edge and my >= fy and my <= fy + fh then
+                    activeCursor = "130851509084818"
+                elseif mx >= fx + fw - edge and mx <= fx + fw and my >= fy and my <= fy + fh then
+                    activeCursor = "130851509084818"
+                elseif mx >= fx and mx <= fx + fw and my >= fy and my <= fy + edge then
+                    activeCursor = "106139089446755"
+                elseif mx >= fx and mx <= fx + fw and my >= fy + fh - edge and my <= fy + fh then
+                    activeCursor = "106139089446755"
+                end
+            end
+            
+            if activeCursor then
+                UserInputService.MouseIconEnabled = false
+                CustomCursor.Image = "rbxassetid://" .. activeCursor
+                CustomCursor.Position = UDim2.new(0, mx - 16, 0, my - 16)
+                CustomCursor.Visible = true
+            else
+                UserInputService.MouseIconEnabled = true
+                CustomCursor.Visible = false
+            end
         end
     end)
+    table.insert(WindowConnections, hoverCheckConn)
 
     local ProfileFrame = Instance.new("Frame")
     ProfileFrame.Name = "Profile"
