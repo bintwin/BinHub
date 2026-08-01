@@ -22,7 +22,8 @@ local PlayerSettings = {
     WalkSpeedEnabled = false,
     WalkSpeed = 16,
     JumpPowerEnabled = false,
-    JumpPower = 50
+    JumpPower = 50,
+    InfiniteJump = false
 }
 
 PlayerTab:CreateToggle("Enable WalkSpeed", false, function(state)
@@ -41,6 +42,10 @@ PlayerTab:CreateSlider("JumpPower", 50, 200, 50, function(value)
     PlayerSettings.JumpPower = value
 end, "Player_JumpPower")
 
+PlayerTab:CreateToggle("Infinite Jump", false, function(state)
+    PlayerSettings.InfiniteJump = state
+end, "Player_InfJump")
+
 if getgenv().PlayerLoop then getgenv().PlayerLoop:Disconnect() end
 getgenv().PlayerLoop = game:GetService("RunService").RenderStepped:Connect(function()
     local char = game:GetService("Players").LocalPlayer.Character
@@ -51,6 +56,18 @@ getgenv().PlayerLoop = game:GetService("RunService").RenderStepped:Connect(funct
         end
         if PlayerSettings.JumpPowerEnabled then
             hum.JumpPower = PlayerSettings.JumpPower
+        end
+    end
+end)
+
+if getgenv().InfJumpConn then getgenv().InfJumpConn:Disconnect() end
+local UserInputService = game:GetService("UserInputService")
+getgenv().InfJumpConn = UserInputService.JumpRequest:Connect(function()
+    if PlayerSettings.InfiniteJump then
+        local char = game:GetService("Players").LocalPlayer.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum:ChangeState(Enum.HumanoidStateType.Jumping)
         end
     end
 end)
@@ -405,6 +422,10 @@ Window:OnClose(function()
     if getgenv().PlayerLoop then
         getgenv().PlayerLoop:Disconnect()
         getgenv().PlayerLoop = nil
+    end
+    if getgenv().InfJumpConn then
+        getgenv().InfJumpConn:Disconnect()
+        getgenv().InfJumpConn = nil
     end
     if getgenv().PropSpawnConn then
         getgenv().PropSpawnConn:Disconnect()
