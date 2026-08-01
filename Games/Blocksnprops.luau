@@ -18,17 +18,42 @@ local SettingsTab = Window:CreateTab("Settings", "settings")
 -- Player Tab
 PlayerTab:CreateTextSection("Local Player")
 
+local PlayerSettings = {
+    WalkSpeedEnabled = false,
+    WalkSpeed = 16,
+    JumpPowerEnabled = false,
+    JumpPower = 50
+}
+
+PlayerTab:CreateToggle("Enable WalkSpeed", false, function(state)
+    PlayerSettings.WalkSpeedEnabled = state
+end, "Player_WalkSpeedToggle")
+
 PlayerTab:CreateSlider("WalkSpeed", 16, 100, 16, function(value)
-    if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
-        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = value
-    end
+    PlayerSettings.WalkSpeed = value
 end, "Player_WalkSpeed")
 
+PlayerTab:CreateToggle("Enable JumpPower", false, function(state)
+    PlayerSettings.JumpPowerEnabled = state
+end, "Player_JumpPowerToggle")
+
 PlayerTab:CreateSlider("JumpPower", 50, 200, 50, function(value)
-    if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
-        game.Players.LocalPlayer.Character.Humanoid.JumpPower = value
-    end
+    PlayerSettings.JumpPower = value
 end, "Player_JumpPower")
+
+if getgenv().PlayerLoop then getgenv().PlayerLoop:Disconnect() end
+getgenv().PlayerLoop = game:GetService("RunService").RenderStepped:Connect(function()
+    local char = game:GetService("Players").LocalPlayer.Character
+    local hum = char and char:FindFirstChild("Humanoid")
+    if hum then
+        if PlayerSettings.WalkSpeedEnabled then
+            hum.WalkSpeed = PlayerSettings.WalkSpeed
+        end
+        if PlayerSettings.JumpPowerEnabled then
+            hum.JumpPower = PlayerSettings.JumpPower
+        end
+    end
+end)
 
 -- Visuals Tab Setup
 VisualsTab:CreateTextSection("Player ESP")
@@ -361,6 +386,10 @@ Window:OnClose(function()
     if getgenv().ESPLoop then
         getgenv().ESPLoop:Disconnect()
         getgenv().ESPLoop = nil
+    end
+    if getgenv().PlayerLoop then
+        getgenv().PlayerLoop:Disconnect()
+        getgenv().PlayerLoop = nil
     end
     if getgenv().PropSpawnConn then
         getgenv().PropSpawnConn:Disconnect()

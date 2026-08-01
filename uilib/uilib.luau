@@ -297,7 +297,7 @@ function UILibrary:CreateWindow(options)
                         local newWidth = math.max(400, dragStartSize.X.Offset - delta.X)
                         local diff = newWidth - dragStartSize.X.Offset
                         MainFrame.Size = UDim2.new(0, newWidth, 0, MainFrame.Size.Y.Offset)
-                        MainFrame.Position = UDim2.new(0, dragStartPos.X.Offset - diff, 0, MainFrame.Position.Y.Offset)
+                        MainFrame.Position = UDim2.new(dragStartPos.X.Scale, dragStartPos.X.Offset - diff, dragStartPos.Y.Scale, dragStartPos.Y.Offset)
                         
                         -- Update ContentArea and Sidebar Line position if sidebar is wider than remaining space
                         local sbWidth = Sidebar.Size.X.Offset
@@ -318,7 +318,7 @@ function UILibrary:CreateWindow(options)
                         local newHeight = math.max(300, dragStartSize.Y.Offset - delta.Y)
                         local diff = newHeight - dragStartSize.Y.Offset
                         MainFrame.Size = UDim2.new(0, MainFrame.Size.X.Offset, 0, newHeight)
-                        MainFrame.Position = UDim2.new(0, MainFrame.Position.X.Offset, 0, dragStartPos.Y.Offset - diff)
+                        MainFrame.Position = UDim2.new(dragStartPos.X.Scale, dragStartPos.X.Offset, dragStartPos.Y.Scale, dragStartPos.Y.Offset - diff)
                     else
                         local newHeight = math.max(300, dragStartSize.Y.Offset + delta.Y)
                         MainFrame.Size = UDim2.new(0, MainFrame.Size.X.Offset, 0, newHeight)
