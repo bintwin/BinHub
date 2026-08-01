@@ -153,15 +153,13 @@ function UILibrary:CreateWindow(options)
     Title.TextXAlignment = Enum.TextXAlignment.Left
     Title.Parent = Topbar
     
-    local CloseBtn = Instance.new("TextButton")
+    local CloseBtn = Instance.new("ImageButton")
     CloseBtn.Name = "Close"
-    CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-    CloseBtn.Position = UDim2.new(1, -30, 0, 0)
+    CloseBtn.Size = UDim2.new(0, 16, 0, 16)
+    CloseBtn.Position = UDim2.new(1, -25, 0.5, -8)
     CloseBtn.BackgroundTransparency = 1
-    CloseBtn.Text = "X"
-    CloseBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
-    CloseBtn.TextSize = 14
-    CloseBtn.Font = Enum.Font.GothamBold
+    CloseBtn.Image = "rbxassetid://10747384394" -- lucide-x
+    CloseBtn.ImageColor3 = Color3.fromRGB(200, 200, 200)
     CloseBtn.Parent = Topbar
     
     CloseBtn.MouseButton1Click:Connect(function()
@@ -174,15 +172,13 @@ function UILibrary:CreateWindow(options)
     end)
 
     local isMinimized = false
-    local MinBtn = Instance.new("TextButton")
+    local MinBtn = Instance.new("ImageButton")
     MinBtn.Name = "Minimize"
-    MinBtn.Size = UDim2.new(0, 30, 0, 30)
-    MinBtn.Position = UDim2.new(1, -60, 0, 0)
+    MinBtn.Size = UDim2.new(0, 16, 0, 16)
+    MinBtn.Position = UDim2.new(1, -50, 0.5, -8)
     MinBtn.BackgroundTransparency = 1
-    MinBtn.Text = "-"
-    MinBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
-    MinBtn.TextSize = 18
-    MinBtn.Font = Enum.Font.GothamBold
+    MinBtn.Image = "rbxassetid://10734896206" -- lucide-minus
+    MinBtn.ImageColor3 = Color3.fromRGB(200, 200, 200)
     MinBtn.Parent = Topbar
     
     local ContentWrapper = Instance.new("Frame")
@@ -234,7 +230,7 @@ function UILibrary:CreateWindow(options)
     local ProfileFrame = Instance.new("Frame")
     ProfileFrame.Name = "Profile"
     ProfileFrame.Size = UDim2.new(1, 0, 0, 50)
-    ProfileFrame.Position = UDim2.new(0, 0, 1, -50)
+    ProfileFrame.Position = UDim2.new(0, 0, 0, 320) -- Fixed offset from top so it doesn't slide up when shrinking
     ProfileFrame.BackgroundTransparency = 1
     ProfileFrame.Parent = Sidebar
     
@@ -254,8 +250,8 @@ function UILibrary:CreateWindow(options)
     ProfileName.BackgroundTransparency = 1
     ProfileName.Text = string.sub(game.Players.LocalPlayer.Name, 1, 8) .. "..."
     ProfileName.TextColor3 = Color3.fromRGB(255, 255, 255)
-    ProfileName.TextSize = 12
-    ProfileName.Font = Enum.Font.GothamSemibold
+    ProfileName.TextSize = 13
+    ProfileName.Font = Enum.Font.GothamBold
     ProfileName.TextXAlignment = Enum.TextXAlignment.Left
     ProfileName.Parent = ProfileFrame
     
@@ -265,8 +261,8 @@ function UILibrary:CreateWindow(options)
     SubName.BackgroundTransparency = 1
     SubName.Text = "Lifetime"
     SubName.TextColor3 = Color3.fromRGB(150, 150, 150)
-    SubName.TextSize = 10
-    SubName.Font = Enum.Font.Gotham
+    SubName.TextSize = 11
+    SubName.Font = Enum.Font.GothamSemibold
     SubName.TextXAlignment = Enum.TextXAlignment.Left
     SubName.Parent = ProfileFrame
 
