@@ -1,13 +1,24 @@
 print("BinHUb Loader Started")
 
--- Map PlaceIds to their respective game script URLs
+-- Map Game/Place configs to their respective game script URLs
 local SupportedGames = {
-    [12345678] = "https://raw.githubusercontent.com/bintwin/BinHub/refs/heads/main/Games/gamename.luau",
-    [2537430692] = "https://raw.githubusercontent.com/bintwin/BinHub/refs/heads/main/Games/Blocksnprops.luau",
+    {
+        Places = {2537430692},
+        GameId = 905198065,
+        Script = "https://raw.githubusercontent.com/bintwin/BinHub/refs/heads/main/Games/Blocksnprops.luau"
+    }
 }
 
 local PlaceId = game.PlaceId
-local gameScriptUrl = SupportedGames[PlaceId]
+local GameId = game.GameId
+local gameScriptUrl = nil
+
+for _, gameInfo in ipairs(SupportedGames) do
+    if gameInfo.GameId == GameId or table.find(gameInfo.Places, PlaceId) then
+        gameScriptUrl = gameInfo.Script
+        break
+    end
+end
 
 -- For testing purposes, if you aren't in a supported game, it defaults to gamename.luau
 if not gameScriptUrl then

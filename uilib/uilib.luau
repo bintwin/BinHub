@@ -462,10 +462,14 @@ function UILibrary:CreateWindow(options)
         
         local TabContentLayout = Instance.new("UIListLayout")
         TabContentLayout.FillDirection = Enum.FillDirection.Horizontal
-        TabContentLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+        TabContentLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
         TabContentLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-        TabContentLayout.Padding = UDim.new(0, 6)
+        TabContentLayout.Padding = UDim.new(0, 10)
         TabContentLayout.Parent = TabBtn
+        
+        local TabPadding = Instance.new("UIPadding")
+        TabPadding.PaddingLeft = UDim.new(0, 12)
+        TabPadding.Parent = TabBtn
 
         local IconLabel = nil
         if iconId then
