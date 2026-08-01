@@ -650,6 +650,18 @@ function UILibrary:CreateWindow(options)
             Section.Parent = TabContent
         end
         
+        function Elements:CreateSubSection(text)
+            local Section = Instance.new("TextLabel")
+            Section.Size = UDim2.new(1, -6, 0, 15)
+            Section.BackgroundTransparency = 1
+            Section.Text = text
+            Section.TextColor3 = Color3.fromRGB(180, 180, 180)
+            Section.Font = Enum.Font.GothamSemibold
+            Section.TextSize = 12
+            Section.TextXAlignment = Enum.TextXAlignment.Left
+            Section.Parent = TabContent
+        end
+        
         function Elements:CreateButton(name, callback)
             local ButtonFrame = Instance.new("Frame")
             ButtonFrame.Size = UDim2.new(1, -6, 0, 35)

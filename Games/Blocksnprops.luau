@@ -94,7 +94,7 @@ VisualsTab:CreateToggle("Use Team Color", false, function(state)
     PlayerESP.UseTeamColor = state
 end, "Visuals_UseTeamColor")
 
-VisualsTab:CreateTextSection("Box ESP")
+VisualsTab:CreateSubSection("Box ESP")
 VisualsTab:CreateToggle("Enable Box ESP", false, function(state)
     PlayerESP.Box = state
 end, "Visuals_PlayerBox")
@@ -102,7 +102,7 @@ VisualsTab:CreateColorPicker("Box Color", Color3.fromRGB(255, 255, 255), functio
     PlayerESP.BoxColor = color
 end, "Visuals_PlayerBoxColor")
 
-VisualsTab:CreateTextSection("Nametag ESP")
+VisualsTab:CreateSubSection("Nametag ESP")
 VisualsTab:CreateToggle("Enable Nametag", false, function(state)
     PlayerESP.Name = state
 end, "Visuals_PlayerName")
@@ -110,7 +110,7 @@ VisualsTab:CreateColorPicker("Nametag Color", Color3.fromRGB(255, 255, 255), fun
     PlayerESP.NameColor = color
 end, "Visuals_PlayerNameColor")
 
-VisualsTab:CreateTextSection("Skeleton ESP")
+VisualsTab:CreateSubSection("Skeleton ESP")
 VisualsTab:CreateToggle("Enable Skeleton", false, function(state)
     PlayerESP.Skeleton = state
 end, "Visuals_PlayerSkeleton")
