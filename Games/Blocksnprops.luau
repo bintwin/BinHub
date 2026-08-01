@@ -26,7 +26,8 @@ local PlayerSettings = {
     JumpPowerEnabled = false,
     JumpPower = 50,
     InfiniteJump = false,
-    Freeze = false
+    Freeze = false,
+    AutoDodge = false
 }
 
 PlayerTab:CreateToggle("Enable WalkSpeed", false, function(state)
@@ -58,6 +59,15 @@ PlayerTab:CreateKeybind("Freeze Position", Enum.KeyCode.F, function()
     end
 end, "Player_Freeze")
 
+PlayerTab:CreateToggle("Auto Dodge", false, function(state)
+    PlayerSettings.AutoDodge = state
+end, "Player_AutoDodge")
+
+local vim = game:GetService("VirtualInputManager")
+local isDodging = false
+local dodgeKey = nil
+local dodgeEndTime = 0
+
 if getgenv().PlayerLoop then getgenv().PlayerLoop:Disconnect() end
 getgenv().PlayerLoop = game:GetService("RunService").RenderStepped:Connect(function()
     local char = game:GetService("Players").LocalPlayer.Character
@@ -75,6 +85,67 @@ getgenv().PlayerLoop = game:GetService("RunService").RenderStepped:Connect(funct
     if hrp then
         if hrp.Anchored ~= PlayerSettings.Freeze then
             hrp.Anchored = PlayerSettings.Freeze
+        end
+        
+        -- Auto Dodge Logic
+        if PlayerSettings.AutoDodge and not PlayerSettings.Freeze then
+            local currentTime = tick()
+            if isDodging and currentTime > dodgeEndTime then
+                vim:SendKeyEvent(false, dodgeKey, false, game)
+                isDodging = false
+            end
+            
+            if not isDodging then
+                local danger = false
+                for _, prop in ipairs(workspace.Projectiles:GetChildren()) do
+                    if prop:IsA("BasePart") and prop.AssemblyLinearVelocity.Magnitude > 15 then
+                        local pPos = prop.Position
+                        local pVel = prop.AssemblyLinearVelocity
+                        local toPlayer = hrp.Position - pPos
+                        
+                        -- Check if moving towards player
+                        if toPlayer:Dot(pVel) > 0 then
+                            local speed = pVel.Magnitude
+                            local timeToReach = toPlayer.Magnitude / speed
+                            
+                            if timeToReach < 1.0 then
+                                -- Check distance to line
+                                local dir = pVel.Unit
+                                local projection = toPlayer:Dot(dir)
+                                local closestPoint = pPos + dir * projection
+                                local distToLine = (hrp.Position - closestPoint).Magnitude
+                                
+                                if distToLine < 6 then
+                                    danger = true
+                                    break
+                                end
+                            end
+                        end
+                    end
+                end
+                
+                if danger then
+                    -- Raycast to check for walls
+                    local rayParams = RaycastParams.new()
+                    rayParams.FilterType = Enum.RaycastFilterType.Exclude
+                    rayParams.FilterDescendantsInstances = {char, workspace.Projectiles}
+                    
+                    local rightRay = workspace:Raycast(hrp.Position, hrp.CFrame.RightVector * 10, rayParams)
+                    local leftRay = workspace:Raycast(hrp.Position, -hrp.CFrame.RightVector * 10, rayParams)
+                    
+                    if not rightRay then
+                        dodgeKey = Enum.KeyCode.D
+                    elseif not leftRay then
+                        dodgeKey = Enum.KeyCode.A
+                    else
+                        dodgeKey = Enum.KeyCode.D -- Default to D if both blocked
+                    end
+                    
+                    vim:SendKeyEvent(true, dodgeKey, false, game)
+                    isDodging = true
+                    dodgeEndTime = tick() + 0.5
+                end
+            end
         end
     end
 end)
