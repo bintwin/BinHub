@@ -339,10 +339,10 @@ function UILibrary:CreateWindow(options)
         table.insert(WindowConnections, moveConn)
     end
     
-    createResizer("RightResize", UDim2.new(0, 15, 1, -20), UDim2.new(1, 0, 0, 0), "130851509084818", "Horizontal", false)
-    createResizer("LeftResize", UDim2.new(0, 15, 1, 0), UDim2.new(0, 0, 0, 0), "130851509084818", "Horizontal", true)
-    createResizer("BottomResize", UDim2.new(1, -20, 0, 15), UDim2.new(0, 0, 1, 0), "106139089446755", "Vertical", false)
-    createResizer("CornerResize", UDim2.new(0, 20, 0, 20), UDim2.new(1, 0, 1, 0), "109840226463996", "Corner", false)
+    createResizer("RightResize", UDim2.new(0, 4, 1, -20), UDim2.new(1, 0, 0, 0), "130851509084818", "Horizontal", false)
+    createResizer("LeftResize", UDim2.new(0, 4, 1, 0), UDim2.new(0, 0, 0, 0), "130851509084818", "Horizontal", true)
+    createResizer("BottomResize", UDim2.new(1, -20, 0, 4), UDim2.new(0, 0, 1, 0), "106139089446755", "Vertical", false)
+    createResizer("CornerResize", UDim2.new(0, 15, 0, 15), UDim2.new(1, 0, 1, 0), "109840226463996", "Corner", false)
     
     local SidebarLine = Instance.new("Frame")
     SidebarLine.Size = UDim2.new(0, 1, 1, 0)
