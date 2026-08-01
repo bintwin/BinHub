@@ -258,12 +258,15 @@ function UILibrary:CreateWindow(options)
         
         local enterConn = Resizer.MouseEnter:Connect(function()
             if not isMinimized and not resizing then
-                Mouse.Icon = "rbxassetid://" .. cursorId
+                UserInputService.MouseIconEnabled = false
+                CustomCursor.Image = "rbxassetid://" .. cursorId
+                CustomCursor.Visible = true
             end
         end)
         local leaveConn = Resizer.MouseLeave:Connect(function()
             if not isMinimized and not resizing then
-                Mouse.Icon = ""
+                UserInputService.MouseIconEnabled = true
+                CustomCursor.Visible = false
             end
         end)
         
@@ -273,14 +276,17 @@ function UILibrary:CreateWindow(options)
                 dragStartMouse = UserInputService:GetMouseLocation()
                 dragStartSize = MainFrame.Size
                 dragStartPos = MainFrame.Position
-                Mouse.Icon = "rbxassetid://" .. cursorId
+                UserInputService.MouseIconEnabled = false
+                CustomCursor.Image = "rbxassetid://" .. cursorId
+                CustomCursor.Visible = true
             end
         end)
         
         local upConn = UserInputService.InputEnded:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 and resizing then
                 resizing = false
-                Mouse.Icon = ""
+                UserInputService.MouseIconEnabled = true
+                CustomCursor.Visible = false
             end
         end)
         
@@ -334,8 +340,8 @@ function UILibrary:CreateWindow(options)
     
     local TabContainer = Instance.new("ScrollingFrame")
     TabContainer.Name = "TabContainer"
-    TabContainer.Size = UDim2.new(1, 0, 1, -60)
-    TabContainer.Position = UDim2.new(0, 0, 0, 10)
+    TabContainer.Size = UDim2.new(1, 0, 1, -50)
+    TabContainer.Position = UDim2.new(0, 0, 0, 0)
     TabContainer.BackgroundTransparency = 1
     TabContainer.BorderSizePixel = 0
     TabContainer.ScrollBarThickness = 0
@@ -347,11 +353,25 @@ function UILibrary:CreateWindow(options)
     TabList.HorizontalAlignment = Enum.HorizontalAlignment.Center
     TabList.VerticalAlignment = Enum.VerticalAlignment.Top
     TabList.Parent = TabContainer
+    
+    local CustomCursor = Instance.new("ImageLabel")
+    CustomCursor.Size = UDim2.new(0, 32, 0, 32)
+    CustomCursor.BackgroundTransparency = 1
+    CustomCursor.ZIndex = 10000
+    CustomCursor.Visible = false
+    CustomCursor.Parent = gui
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement and CustomCursor.Visible then
+            local pos = UserInputService:GetMouseLocation()
+            CustomCursor.Position = UDim2.new(0, pos.X - 16, 0, pos.Y - 16)
+        end
+    end)
 
     local ProfileFrame = Instance.new("Frame")
     ProfileFrame.Name = "Profile"
     ProfileFrame.Size = UDim2.new(1, 0, 0, 50)
-    ProfileFrame.Position = UDim2.new(0, 0, 0, 320)
+    ProfileFrame.Position = UDim2.new(0, 0, 1, -50)
     ProfileFrame.BackgroundTransparency = 1
     ProfileFrame.Parent = Sidebar
     
