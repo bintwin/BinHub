@@ -55,11 +55,13 @@ function UILibrary:CreateWindow(options)
     if not gui.Parent then gui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui") end
     
     -- Global UI Toggle
-    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    local toggleConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
         if not gameProcessed and input.KeyCode == ToggleKey then
             gui.Enabled = not gui.Enabled
         end
     end)
+    
+    local WindowConnections = {toggleConnection}
     
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "Main"
@@ -132,11 +134,12 @@ function UILibrary:CreateWindow(options)
         end
     end)
     
-    UserInputService.InputChanged:Connect(function(input)
+    local dragConnection = UserInputService.InputChanged:Connect(function(input)
         if input == dragInput and dragging then
             update(input)
         end
     end)
+    table.insert(WindowConnections, dragConnection)
     
     local Title = Instance.new("TextLabel")
     Title.Name = "Title"
@@ -162,6 +165,11 @@ function UILibrary:CreateWindow(options)
     CloseBtn.Parent = Topbar
     
     CloseBtn.MouseButton1Click:Connect(function()
+        for _, conn in ipairs(WindowConnections) do
+            if conn and conn.Connected then
+                conn:Disconnect()
+            end
+        end
         gui:Destroy()
     end)
 
@@ -609,7 +617,7 @@ function UILibrary:CreateWindow(options)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
             end)
             
-            UserInputService.InputChanged:Connect(function(input)
+            local sliderDragConnection = UserInputService.InputChanged:Connect(function(input)
                 if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
                     local mousePos = UserInputService:GetMouseLocation().X
                     local rel = math.clamp((mousePos - Track.AbsolutePosition.X) / Track.AbsoluteSize.X, 0, 1)
@@ -623,6 +631,7 @@ function UILibrary:CreateWindow(options)
                     if callback then callback(val) end
                 end
             end)
+            table.insert(WindowConnections, sliderDragConnection)
             
             if currentVal ~= default then
                 if callback then callback(currentVal) end
@@ -686,7 +695,7 @@ function UILibrary:CreateWindow(options)
                 KeyBtn.Text = "..."
             end)
             
-            UserInputService.InputBegan:Connect(function(input)
+            local keybindConnection = UserInputService.InputBegan:Connect(function(input)
                 if listening and input.UserInputType == Enum.UserInputType.Keyboard then
                     currentKeyName = input.KeyCode.Name
                     KeyBtn.Text = currentKeyName
@@ -699,6 +708,7 @@ function UILibrary:CreateWindow(options)
                     if callback then callback() end
                 end
             end)
+            table.insert(WindowConnections, keybindConnection)
         end
         
         return Elements
