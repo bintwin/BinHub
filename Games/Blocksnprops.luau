@@ -22,24 +22,24 @@ PlayerTab:CreateSlider("WalkSpeed", 16, 100, 16, function(value)
     if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
         game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = value
     end
-end)
+end, "Player_WalkSpeed")
 
 PlayerTab:CreateSlider("JumpPower", 50, 200, 50, function(value)
     if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
         game.Players.LocalPlayer.Character.Humanoid.JumpPower = value
     end
-end)
+end, "Player_JumpPower")
 
 -- Visuals Tab
 VisualsTab:CreateTextSection("ESP / Visuals")
 
 VisualsTab:CreateToggle("Player ESP", false, function(state)
     print("Player ESP:", state)
-end)
+end, "Visuals_PlayerESP")
 
 VisualsTab:CreateToggle("Prop ESP", false, function(state)
     print("Prop ESP:", state)
-end)
+end, "Visuals_PropESP")
 
 -- Misc Tab
 MiscTab:CreateTextSection("Blocks n Props Features")
@@ -55,8 +55,7 @@ end)
 -- Settings Tab
 SettingsTab:CreateTextSection("UI Settings")
 
-SettingsTab:CreateKeybind("Toggle UI", Enum.KeyCode.RightControl, function()
-    print("Toggle UI pressed")
-    -- Logic for hiding/showing the UI would go here, e.g.
-    -- Window:Toggle()
+SettingsTab:CreateButton("Clear Config", function()
+    -- An example button
+    print("Clearing Config is not yet implemented")
 end)
