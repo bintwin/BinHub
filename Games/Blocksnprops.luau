@@ -37,9 +37,14 @@ local PlayerESP = {
     Box = false, BoxColor = Color3.fromRGB(255, 255, 255),
     Name = false, NameColor = Color3.fromRGB(255, 255, 255),
     Skeleton = false, SkeletonColor = Color3.fromRGB(255, 255, 255),
-    SkeletonThickness = 1
+    SkeletonThickness = 1,
+    TeamCheck = false
 }
 local Drawings = { Players = {}, Props = {}, Prediction = {} }
+
+VisualsTab:CreateToggle("Team Check", false, function(state)
+    PlayerESP.TeamCheck = state
+end, "Visuals_TeamCheck")
 
 VisualsTab:CreateToggle("Box ESP", false, function(state)
     PlayerESP.Box = state
@@ -163,7 +168,7 @@ getgenv().ESPLoop = RunService.RenderStepped:Connect(function()
             local root = char and char:FindFirstChild("HumanoidRootPart")
             local head = char and char:FindFirstChild("Head")
             
-            if root and head and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 and (PlayerESP.Box or PlayerESP.Name or PlayerESP.Skeleton) then
+            if root and head and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 and (PlayerESP.Box or PlayerESP.Name or PlayerESP.Skeleton) and (not PlayerESP.TeamCheck or player.Team ~= LocalPlayer.Team) then
                 local pos, onScreen = Camera:WorldToViewportPoint(root.Position)
                 if onScreen then
                     -- Box Math using proper top and bottom bounds
