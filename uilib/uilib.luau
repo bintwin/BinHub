@@ -1073,73 +1073,116 @@ function UILibrary:CreateWindow(options)
             local expanded = false
             
             local SliderContainer = Instance.new("Frame")
-            SliderContainer.Size = UDim2.new(1, 0, 0, 105)
+            SliderContainer.Size = UDim2.new(1, 0, 0, 150)
             SliderContainer.Position = UDim2.new(0, 0, 0, 35)
             SliderContainer.BackgroundTransparency = 1
             SliderContainer.Parent = PickerFrame
             
-            local function createColorSlider(yPos, colorName, barColor, initialValue)
-                local SFrame = Instance.new("Frame")
-                SFrame.Size = UDim2.new(1, -20, 0, 25)
-                SFrame.Position = UDim2.new(0, 10, 0, yPos)
-                SFrame.BackgroundTransparency = 1
-                SFrame.Parent = SliderContainer
-                
-                local SLabel = Instance.new("TextLabel")
-                SLabel.Size = UDim2.new(0, 15, 1, 0)
-                SLabel.BackgroundTransparency = 1
-                SLabel.Text = colorName
-                SLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-                SLabel.TextSize = 12
-                SLabel.Font = Enum.Font.GothamBold
-                SLabel.Parent = SFrame
-                
-                local Track = Instance.new("Frame")
-                Track.Size = UDim2.new(1, -55, 0, 6)
-                Track.Position = UDim2.new(0, 20, 0.5, -3)
-                Track.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-                Track.Parent = SFrame
-                
-                local TCorner = Instance.new("UICorner")
-                TCorner.CornerRadius = UDim.new(1, 0)
-                TCorner.Parent = Track
-                
-                local Fill = Instance.new("Frame")
-                Fill.Size = UDim2.new(initialValue/255, 0, 1, 0)
-                Fill.BackgroundColor3 = barColor
-                Fill.Parent = Track
-                
-                local FCorner = Instance.new("UICorner")
-                FCorner.CornerRadius = UDim.new(1, 0)
-                FCorner.Parent = Fill
-                
-                local ValLabel = Instance.new("TextLabel")
-                ValLabel.Size = UDim2.new(0, 30, 1, 0)
-                ValLabel.Position = UDim2.new(1, -30, 0, 0)
-                ValLabel.BackgroundTransparency = 1
-                ValLabel.Text = tostring(math.floor(initialValue))
-                ValLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-                ValLabel.TextSize = 12
-                ValLabel.Font = Enum.Font.Gotham
-                ValLabel.Parent = SFrame
-                
-                local Btn = Instance.new("TextButton")
-                Btn.Size = UDim2.new(1, 0, 1, 0)
-                Btn.BackgroundTransparency = 1
-                Btn.Text = ""
-                Btn.Parent = SFrame
-                
-                return Btn, Track, Fill, ValLabel
-            end
+            local currentH, currentS, currentV = Color3.toHSV(currentColor)
             
-            local rBtn, rTrack, rFill, rVal = createColorSlider(5, "R", Color3.fromRGB(255, 60, 60), currentColor.R * 255)
-            local gBtn, gTrack, gFill, gVal = createColorSlider(35, "G", Color3.fromRGB(60, 255, 60), currentColor.G * 255)
-            local bBtn, bTrack, bFill, bVal = createColorSlider(65, "B", Color3.fromRGB(60, 60, 255), currentColor.B * 255)
+            local SatValBox = Instance.new("Frame")
+            SatValBox.Size = UDim2.new(1, -20, 0, 100)
+            SatValBox.Position = UDim2.new(0, 10, 0, 10)
+            SatValBox.BackgroundColor3 = Color3.fromHSV(currentH, 1, 1)
+            SatValBox.BorderSizePixel = 0
+            SatValBox.Parent = SliderContainer
+            
+            local SCorner = Instance.new("UICorner")
+            SCorner.CornerRadius = UDim.new(0, 4)
+            SCorner.Parent = SatValBox
+            
+            local WhiteGradFrame = Instance.new("Frame")
+            WhiteGradFrame.Size = UDim2.new(1, 0, 1, 0)
+            WhiteGradFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            WhiteGradFrame.BackgroundTransparency = 0
+            WhiteGradFrame.BorderSizePixel = 0
+            WhiteGradFrame.Parent = SatValBox
+            local WCorner = Instance.new("UICorner") WCorner.CornerRadius = UDim.new(0, 4) WCorner.Parent = WhiteGradFrame
+            
+            local WhiteGrad = Instance.new("UIGradient")
+            WhiteGrad.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 1)})
+            WhiteGrad.Parent = WhiteGradFrame
+            
+            local BlackGradFrame = Instance.new("Frame")
+            BlackGradFrame.Size = UDim2.new(1, 0, 1, 0)
+            BlackGradFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+            BlackGradFrame.BackgroundTransparency = 0
+            BlackGradFrame.BorderSizePixel = 0
+            BlackGradFrame.Parent = SatValBox
+            local BCorner = Instance.new("UICorner") BCorner.CornerRadius = UDim.new(0, 4) BCorner.Parent = BlackGradFrame
+            
+            local BlackGrad = Instance.new("UIGradient")
+            BlackGrad.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(1, 0)})
+            BlackGrad.Rotation = 90
+            BlackGrad.Parent = BlackGradFrame
+            
+            local SVPicker = Instance.new("Frame")
+            SVPicker.Size = UDim2.new(0, 10, 0, 10)
+            SVPicker.AnchorPoint = Vector2.new(0.5, 0.5)
+            SVPicker.Position = UDim2.new(currentS, 0, 1 - currentV, 0)
+            SVPicker.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            SVPicker.BackgroundTransparency = 1
+            SVPicker.Parent = SatValBox
+            local SVPickerStroke = Instance.new("UIStroke")
+            SVPickerStroke.Color = Color3.fromRGB(255, 255, 255)
+            SVPickerStroke.Thickness = 2
+            SVPickerStroke.Parent = SVPicker
+            local SVPickerCorner = Instance.new("UICorner")
+            SVPickerCorner.CornerRadius = UDim.new(1, 0)
+            SVPickerCorner.Parent = SVPicker
+            
+            local SVBtn = Instance.new("TextButton")
+            SVBtn.Size = UDim2.new(1, 0, 1, 0)
+            SVBtn.BackgroundTransparency = 1
+            SVBtn.Text = ""
+            SVBtn.Parent = SatValBox
+            
+            local HueSlider = Instance.new("Frame")
+            HueSlider.Size = UDim2.new(1, -20, 0, 15)
+            HueSlider.Position = UDim2.new(0, 10, 0, 120)
+            HueSlider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            HueSlider.BorderSizePixel = 0
+            HueSlider.Parent = SliderContainer
+            
+            local HCorner = Instance.new("UICorner")
+            HCorner.CornerRadius = UDim.new(1, 0)
+            HCorner.Parent = HueSlider
+            
+            local HueGrad = Instance.new("UIGradient")
+            HueGrad.Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+                ColorSequenceKeypoint.new(0.167, Color3.fromRGB(255, 255, 0)),
+                ColorSequenceKeypoint.new(0.333, Color3.fromRGB(0, 255, 0)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 255)),
+                ColorSequenceKeypoint.new(0.667, Color3.fromRGB(0, 0, 255)),
+                ColorSequenceKeypoint.new(0.833, Color3.fromRGB(255, 0, 255)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0))
+            })
+            HueGrad.Parent = HueSlider
+            
+            local HuePicker = Instance.new("Frame")
+            HuePicker.Size = UDim2.new(0, 6, 1, 4)
+            HuePicker.AnchorPoint = Vector2.new(0.5, 0.5)
+            HuePicker.Position = UDim2.new(1 - currentH, 0, 0.5, 0)
+            HuePicker.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            HuePicker.Parent = HueSlider
+            local HPickerCorner = Instance.new("UICorner")
+            HPickerCorner.CornerRadius = UDim.new(1, 0)
+            HPickerCorner.Parent = HuePicker
+            local HPickerStroke = Instance.new("UIStroke")
+            HPickerStroke.Color = Color3.fromRGB(50, 50, 50)
+            HPickerStroke.Parent = HuePicker
+            
+            local HueBtn = Instance.new("TextButton")
+            HueBtn.Size = UDim2.new(1, 0, 1, 0)
+            HueBtn.BackgroundTransparency = 1
+            HueBtn.Text = ""
+            HueBtn.Parent = HueSlider
             
             local activeDrag = nil
             
             local function updateColor()
-                currentColor = Color3.fromRGB(tonumber(rVal.Text), tonumber(gVal.Text), tonumber(bVal.Text))
+                currentColor = Color3.fromHSV(currentH, currentS, currentV)
                 DisplayColor.BackgroundColor3 = currentColor
                 if flag then
                     ConfigData[flag] = tostring(math.floor(currentColor.R*255)) .. "," .. tostring(math.floor(currentColor.G*255)) .. "," .. tostring(math.floor(currentColor.B*255))
@@ -1148,37 +1191,40 @@ function UILibrary:CreateWindow(options)
                 if callback then callback(currentColor) end
             end
             
-            local function bindSlider(btn, track, fill, valLabel, cName)
-                btn.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        activeDrag = cName
-                    end
-                end)
-                UserInputService.InputEnded:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 and activeDrag == cName then
-                        activeDrag = nil
-                    end
-                end)
-                UserInputService.InputChanged:Connect(function(input)
-                    if activeDrag == cName and input.UserInputType == Enum.UserInputType.MouseMovement then
-                        local mousePos = UserInputService:GetMouseLocation().X
-                        local rel = math.clamp((mousePos - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
-                        fill.Size = UDim2.new(rel, 0, 1, 0)
-                        local val = math.floor(rel * 255)
-                        valLabel.Text = tostring(val)
+            SVBtn.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then activeDrag = "SV" end
+            end)
+            HueBtn.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then activeDrag = "H" end
+            end)
+            UserInputService.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then activeDrag = nil end
+            end)
+            
+            UserInputService.InputChanged:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseMovement then
+                    local mousePos = UserInputService:GetMouseLocation()
+                    if activeDrag == "SV" then
+                        local relX = math.clamp((mousePos.X - SatValBox.AbsolutePosition.X) / SatValBox.AbsoluteSize.X, 0, 1)
+                        local relY = math.clamp((mousePos.Y - SatValBox.AbsolutePosition.Y) / SatValBox.AbsoluteSize.Y, 0, 1)
+                        currentS = relX
+                        currentV = 1 - relY
+                        SVPicker.Position = UDim2.new(relX, 0, relY, 0)
+                        updateColor()
+                    elseif activeDrag == "H" then
+                        local relX = math.clamp((mousePos.X - HueSlider.AbsolutePosition.X) / HueSlider.AbsoluteSize.X, 0, 1)
+                        currentH = 1 - relX
+                        HuePicker.Position = UDim2.new(relX, 0, 0.5, 0)
+                        SatValBox.BackgroundColor3 = Color3.fromHSV(currentH, 1, 1)
                         updateColor()
                     end
-                end)
-            end
-            
-            bindSlider(rBtn, rTrack, rFill, rVal, "R")
-            bindSlider(gBtn, gTrack, gFill, gVal, "G")
-            bindSlider(bBtn, bTrack, bFill, bVal, "B")
+                end
+            end)
             
             ExpandBtn.MouseButton1Click:Connect(function()
                 expanded = not expanded
                 if expanded then
-                    PickerFrame.Size = UDim2.new(1, -6, 0, 140)
+                    PickerFrame.Size = UDim2.new(1, -6, 0, 185)
                 else
                     PickerFrame.Size = UDim2.new(1, -6, 0, 35)
                 end

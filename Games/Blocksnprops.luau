@@ -36,7 +36,8 @@ VisualsTab:CreateTextSection("Player ESP")
 local PlayerESP = { 
     Box = false, BoxColor = Color3.fromRGB(255, 255, 255),
     Name = false, NameColor = Color3.fromRGB(255, 255, 255),
-    Skeleton = false, SkeletonColor = Color3.fromRGB(255, 255, 255)
+    Skeleton = false, SkeletonColor = Color3.fromRGB(255, 255, 255),
+    SkeletonThickness = 1
 }
 local Drawings = { Players = {}, Props = {}, Prediction = {} }
 
@@ -60,6 +61,10 @@ end, "Visuals_PlayerSkeleton")
 VisualsTab:CreateColorPicker("Skeleton Color", Color3.fromRGB(255, 255, 255), function(color)
     PlayerESP.SkeletonColor = color
 end, "Visuals_PlayerSkeletonColor")
+
+VisualsTab:CreateSlider("Skeleton Thickness", 1, 10, 1, function(val)
+    PlayerESP.SkeletonThickness = val
+end, "Visuals_PlayerSkeletonThick")
 
 VisualsTab:CreateTextSection("Prop ESP")
 
@@ -218,6 +223,7 @@ getgenv().ESPLoop = RunService.RenderStepped:Connect(function()
                                     draws.Skeleton[i].From = Vector2.new(pos1.X, pos1.Y)
                                     draws.Skeleton[i].To = Vector2.new(pos2.X, pos2.Y)
                                     draws.Skeleton[i].Color = PlayerESP.SkeletonColor
+                                    draws.Skeleton[i].Thickness = PlayerESP.SkeletonThickness
                                 else
                                     draws.Skeleton[i].Visible = false
                                 end
