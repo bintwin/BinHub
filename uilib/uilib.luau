@@ -389,8 +389,8 @@ function UILibrary:CreateWindow(options)
 
     local ContentArea = Instance.new("Frame")
     ContentArea.Name = "ContentArea"
-    ContentArea.Size = UDim2.new(1, -130, 1, 0)
-    ContentArea.Position = UDim2.new(0, 130, 0, 0)
+    ContentArea.Size = UDim2.new(1, -150, 1, 0)
+    ContentArea.Position = UDim2.new(0, 150, 0, 0)
     ContentArea.BackgroundTransparency = 1
     ContentArea.Parent = ContentWrapper
 
@@ -480,6 +480,21 @@ function UILibrary:CreateWindow(options)
             TabText.TextColor3 = Color3.fromRGB(255, 255, 255)
             if IconLabel then IconLabel.ImageColor3 = Color3.fromRGB(255, 255, 255) end
             TabContent.Visible = true
+            WindowObj.CurrentTab = name
+        end)
+        
+        TabBtn.MouseEnter:Connect(function()
+            if WindowObj.CurrentTab ~= name then
+                TabText.TextColor3 = Color3.fromRGB(220, 220, 220)
+                if IconLabel then IconLabel.ImageColor3 = Color3.fromRGB(220, 220, 220) end
+            end
+        end)
+        
+        TabBtn.MouseLeave:Connect(function()
+            if WindowObj.CurrentTab ~= name then
+                TabText.TextColor3 = Color3.fromRGB(150, 150, 150)
+                if IconLabel then IconLabel.ImageColor3 = Color3.fromRGB(150, 150, 150) end
+            end
         end)
         
         if firstTab then
@@ -487,6 +502,7 @@ function UILibrary:CreateWindow(options)
             TabText.TextColor3 = Color3.fromRGB(255, 255, 255)
             if IconLabel then IconLabel.ImageColor3 = Color3.fromRGB(255, 255, 255) end
             TabContent.Visible = true
+            WindowObj.CurrentTab = name
             firstTab = false
         end
         
