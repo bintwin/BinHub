@@ -25,7 +25,8 @@ local PlayerSettings = {
     WalkSpeed = 16,
     JumpPowerEnabled = false,
     JumpPower = 50,
-    InfiniteJump = false
+    InfiniteJump = false,
+    Freeze = false
 }
 
 PlayerTab:CreateToggle("Enable WalkSpeed", false, function(state)
@@ -48,6 +49,15 @@ PlayerTab:CreateToggle("Infinite Jump", false, function(state)
     PlayerSettings.InfiniteJump = state
 end, "Player_InfJump")
 
+PlayerTab:CreateKeybind("Freeze Position", Enum.KeyCode.F, function()
+    PlayerSettings.Freeze = not PlayerSettings.Freeze
+    local char = game:GetService("Players").LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        hrp.Anchored = PlayerSettings.Freeze
+    end
+end, "Player_Freeze")
+
 if getgenv().PlayerLoop then getgenv().PlayerLoop:Disconnect() end
 getgenv().PlayerLoop = game:GetService("RunService").RenderStepped:Connect(function()
     local char = game:GetService("Players").LocalPlayer.Character
@@ -58,6 +68,13 @@ getgenv().PlayerLoop = game:GetService("RunService").RenderStepped:Connect(funct
         end
         if PlayerSettings.JumpPowerEnabled then
             hum.JumpPower = PlayerSettings.JumpPower
+        end
+    end
+    
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        if hrp.Anchored ~= PlayerSettings.Freeze then
+            hrp.Anchored = PlayerSettings.Freeze
         end
     end
 end)
@@ -392,10 +409,6 @@ end)
 
 -- Misc Tab
 MiscTab:CreateTextSection("Blocks n Props Features")
-
-MiscTab:CreateButton("Become Random Prop", function()
-    print("Become Random Prop clicked")
-end)
 
 MiscTab:CreateButton("Teleport to Map", function()
     print("Teleport to Map clicked")
