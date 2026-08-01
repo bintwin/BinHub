@@ -586,7 +586,7 @@ function UILibrary:CreateWindow(options)
         
         local ListLayout = Instance.new("UIListLayout")
         ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        ListLayout.Padding = UDim.new(0, 6)
+        ListLayout.Padding = UDim.new(0, 10)
         ListLayout.Parent = TabContent
         
         TabBtn.MouseButton1Click:Connect(function()
@@ -636,9 +636,10 @@ function UILibrary:CreateWindow(options)
         
         -- Using AutomaticCanvasSize instead of ChildAdded for proper scrolling
         
-        local Elements = {}
+        local Elements = { InSubSection = false }
         
         function Elements:CreateTextSection(text)
+            self.InSubSection = false
             local Section = Instance.new("TextLabel")
             Section.Size = UDim2.new(1, -6, 0, 20)
             Section.BackgroundTransparency = 1
@@ -651,6 +652,7 @@ function UILibrary:CreateWindow(options)
         end
         
         function Elements:CreateSubSection(text)
+            self.InSubSection = true
             local Section = Instance.new("TextLabel")
             Section.Size = UDim2.new(1, -6, 0, 15)
             Section.BackgroundTransparency = 1
@@ -663,8 +665,9 @@ function UILibrary:CreateWindow(options)
         end
         
         function Elements:CreateButton(name, callback)
+            local h = self.InSubSection and 28 or 35
             local ButtonFrame = Instance.new("Frame")
-            ButtonFrame.Size = UDim2.new(1, -6, 0, 28)
+            ButtonFrame.Size = UDim2.new(1, -6, 0, h)
             ButtonFrame.BackgroundTransparency = 1
             
             local Btn = Instance.new("TextButton")
@@ -697,8 +700,9 @@ function UILibrary:CreateWindow(options)
         end
         
         function Elements:CreateToggle(name, default, callback, flag)
+            local h = self.InSubSection and 28 or 35
             local ToggleFrame = Instance.new("Frame")
-            ToggleFrame.Size = UDim2.new(1, -6, 0, 28)
+            ToggleFrame.Size = UDim2.new(1, -6, 0, h)
             ToggleFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
             ToggleFrame.Parent = TabContent
             
@@ -728,8 +732,8 @@ function UILibrary:CreateWindow(options)
             end
             
             local Indicator = Instance.new("Frame")
-            Indicator.Size = UDim2.new(0, 16, 0, 16)
-            Indicator.Position = UDim2.new(1, -26, 0.5, -8)
+            Indicator.Size = self.InSubSection and UDim2.new(0, 16, 0, 16) or UDim2.new(0, 20, 0, 20)
+            Indicator.Position = self.InSubSection and UDim2.new(1, -26, 0.5, -8) or UDim2.new(1, -30, 0.5, -10)
             Indicator.BackgroundColor3 = state and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(50, 50, 50)
             Indicator.Parent = ToggleFrame
             
@@ -763,8 +767,9 @@ function UILibrary:CreateWindow(options)
         end
 
         function Elements:CreateDropdown(name, options, default, callback, flag)
+            local h = self.InSubSection and 28 or 35
             local DropdownFrame = Instance.new("Frame")
-            DropdownFrame.Size = UDim2.new(1, -6, 0, 28)
+            DropdownFrame.Size = UDim2.new(1, -6, 0, h)
             DropdownFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
             DropdownFrame.Parent = TabContent
             
@@ -800,8 +805,9 @@ function UILibrary:CreateWindow(options)
             Btn.Text = ""
             Btn.Parent = DropdownFrame
             
+            local lh = self.InSubSection and 25 or 30
             local ListFrame = Instance.new("Frame")
-            ListFrame.Size = UDim2.new(1, 0, 0, #options * 25)
+            ListFrame.Size = UDim2.new(1, 0, 0, #options * lh)
             ListFrame.Position = UDim2.new(0, 0, 1, 5)
             ListFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
             ListFrame.Visible = false
@@ -823,7 +829,7 @@ function UILibrary:CreateWindow(options)
             
             for _, opt in ipairs(options) do
                 local OptBtn = Instance.new("TextButton")
-                OptBtn.Size = UDim2.new(1, 0, 0, 25)
+                OptBtn.Size = UDim2.new(1, 0, 0, lh)
                 OptBtn.BackgroundTransparency = 1
                 OptBtn.Text = opt
                 OptBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -849,7 +855,7 @@ function UILibrary:CreateWindow(options)
                 open = not open
                 ListFrame.Visible = open
                 if open then
-                    TabContent.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y + 20 + (#options*25))
+                    TabContent.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y + 20 + (#options*lh))
                 else
                     TabContent.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y + 20)
                 end
@@ -861,8 +867,9 @@ function UILibrary:CreateWindow(options)
         end
         
         function Elements:CreateSlider(name, min, max, default, callback, flag)
+            local h = self.InSubSection and 42 or 50
             local SliderFrame = Instance.new("Frame")
-            SliderFrame.Size = UDim2.new(1, -6, 0, 42)
+            SliderFrame.Size = UDim2.new(1, -6, 0, h)
             SliderFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
             SliderFrame.Parent = TabContent
             
@@ -902,9 +909,10 @@ function UILibrary:CreateWindow(options)
             ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
             ValueLabel.Parent = SliderFrame
             
+            local th = self.InSubSection and 30 or 38
             local Track = Instance.new("Frame")
             Track.Size = UDim2.new(1, -20, 0, 6)
-            Track.Position = UDim2.new(0, 10, 0, 30)
+            Track.Position = UDim2.new(0, 10, 0, th)
             Track.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
             Track.Parent = SliderFrame
             local TrackCorner = Instance.new("UICorner")
@@ -955,8 +963,9 @@ function UILibrary:CreateWindow(options)
         end
         
         function Elements:CreateKeybind(name, defaultKey, callback, flag, onChangeCallback)
+            local h = self.InSubSection and 28 or 35
             local KeyFrame = Instance.new("Frame")
-            KeyFrame.Size = UDim2.new(1, -6, 0, 28)
+            KeyFrame.Size = UDim2.new(1, -6, 0, h)
             KeyFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
             KeyFrame.Parent = TabContent
             
@@ -985,9 +994,11 @@ function UILibrary:CreateWindow(options)
                 currentKeyName = ConfigData[flag]
             end
             
+            local bh = self.InSubSection and 20 or 25
+            local bp = self.InSubSection and -10 or -12.5
             local KeyBtn = Instance.new("TextButton")
-            KeyBtn.Size = UDim2.new(0, 80, 0, 20)
-            KeyBtn.Position = UDim2.new(1, -90, 0.5, -10)
+            KeyBtn.Size = UDim2.new(0, 80, 0, bh)
+            KeyBtn.Position = UDim2.new(1, -90, 0.5, bp)
             KeyBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
             KeyBtn.Text = currentKeyName
             KeyBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -1028,8 +1039,9 @@ function UILibrary:CreateWindow(options)
             table.insert(WindowConnections, keybindConnection)
         end
         function Elements:CreateColorPicker(name, defaultColor, callback, flag)
+            local h = self.InSubSection and 28 or 35
             local PickerFrame = Instance.new("Frame")
-            PickerFrame.Size = UDim2.new(1, -6, 0, 28)
+            PickerFrame.Size = UDim2.new(1, -6, 0, h)
             PickerFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
             PickerFrame.ClipsDescendants = true
             PickerFrame.Parent = TabContent
@@ -1044,7 +1056,7 @@ function UILibrary:CreateWindow(options)
             Stroke.Parent = PickerFrame
             
             local Label = Instance.new("TextLabel")
-            Label.Size = UDim2.new(1, -60, 0, 28)
+            Label.Size = UDim2.new(1, -60, 0, h)
             Label.Position = UDim2.new(0, 10, 0, 0)
             Label.BackgroundTransparency = 1
             Label.Text = name
@@ -1062,9 +1074,10 @@ function UILibrary:CreateWindow(options)
                 end
             end
             
+            local dp = self.InSubSection and 4 or 7
             local DisplayColor = Instance.new("Frame")
             DisplayColor.Size = UDim2.new(0, 40, 0, 20)
-            DisplayColor.Position = UDim2.new(1, -50, 0, 4)
+            DisplayColor.Position = UDim2.new(1, -50, 0, dp)
             DisplayColor.BackgroundColor3 = currentColor
             DisplayColor.Parent = PickerFrame
             
@@ -1077,7 +1090,7 @@ function UILibrary:CreateWindow(options)
             DStroke.Parent = DisplayColor
             
             local ExpandBtn = Instance.new("TextButton")
-            ExpandBtn.Size = UDim2.new(1, 0, 0, 28)
+            ExpandBtn.Size = UDim2.new(1, 0, 0, h)
             ExpandBtn.BackgroundTransparency = 1
             ExpandBtn.Text = ""
             ExpandBtn.Parent = PickerFrame
@@ -1086,7 +1099,7 @@ function UILibrary:CreateWindow(options)
             
             local SliderContainer = Instance.new("Frame")
             SliderContainer.Size = UDim2.new(1, 0, 0, 150)
-            SliderContainer.Position = UDim2.new(0, 0, 0, 28)
+            SliderContainer.Position = UDim2.new(0, 0, 0, h)
             SliderContainer.BackgroundTransparency = 1
             SliderContainer.Parent = PickerFrame
             
