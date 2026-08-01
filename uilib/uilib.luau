@@ -1251,7 +1251,7 @@ function UILibrary:CreateWindow(options)
                 if expanded then
                     PickerFrame.Size = UDim2.new(1, -6, 0, 185)
                 else
-                    PickerFrame.Size = UDim2.new(1, -6, 0, 35)
+                    PickerFrame.Size = UDim2.new(1, -6, 0, h)
                 end
             end)
             
