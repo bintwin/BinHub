@@ -1,10 +1,5 @@
--- Assume UILibrary is passed in if loaded by loader, or we load it ourselves
-local UILibrary
-if isfile and readfile then
-    -- Local development loading
-    local success, result = pcall(function() return loadstring(readfile("BinHUb/uilib/uilib.luau"))() end)
-    if success and result then UILibrary = result end
-end
+-- Try to get UILibrary from the loader, or fetch it directly from GitHub
+local UILibrary = getgenv().UILibrary or loadstring(game:HttpGet("https://raw.githubusercontent.com/bintwin/BinHub/refs/heads/main/uilib/uilib.luau"))()
 
 if not UILibrary then
     warn("Failed to load UILibrary")
