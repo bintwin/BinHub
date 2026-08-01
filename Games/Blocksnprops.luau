@@ -38,7 +38,49 @@ VisualsTab:CreateToggle("Player ESP", false, function(state)
 end, "Visuals_PlayerESP")
 
 VisualsTab:CreateToggle("Prop ESP", false, function(state)
-    print("Prop ESP:", state)
+    getgenv().PropESP = state
+    
+    local function updatePropESP()
+        for _, prop in ipairs(workspace.Projectiles:GetChildren()) do
+            if getgenv().PropESP then
+                if not prop:FindFirstChild("PropHighlight") then
+                    local h = Instance.new("Highlight")
+                    h.Name = "PropHighlight"
+                    h.FillColor = Color3.fromRGB(255, 100, 100)
+                    h.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    h.FillTransparency = 0.5
+                    h.Parent = prop
+                end
+            else
+                if prop:FindFirstChild("PropHighlight") then
+                    prop.PropHighlight:Destroy()
+                end
+            end
+        end
+    end
+    
+    if getgenv().PropESPConn then
+        getgenv().PropESPConn:Disconnect()
+        getgenv().PropESPConn = nil
+    end
+    
+    if state then
+        getgenv().PropESPConn = workspace.Projectiles.ChildAdded:Connect(function(prop)
+            task.wait(0.1) -- Wait for model to load
+            if getgenv().PropESP then
+                if not prop:FindFirstChild("PropHighlight") then
+                    local h = Instance.new("Highlight")
+                    h.Name = "PropHighlight"
+                    h.FillColor = Color3.fromRGB(255, 100, 100)
+                    h.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    h.FillTransparency = 0.5
+                    h.Parent = prop
+                end
+            end
+        end)
+    end
+    
+    updatePropESP()
 end, "Visuals_PropESP")
 
 -- Misc Tab
