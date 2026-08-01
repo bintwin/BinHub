@@ -1,5 +1,5 @@
 -- Try to get UILibrary from the loader, or fetch it directly from GitHub
-local UILibrary = getgenv().UILibrary or loadstring(game:HttpGet("https://raw.githubusercontent.com/bintwin/BinHub/refs/heads/main/uilib/uilib.luau"))()
+local UILibrary = getgenv().UILibrary or loadstring(game:HttpGet("https://raw.githubusercontent.com/bintwin/BinHub/refs/heads/main/uilib/uilib.luau?t=" .. tostring(tick())))()
 
 if not UILibrary then
     warn("Failed to load UILibrary")

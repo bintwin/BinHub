@@ -47,8 +47,9 @@ function UILibrary:CreateWindow(options)
     end
 
     local gui = Instance.new("ScreenGui")
-    gui.Name = WindowName
+    gui.Name = "BinHub_UI"
     gui.ResetOnSpawn = false
+    gui.IgnoreGuiInset = true
     gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     
     pcall(function() gui.Parent = CoreGui end)

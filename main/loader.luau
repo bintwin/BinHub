@@ -17,7 +17,7 @@ end
 
 if gameScriptUrl then
     print("BinHUb: Loading UI Library...")
-    local uiLibUrl = "https://raw.githubusercontent.com/bintwin/BinHub/refs/heads/main/uilib/uilib.luau"
+    local uiLibUrl = "https://raw.githubusercontent.com/bintwin/BinHub/refs/heads/main/uilib/uilib.luau?t=" .. tostring(tick())
     
     -- Fetch the UI Library globally so game scripts can use it
     local success, uiLib = pcall(function()
