@@ -192,6 +192,8 @@ function UILibrary:CreateWindow(options)
                 conn:Disconnect()
             end
         end
+        local Mouse = game.Players.LocalPlayer:GetMouse()
+        Mouse.Icon = ""
         gui:Destroy()
     end)
     
@@ -218,23 +220,110 @@ function UILibrary:CreateWindow(options)
     ContentWrapper.BackgroundTransparency = 1
     ContentWrapper.Parent = MainFrame
     
+    local preMinimizeSize = UDim2.new(0, 600, 0, 400)
     MinBtn.MouseButton1Click:Connect(function()
         isMinimized = not isMinimized
         if isMinimized then
-            TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(0, 600, 0, 30)}):Play()
-            TweenService:Create(ContentWrapper, TweenInfo.new(0.15), {GroupTransparency = 1}):Play()
+            preMinimizeSize = MainFrame.Size
+            TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(0, preMinimizeSize.X.Offset, 0, 30)}):Play()
+            ContentWrapper.Visible = false
         else
-            TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(0, 600, 0, 400)}):Play()
-            TweenService:Create(ContentWrapper, TweenInfo.new(0.3), {GroupTransparency = 0}):Play()
+            ContentWrapper.Visible = true
+            TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = preMinimizeSize}):Play()
         end
     end)
 
     local Sidebar = Instance.new("Frame")
     Sidebar.Name = "Sidebar"
-    Sidebar.Size = UDim2.new(0, 130, 1, 0)
+    Sidebar.Size = UDim2.new(0, 150, 1, 0)
     Sidebar.Position = UDim2.new(0, 0, 0, 0)
     Sidebar.BackgroundTransparency = 1
     Sidebar.Parent = ContentWrapper
+    
+    local Mouse = game.Players.LocalPlayer:GetMouse()
+    local function createResizer(name, size, pos, cursorId, isHorizontal, isNegative)
+        local Resizer = Instance.new("TextButton")
+        Resizer.Name = name
+        Resizer.Size = size
+        Resizer.Position = pos
+        Resizer.BackgroundTransparency = 1
+        Resizer.Text = ""
+        Resizer.ZIndex = 100
+        Resizer.Parent = MainFrame
+        
+        local resizing = false
+        local dragStartMouse = nil
+        local dragStartSize = nil
+        local dragStartPos = nil
+        
+        local enterConn = Resizer.MouseEnter:Connect(function()
+            if not isMinimized and not resizing then
+                Mouse.Icon = "rbxassetid://" .. cursorId
+            end
+        end)
+        local leaveConn = Resizer.MouseLeave:Connect(function()
+            if not isMinimized and not resizing then
+                Mouse.Icon = ""
+            end
+        end)
+        
+        local downConn = Resizer.InputBegan:Connect(function(input)
+            if not isMinimized and input.UserInputType == Enum.UserInputType.MouseButton1 then
+                resizing = true
+                dragStartMouse = UserInputService:GetMouseLocation()
+                dragStartSize = MainFrame.Size
+                dragStartPos = MainFrame.Position
+                Mouse.Icon = "rbxassetid://" .. cursorId
+            end
+        end)
+        
+        local upConn = UserInputService.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 and resizing then
+                resizing = false
+                Mouse.Icon = ""
+            end
+        end)
+        
+        local moveConn = UserInputService.InputChanged:Connect(function(input)
+            if not isMinimized and resizing and input.UserInputType == Enum.UserInputType.MouseMovement then
+                local currentMouse = UserInputService:GetMouseLocation()
+                local delta = currentMouse - dragStartMouse
+                
+                if isHorizontal then
+                    if isNegative then
+                        local newWidth = math.max(400, dragStartSize.X.Offset - delta.X)
+                        local diff = newWidth - dragStartSize.X.Offset
+                        MainFrame.Size = UDim2.new(0, newWidth, 0, MainFrame.Size.Y.Offset)
+                        MainFrame.Position = UDim2.new(0, dragStartPos.X.Offset - diff, 0, MainFrame.Position.Y.Offset)
+                    else
+                        local newWidth = math.max(400, dragStartSize.X.Offset + delta.X)
+                        MainFrame.Size = UDim2.new(0, newWidth, 0, MainFrame.Size.Y.Offset)
+                    end
+                else
+                    if isNegative then
+                        local newHeight = math.max(300, dragStartSize.Y.Offset - delta.Y)
+                        local diff = newHeight - dragStartSize.Y.Offset
+                        MainFrame.Size = UDim2.new(0, MainFrame.Size.X.Offset, 0, newHeight)
+                        MainFrame.Position = UDim2.new(0, MainFrame.Position.X.Offset, 0, dragStartPos.Y.Offset - diff)
+                    else
+                        local newHeight = math.max(300, dragStartSize.Y.Offset + delta.Y)
+                        MainFrame.Size = UDim2.new(0, MainFrame.Size.X.Offset, 0, newHeight)
+                    end
+                end
+            end
+        end)
+        
+        table.insert(WindowConnections, enterConn)
+        table.insert(WindowConnections, leaveConn)
+        table.insert(WindowConnections, downConn)
+        table.insert(WindowConnections, upConn)
+        table.insert(WindowConnections, moveConn)
+    end
+    
+    createResizer("RightResize", UDim2.new(0, 5, 1, 0), UDim2.new(1, -5, 0, 0), "130851509084818", true, false)
+    createResizer("LeftResize", UDim2.new(0, 5, 1, 0), UDim2.new(0, 0, 0, 0), "130851509084818", true, true)
+    createResizer("BottomResize", UDim2.new(1, 0, 0, 5), UDim2.new(0, 0, 1, -5), "106139089446755", false, false)
+    createResizer("TopResize", UDim2.new(1, 0, 0, 5), UDim2.new(0, 0, 0, 0), "106139089446755", false, true)
     
     local SidebarLine = Instance.new("Frame")
     SidebarLine.Size = UDim2.new(0, 1, 1, 0)
@@ -256,7 +345,7 @@ function UILibrary:CreateWindow(options)
     TabList.SortOrder = Enum.SortOrder.LayoutOrder
     TabList.Padding = UDim.new(0, 10)
     TabList.HorizontalAlignment = Enum.HorizontalAlignment.Center
-    TabList.VerticalAlignment = Enum.VerticalAlignment.Center
+    TabList.VerticalAlignment = Enum.VerticalAlignment.Top
     TabList.Parent = TabContainer
 
     local ProfileFrame = Instance.new("Frame")
