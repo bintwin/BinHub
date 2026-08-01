@@ -10,10 +10,10 @@ local Window = UILibrary:CreateWindow({
     Name = "BinHUb - Blocks n Props"
 })
 
-local PlayerTab = Window:CreateTab("Player")
-local VisualsTab = Window:CreateTab("Visuals")
-local MiscTab = Window:CreateTab("Misc")
-local SettingsTab = Window:CreateTab("Settings")
+local PlayerTab = Window:CreateTab("Player", "user")
+local VisualsTab = Window:CreateTab("Visuals", "view")
+local MiscTab = Window:CreateTab("Misc", "box")
+local SettingsTab = Window:CreateTab("Settings", "settings")
 
 -- Player Tab
 PlayerTab:CreateTextSection("Local Player")
@@ -54,6 +54,14 @@ end)
 
 -- Settings Tab
 SettingsTab:CreateTextSection("UI Settings")
+
+SettingsTab:CreateKeybind("Menu Keybind", Enum.KeyCode.RightControl, function()
+    -- This callback is for when the key is pressed, but the library already handles the toggle logic internally.
+    -- So we don't need to do anything here unless we want an extra action.
+end, "Settings_ToggleKey", function(newKeyName)
+    -- This callback fires when the user sets a new key!
+    Window:SetToggleKey(newKeyName)
+end)
 
 SettingsTab:CreateButton("Clear Config", function()
     -- An example button

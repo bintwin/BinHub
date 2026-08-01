@@ -54,9 +54,33 @@ function UILibrary:CreateWindow(options)
     pcall(function() gui.Parent = CoreGui end)
     if not gui.Parent then gui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui") end
     
+    local toggleKeyName = ToggleKey.Name
+    if ConfigData["Settings_ToggleKey"] then
+        toggleKeyName = ConfigData["Settings_ToggleKey"]
+    end
+    
+    local LucideIcons = {}
+    pcall(function()
+        local req = (syn and syn.request) or (http and http.request) or request
+        if req then
+            local res = req({Url = "https://raw.githubusercontent.com/dawid-scripts/Fluent/master/src/Icons.lua", Method = "GET"})
+            if res.Success then
+                for name, id in string.gmatch(res.Body, '%["lucide%-(.-)"%]%s*=%s*"([^"]+)"') do
+                    LucideIcons[name] = id
+                end
+            end
+        end
+    end)
+
+    local function GetIcon(name)
+        if not name then return nil end
+        if string.find(name, "rbxassetid") then return name end
+        return LucideIcons[name] or ""
+    end
+    
     -- Global UI Toggle
     local toggleConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
-        if not gameProcessed and input.KeyCode == ToggleKey then
+        if not gameProcessed and input.KeyCode.Name == toggleKeyName then
             gui.Enabled = not gui.Enabled
         end
     end)
@@ -158,7 +182,7 @@ function UILibrary:CreateWindow(options)
     CloseBtn.Size = UDim2.new(0, 16, 0, 16)
     CloseBtn.Position = UDim2.new(1, -25, 0.5, -8)
     CloseBtn.BackgroundTransparency = 1
-    CloseBtn.Image = "rbxassetid://10747384394" -- lucide-x
+    CloseBtn.Image = GetIcon("x")
     CloseBtn.ImageColor3 = Color3.fromRGB(200, 200, 200)
     CloseBtn.Parent = Topbar
     
@@ -170,6 +194,9 @@ function UILibrary:CreateWindow(options)
         end
         gui:Destroy()
     end)
+    
+    CloseBtn.MouseEnter:Connect(function() CloseBtn.ImageColor3 = Color3.fromRGB(255, 255, 255) end)
+    CloseBtn.MouseLeave:Connect(function() CloseBtn.ImageColor3 = Color3.fromRGB(200, 200, 200) end)
 
     local isMinimized = false
     local MinBtn = Instance.new("ImageButton")
@@ -177,9 +204,12 @@ function UILibrary:CreateWindow(options)
     MinBtn.Size = UDim2.new(0, 16, 0, 16)
     MinBtn.Position = UDim2.new(1, -50, 0.5, -8)
     MinBtn.BackgroundTransparency = 1
-    MinBtn.Image = "rbxassetid://10734896206" -- lucide-minus
+    MinBtn.Image = GetIcon("minus")
     MinBtn.ImageColor3 = Color3.fromRGB(200, 200, 200)
     MinBtn.Parent = Topbar
+    
+    MinBtn.MouseEnter:Connect(function() MinBtn.ImageColor3 = Color3.fromRGB(255, 255, 255) end)
+    MinBtn.MouseLeave:Connect(function() MinBtn.ImageColor3 = Color3.fromRGB(200, 200, 200) end)
     
     local ContentWrapper = Instance.new("Frame")
     ContentWrapper.Name = "ContentWrapper"
@@ -222,15 +252,17 @@ function UILibrary:CreateWindow(options)
     TabContainer.ScrollBarThickness = 0
     TabContainer.Parent = Sidebar
     
-    local TabListLayout = Instance.new("UIListLayout")
-    TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    TabListLayout.Padding = UDim.new(0, 5)
-    TabListLayout.Parent = TabContainer
-    
+    local TabList = Instance.new("UIListLayout")
+    TabList.SortOrder = Enum.SortOrder.LayoutOrder
+    TabList.Padding = UDim.new(0, 10)
+    TabList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    TabList.VerticalAlignment = Enum.VerticalAlignment.Center
+    TabList.Parent = TabContainer
+
     local ProfileFrame = Instance.new("Frame")
     ProfileFrame.Name = "Profile"
     ProfileFrame.Size = UDim2.new(1, 0, 0, 50)
-    ProfileFrame.Position = UDim2.new(0, 0, 0, 320) -- Fixed offset from top so it doesn't slide up when shrinking
+    ProfileFrame.Position = UDim2.new(0, 0, 0, 320)
     ProfileFrame.BackgroundTransparency = 1
     ProfileFrame.Parent = Sidebar
     
@@ -277,90 +309,128 @@ function UILibrary:CreateWindow(options)
         CurrentTab = nil,
         Tabs = {}
     }
-
-    function WindowObj:CreateTab(tabName)
+    local firstTab = true
+    
+    function WindowObj:CreateTab(name, iconId)
         local TabBtn = Instance.new("TextButton")
-        TabBtn.Name = tabName
-        TabBtn.Size = UDim2.new(1, -10, 0, 35)
-        TabBtn.Position = UDim2.new(0, 5, 0, 0)
-        TabBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        TabBtn.Name = name
+        TabBtn.Size = UDim2.new(1, -20, 0, 32)
+        TabBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
         TabBtn.BackgroundTransparency = 1
-        TabBtn.Text = tabName
-        TabBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
-        TabBtn.TextSize = 13
-        TabBtn.Font = Enum.Font.GothamSemibold
+        TabBtn.Text = ""
         TabBtn.Parent = TabContainer
         
-        local TabBtnCorner = Instance.new("UICorner")
-        TabBtnCorner.CornerRadius = UDim.new(0, 6)
-        TabBtnCorner.Parent = TabBtn
+        local TabCorner = Instance.new("UICorner")
+        TabCorner.CornerRadius = UDim.new(0, 6)
+        TabCorner.Parent = TabBtn
+        
+        local TabContentLayout = Instance.new("UIListLayout")
+        TabContentLayout.FillDirection = Enum.FillDirection.Horizontal
+        TabContentLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+        TabContentLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+        TabContentLayout.Padding = UDim.new(0, 6)
+        TabContentLayout.Parent = TabBtn
+
+        local IconLabel = nil
+        if iconId then
+            IconLabel = Instance.new("ImageLabel")
+            IconLabel.Size = UDim2.new(0, 16, 0, 16)
+            IconLabel.BackgroundTransparency = 1
+            IconLabel.Image = GetIcon(iconId)
+            IconLabel.ImageColor3 = Color3.fromRGB(150, 150, 150)
+            IconLabel.Parent = TabBtn
+        end
+
+        local TabText = Instance.new("TextLabel")
+        TabText.BackgroundTransparency = 1
+        TabText.Size = UDim2.new(0, 0, 1, 0)
+        TabText.AutomaticSize = Enum.AutomaticSize.X
+        TabText.Text = name
+        TabText.TextColor3 = Color3.fromRGB(150, 150, 150)
+        TabText.Font = Enum.Font.Gotham
+        TabText.TextSize = 13
+        TabText.Parent = TabBtn
         
         local TabContent = Instance.new("ScrollingFrame")
-        TabContent.Name = tabName .. "Content"
-        TabContent.Size = UDim2.new(1, -20, 1, -20)
-        TabContent.Position = UDim2.new(0, 10, 0, 10)
+        TabContent.Name = name .. "Content"
+        TabContent.Size = UDim2.new(1, 0, 1, 0)
         TabContent.BackgroundTransparency = 1
-        TabContent.BorderSizePixel = 0
         TabContent.ScrollBarThickness = 2
+        TabContent.BorderSizePixel = 0
         TabContent.Visible = false
         TabContent.Parent = ContentArea
         
-        local ContentLayout = Instance.new("UIListLayout")
-        ContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        ContentLayout.Padding = UDim.new(0, 10)
-        ContentLayout.Parent = TabContent
+        local Padding = Instance.new("UIPadding")
+        Padding.PaddingTop = UDim.new(0, 15)
+        Padding.PaddingLeft = UDim.new(0, 15)
+        Padding.PaddingRight = UDim.new(0, 15)
+        Padding.PaddingBottom = UDim.new(0, 15)
+        Padding.Parent = TabContent
         
-        TabContent.ChildAdded:Connect(function()
-            TabContent.CanvasSize = UDim2.new(0, 0, 0, ContentLayout.AbsoluteContentSize.Y + 20)
-        end)
+        local ListLayout = Instance.new("UIListLayout")
+        ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        ListLayout.Padding = UDim.new(0, 10)
+        ListLayout.Parent = TabContent
         
         TabBtn.MouseButton1Click:Connect(function()
-            for _, t in pairs(WindowObj.Tabs) do
-                TweenService:Create(t.Button, TweenInfo.new(0.2), {BackgroundTransparency = 1, TextColor3 = Color3.fromRGB(150, 150, 150)}):Play()
-                t.Content.Visible = false
+            for _, child in ipairs(TabContainer:GetChildren()) do
+                if child:IsA("TextButton") then
+                    child.BackgroundTransparency = 1
+                    local txt = child:FindFirstChildOfClass("TextLabel")
+                    local img = child:FindFirstChildOfClass("ImageLabel")
+                    if txt then txt.TextColor3 = Color3.fromRGB(150, 150, 150) end
+                    if img then img.ImageColor3 = Color3.fromRGB(150, 150, 150) end
+                end
             end
-            TweenService:Create(TabBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0.9, TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+            for _, child in ipairs(ContentArea:GetChildren()) do
+                if child:IsA("ScrollingFrame") then
+                    child.Visible = false
+                end
+            end
+            TabBtn.BackgroundTransparency = 0.5
+            TabText.TextColor3 = Color3.fromRGB(255, 255, 255)
+            if IconLabel then IconLabel.ImageColor3 = Color3.fromRGB(255, 255, 255) end
             TabContent.Visible = true
-            WindowObj.CurrentTab = tabName
         end)
         
-        local TabData = {
-            Button = TabBtn,
-            Content = TabContent
-        }
-        
-        WindowObj.Tabs[tabName] = TabData
-        
-        if not WindowObj.CurrentTab then
-            TabBtn.BackgroundTransparency = 0.9
-            TabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        if firstTab then
+            TabBtn.BackgroundTransparency = 0.5
+            TabText.TextColor3 = Color3.fromRGB(255, 255, 255)
+            if IconLabel then IconLabel.ImageColor3 = Color3.fromRGB(255, 255, 255) end
             TabContent.Visible = true
-            WindowObj.CurrentTab = tabName
+            firstTab = false
         end
+        
+        TabContent.ChildAdded:Connect(function()
+            TabContent.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y + 20)
+        end)
         
         local Elements = {}
         
         function Elements:CreateTextSection(text)
-            local SectionLabel = Instance.new("TextLabel")
-            SectionLabel.Size = UDim2.new(1, 0, 0, 20)
-            SectionLabel.BackgroundTransparency = 1
-            SectionLabel.Text = text
-            SectionLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-            SectionLabel.TextSize = 13
-            SectionLabel.Font = Enum.Font.GothamBold
-            SectionLabel.TextXAlignment = Enum.TextXAlignment.Left
-            SectionLabel.Parent = TabContent
+            local Section = Instance.new("TextLabel")
+            Section.Size = UDim2.new(1, -6, 0, 20)
+            Section.BackgroundTransparency = 1
+            Section.Text = text
+            Section.TextColor3 = Color3.fromRGB(255, 255, 255)
+            Section.Font = Enum.Font.GothamBold
+            Section.TextSize = 14
+            Section.TextXAlignment = Enum.TextXAlignment.Left
+            Section.Parent = TabContent
         end
         
         function Elements:CreateButton(name, callback)
+            local ButtonFrame = Instance.new("Frame")
+            ButtonFrame.Size = UDim2.new(1, -6, 0, 35)
             local Btn = Instance.new("TextButton")
-            Btn.Size = UDim2.new(1, 0, 0, 35)
+            Btn.Size = UDim2.new(1, 0, 1, 0)
             Btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
             Btn.Text = name
             Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
             Btn.TextSize = 13
             Btn.Font = Enum.Font.Gotham
-            Btn.Parent = TabContent
+            Btn.Parent = ButtonFrame
+            ButtonFrame.Parent = TabContent
             
             local BtnCorner = Instance.new("UICorner")
             BtnCorner.CornerRadius = UDim.new(0, 6)
@@ -378,7 +448,7 @@ function UILibrary:CreateWindow(options)
         
         function Elements:CreateToggle(name, default, callback, flag)
             local ToggleFrame = Instance.new("Frame")
-            ToggleFrame.Size = UDim2.new(1, 0, 0, 35)
+            ToggleFrame.Size = UDim2.new(1, -6, 0, 35)
             ToggleFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
             ToggleFrame.Parent = TabContent
             
@@ -443,19 +513,19 @@ function UILibrary:CreateWindow(options)
         end
 
         function Elements:CreateDropdown(name, options, default, callback, flag)
-            local DropFrame = Instance.new("Frame")
-            DropFrame.Size = UDim2.new(1, 0, 0, 35)
-            DropFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-            DropFrame.Parent = TabContent
+            local DropdownFrame = Instance.new("Frame")
+            DropdownFrame.Size = UDim2.new(1, -6, 0, 35)
+            DropdownFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+            DropdownFrame.Parent = TabContent
             
             local Corner = Instance.new("UICorner")
             Corner.CornerRadius = UDim.new(0, 6)
-            Corner.Parent = DropFrame
+            Corner.Parent = DropdownFrame
             
             local Stroke = Instance.new("UIStroke")
             Stroke.Color = Color3.fromRGB(50, 50, 50)
             Stroke.Thickness = 1
-            Stroke.Parent = DropFrame
+            Stroke.Parent = DropdownFrame
             
             local currentVal = default
             if flag and ConfigData[flag] ~= nil then
@@ -471,14 +541,14 @@ function UILibrary:CreateWindow(options)
             Label.TextSize = 13
             Label.Font = Enum.Font.Gotham
             Label.TextXAlignment = Enum.TextXAlignment.Left
-            Label.Parent = DropFrame
+            Label.Parent = DropdownFrame
             
             local open = false
             local Btn = Instance.new("TextButton")
             Btn.Size = UDim2.new(1, 0, 1, 0)
             Btn.BackgroundTransparency = 1
             Btn.Text = ""
-            Btn.Parent = DropFrame
+            Btn.Parent = DropdownFrame
             
             local ListFrame = Instance.new("Frame")
             ListFrame.Size = UDim2.new(1, 0, 0, #options * 30)
@@ -486,7 +556,7 @@ function UILibrary:CreateWindow(options)
             ListFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
             ListFrame.Visible = false
             ListFrame.ZIndex = 5
-            ListFrame.Parent = DropFrame
+            ListFrame.Parent = DropdownFrame
             
             local ListCorner = Instance.new("UICorner")
             ListCorner.CornerRadius = UDim.new(0, 6)
@@ -516,7 +586,7 @@ function UILibrary:CreateWindow(options)
                     Label.Text = name .. ": " .. opt
                     open = false
                     ListFrame.Visible = false
-                    TabContent.CanvasSize = UDim2.new(0, 0, 0, ContentLayout.AbsoluteContentSize.Y + 20)
+                    TabContent.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y + 20)
                     if flag then
                         ConfigData[flag] = opt
                         SaveConfig()
@@ -529,9 +599,9 @@ function UILibrary:CreateWindow(options)
                 open = not open
                 ListFrame.Visible = open
                 if open then
-                    TabContent.CanvasSize = UDim2.new(0, 0, 0, ContentLayout.AbsoluteContentSize.Y + 20 + (#options*30))
+                    TabContent.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y + 20 + (#options*30))
                 else
-                    TabContent.CanvasSize = UDim2.new(0, 0, 0, ContentLayout.AbsoluteContentSize.Y + 20)
+                    TabContent.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y + 20)
                 end
             end)
             
@@ -542,7 +612,7 @@ function UILibrary:CreateWindow(options)
         
         function Elements:CreateSlider(name, min, max, default, callback, flag)
             local SliderFrame = Instance.new("Frame")
-            SliderFrame.Size = UDim2.new(1, 0, 0, 55)
+            SliderFrame.Size = UDim2.new(1, -6, 0, 50)
             SliderFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
             SliderFrame.Parent = TabContent
             
@@ -634,9 +704,9 @@ function UILibrary:CreateWindow(options)
             end
         end
         
-        function Elements:CreateKeybind(name, defaultKey, callback, flag)
+        function Elements:CreateKeybind(name, defaultKey, callback, flag, onChangeCallback)
             local KeyFrame = Instance.new("Frame")
-            KeyFrame.Size = UDim2.new(1, 0, 0, 35)
+            KeyFrame.Size = UDim2.new(1, -6, 0, 35)
             KeyFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
             KeyFrame.Parent = TabContent
             
@@ -700,11 +770,16 @@ function UILibrary:CreateWindow(options)
                         SaveConfig()
                     end
                     listening = false
+                    if onChangeCallback then onChangeCallback(currentKeyName) end
                 elseif not listening and input.KeyCode.Name == currentKeyName then
                     if callback then callback() end
                 end
             end)
             table.insert(WindowConnections, keybindConnection)
+        end
+        
+        function WindowObj:SetToggleKey(keyName)
+            toggleKeyName = keyName
         end
         
         return Elements
