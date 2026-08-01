@@ -30,58 +30,226 @@ PlayerTab:CreateSlider("JumpPower", 50, 200, 50, function(value)
     end
 end, "Player_JumpPower")
 
--- Visuals Tab
-VisualsTab:CreateTextSection("ESP / Visuals")
+-- Visuals Tab Setup
+VisualsTab:CreateTextSection("Player ESP")
 
-VisualsTab:CreateToggle("Player ESP", false, function(state)
-    print("Player ESP:", state)
-end, "Visuals_PlayerESP")
+local PlayerESP = { Box = false, Name = false, Skeleton = false }
+local Drawings = { Players = {}, Props = {}, Prediction = {} }
+
+VisualsTab:CreateToggle("Box ESP", false, function(state)
+    PlayerESP.Box = state
+end, "Visuals_PlayerBox")
+
+VisualsTab:CreateToggle("Nametag ESP", false, function(state)
+    PlayerESP.Name = state
+end, "Visuals_PlayerName")
+
+VisualsTab:CreateToggle("Skeleton ESP", false, function(state)
+    PlayerESP.Skeleton = state
+end, "Visuals_PlayerSkeleton")
+
+VisualsTab:CreateTextSection("Prop ESP")
+
+local PropESP = { Enabled = false, Box = false, Transparency = 0.5, FillColor = Color3.fromRGB(255, 100, 100), OutlineColor = Color3.fromRGB(255, 255, 255), Predict = false }
+
+local function updatePropHighlights()
+    for _, prop in ipairs(workspace.Projectiles:GetChildren()) do
+        if PropESP.Enabled then
+            local h = prop:FindFirstChild("PropHighlight")
+            if not h then
+                h = Instance.new("Highlight")
+                h.Name = "PropHighlight"
+                h.Parent = prop
+            end
+            h.FillColor = PropESP.FillColor
+            h.OutlineColor = PropESP.OutlineColor
+            h.FillTransparency = PropESP.Transparency
+        else
+            if prop:FindFirstChild("PropHighlight") then
+                prop.PropHighlight:Destroy()
+            end
+        end
+    end
+end
 
 VisualsTab:CreateToggle("Prop ESP", false, function(state)
-    getgenv().PropESP = state
-    
-    local function updatePropESP()
-        for _, prop in ipairs(workspace.Projectiles:GetChildren()) do
-            if getgenv().PropESP then
-                if not prop:FindFirstChild("PropHighlight") then
-                    local h = Instance.new("Highlight")
-                    h.Name = "PropHighlight"
-                    h.FillColor = Color3.fromRGB(255, 100, 100)
-                    h.OutlineColor = Color3.fromRGB(255, 255, 255)
-                    h.FillTransparency = 0.5
-                    h.Parent = prop
+    PropESP.Enabled = state
+    updatePropHighlights()
+end, "Visuals_PropESP")
+
+VisualsTab:CreateToggle("Prop Box", false, function(state)
+    PropESP.Box = state
+end, "Visuals_PropBox")
+
+VisualsTab:CreateSlider("Fill Transparency", 0, 100, 50, function(val)
+    PropESP.Transparency = val / 100
+    updatePropHighlights()
+end, "Visuals_PropTrans")
+
+VisualsTab:CreateColorPicker("Fill Color", Color3.fromRGB(255, 100, 100), function(color)
+    PropESP.FillColor = color
+    updatePropHighlights()
+end, "Visuals_PropFillColor")
+
+VisualsTab:CreateColorPicker("Outline Color", Color3.fromRGB(255, 255, 255), function(color)
+    PropESP.OutlineColor = color
+    updatePropHighlights()
+end, "Visuals_PropOutlineColor")
+
+VisualsTab:CreateToggle("Predict Arrow Prop", false, function(state)
+    PropESP.Predict = state
+end, "Visuals_PredictProp")
+
+-- ESP RenderStepped Loop
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+local function createDrawing(type, props)
+    local d = Drawing.new(type)
+    for k, v in pairs(props) do d[k] = v end
+    return d
+end
+
+local function clearDrawings(tbl)
+    for _, d in pairs(tbl) do d:Remove() end
+    table.clear(tbl)
+end
+
+if getgenv().ESPLoop then getgenv().ESPLoop:Disconnect() end
+if getgenv().PropSpawnConn then getgenv().PropSpawnConn:Disconnect() end
+
+getgenv().PropSpawnConn = workspace.Projectiles.ChildAdded:Connect(function(prop)
+    task.wait(0.1)
+    if PropESP.Enabled then updatePropHighlights() end
+end)
+
+getgenv().ESPLoop = RunService.RenderStepped:Connect(function()
+    -- Handle Player ESP
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            if not Drawings.Players[player] then
+                Drawings.Players[player] = {
+                    Box = createDrawing("Square", {Thickness = 1, Color = Color3.fromRGB(255, 255, 255), Filled = false}),
+                    Name = createDrawing("Text", {Size = 16, Center = true, Outline = true, Color = Color3.fromRGB(255, 255, 255)}),
+                    Skeleton = {}
+                }
+                for i=1, 15 do
+                    Drawings.Players[player].Skeleton[i] = createDrawing("Line", {Thickness = 1, Color = Color3.fromRGB(255, 255, 255)})
+                end
+            end
+            
+            local draws = Drawings.Players[player]
+            local char = player.Character
+            local root = char and char:FindFirstChild("HumanoidRootPart")
+            local head = char and char:FindFirstChild("Head")
+            
+            if root and head and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 and (PlayerESP.Box or PlayerESP.Name or PlayerESP.Skeleton) then
+                local pos, onScreen = Camera:WorldToViewportPoint(root.Position)
+                if onScreen then
+                    -- Box Math
+                    local headPos = Camera:WorldToViewportPoint(head.Position + Vector3.new(0, 0.5, 0))
+                    local legPos = Camera:WorldToViewportPoint(root.Position - Vector3.new(0, 3, 0))
+                    local height = math.abs(headPos.Y - legPos.Y)
+                    local width = height / 2
+                    
+                    draws.Box.Visible = PlayerESP.Box
+                    if PlayerESP.Box then
+                        draws.Box.Size = Vector2.new(width, height)
+                        draws.Box.Position = Vector2.new(pos.X - width/2, headPos.Y)
+                    end
+                    
+                    draws.Name.Visible = PlayerESP.Name
+                    if PlayerESP.Name then
+                        draws.Name.Text = player.Name
+                        draws.Name.Position = Vector2.new(pos.X, headPos.Y - 20)
+                    end
+                    
+                    if PlayerESP.Skeleton then
+                        local joints = {
+                            {"Head", "UpperTorso"}, {"UpperTorso", "LowerTorso"},
+                            {"UpperTorso", "LeftUpperArm"}, {"LeftUpperArm", "LeftLowerArm"}, {"LeftLowerArm", "LeftHand"},
+                            {"UpperTorso", "RightUpperArm"}, {"RightUpperArm", "RightLowerArm"}, {"RightLowerArm", "RightHand"},
+                            {"LowerTorso", "LeftUpperLeg"}, {"LeftUpperLeg", "LeftLowerLeg"}, {"LeftLowerLeg", "LeftFoot"},
+                            {"LowerTorso", "RightUpperLeg"}, {"RightUpperLeg", "RightLowerLeg"}, {"RightLowerLeg", "RightFoot"}
+                        }
+                        for i, v in ipairs(joints) do
+                            local p1 = char:FindFirstChild(v[1])
+                            local p2 = char:FindFirstChild(v[2])
+                            if p1 and p2 then
+                                local pos1, vis1 = Camera:WorldToViewportPoint(p1.Position)
+                                local pos2, vis2 = Camera:WorldToViewportPoint(p2.Position)
+                                if vis1 and vis2 then
+                                    draws.Skeleton[i].Visible = true
+                                    draws.Skeleton[i].From = Vector2.new(pos1.X, pos1.Y)
+                                    draws.Skeleton[i].To = Vector2.new(pos2.X, pos2.Y)
+                                else
+                                    draws.Skeleton[i].Visible = false
+                                end
+                            else
+                                draws.Skeleton[i].Visible = false
+                            end
+                        end
+                        for i=#joints+1, 15 do draws.Skeleton[i].Visible = false end
+                    else
+                        for i=1, 15 do draws.Skeleton[i].Visible = false end
+                    end
+                else
+                    draws.Box.Visible = false
+                    draws.Name.Visible = false
+                    for i=1, 15 do draws.Skeleton[i].Visible = false end
                 end
             else
-                if prop:FindFirstChild("PropHighlight") then
-                    prop.PropHighlight:Destroy()
-                end
+                draws.Box.Visible = false
+                draws.Name.Visible = false
+                for i=1, 15 do draws.Skeleton[i].Visible = false end
             end
         end
     end
     
-    if getgenv().PropESPConn then
-        getgenv().PropESPConn:Disconnect()
-        getgenv().PropESPConn = nil
+    -- Clean up disconnected players
+    for player, draws in pairs(Drawings.Players) do
+        if not player.Parent then
+            draws.Box:Remove()
+            draws.Name:Remove()
+            for i=1, 15 do draws.Skeleton[i]:Remove() end
+            Drawings.Players[player] = nil
+        end
     end
     
-    if state then
-        getgenv().PropESPConn = workspace.Projectiles.ChildAdded:Connect(function(prop)
-            task.wait(0.1) -- Wait for model to load
-            if getgenv().PropESP then
-                if not prop:FindFirstChild("PropHighlight") then
-                    local h = Instance.new("Highlight")
-                    h.Name = "PropHighlight"
-                    h.FillColor = Color3.fromRGB(255, 100, 100)
-                    h.OutlineColor = Color3.fromRGB(255, 255, 255)
-                    h.FillTransparency = 0.5
-                    h.Parent = prop
+    -- Handle Prop ESP & Prediction
+    clearDrawings(Drawings.Props)
+    clearDrawings(Drawings.Prediction)
+    
+    for _, prop in ipairs(workspace.Projectiles:GetChildren()) do
+        if PropESP.Box and prop:IsA("BasePart") then
+            local pos, onScreen = Camera:WorldToViewportPoint(prop.Position)
+            if onScreen then
+                local b = createDrawing("Square", {Thickness = 1, Color = PropESP.OutlineColor, Filled = false, Visible = true})
+                local size = 2000 / pos.Z
+                b.Size = Vector2.new(size, size)
+                b.Position = Vector2.new(pos.X - size/2, pos.Y - size/2)
+                table.insert(Drawings.Props, b)
+            end
+        end
+        
+        if PropESP.Predict and prop:IsA("BasePart") and prop.Velocity.Magnitude > 5 then
+            local pPos = prop.Position
+            local pVel = prop.Velocity
+            local grav = Vector3.new(0, -workspace.Gravity, 0)
+            
+            for t = 0.1, 2, 0.1 do
+                local futurePos = pPos + (pVel * t) + (0.5 * grav * t * t)
+                local screenPos, onScreen = Camera:WorldToViewportPoint(futurePos)
+                if onScreen then
+                    local dot = createDrawing("Square", {Size = Vector2.new(4, 4), Position = Vector2.new(screenPos.X-2, screenPos.Y-2), Color = Color3.fromRGB(0, 255, 0), Filled = true, Visible = true})
+                    table.insert(Drawings.Prediction, dot)
                 end
             end
-        end)
+        end
     end
-    
-    updatePropESP()
-end, "Visuals_PropESP")
+end)
 
 -- Misc Tab
 MiscTab:CreateTextSection("Blocks n Props Features")

@@ -942,6 +942,177 @@ function UILibrary:CreateWindow(options)
             end)
             table.insert(WindowConnections, keybindConnection)
         end
+        function Elements:CreateColorPicker(name, defaultColor, callback, flag)
+            local PickerFrame = Instance.new("Frame")
+            PickerFrame.Size = UDim2.new(1, -6, 0, 35)
+            PickerFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+            PickerFrame.ClipsDescendants = true
+            PickerFrame.Parent = TabContent
+            
+            local Corner = Instance.new("UICorner")
+            Corner.CornerRadius = UDim.new(0, 6)
+            Corner.Parent = PickerFrame
+            
+            local Stroke = Instance.new("UIStroke")
+            Stroke.Color = Color3.fromRGB(50, 50, 50)
+            Stroke.Thickness = 1
+            Stroke.Parent = PickerFrame
+            
+            local Label = Instance.new("TextLabel")
+            Label.Size = UDim2.new(1, -60, 0, 35)
+            Label.Position = UDim2.new(0, 10, 0, 0)
+            Label.BackgroundTransparency = 1
+            Label.Text = name
+            Label.TextColor3 = Color3.fromRGB(255, 255, 255)
+            Label.TextSize = 13
+            Label.Font = Enum.Font.Gotham
+            Label.TextXAlignment = Enum.TextXAlignment.Left
+            Label.Parent = PickerFrame
+            
+            local currentColor = defaultColor or Color3.fromRGB(255, 255, 255)
+            if flag and ConfigData[flag] ~= nil then
+                local s = string.split(ConfigData[flag], ",")
+                if #s == 3 then
+                    currentColor = Color3.fromRGB(tonumber(s[1]), tonumber(s[2]), tonumber(s[3]))
+                end
+            end
+            
+            local DisplayColor = Instance.new("Frame")
+            DisplayColor.Size = UDim2.new(0, 40, 0, 20)
+            DisplayColor.Position = UDim2.new(1, -50, 0, 7)
+            DisplayColor.BackgroundColor3 = currentColor
+            DisplayColor.Parent = PickerFrame
+            
+            local DCorner = Instance.new("UICorner")
+            DCorner.CornerRadius = UDim.new(0, 4)
+            DCorner.Parent = DisplayColor
+            
+            local DStroke = Instance.new("UIStroke")
+            DStroke.Color = Color3.fromRGB(80, 80, 80)
+            DStroke.Parent = DisplayColor
+            
+            local ExpandBtn = Instance.new("TextButton")
+            ExpandBtn.Size = UDim2.new(1, 0, 0, 35)
+            ExpandBtn.BackgroundTransparency = 1
+            ExpandBtn.Text = ""
+            ExpandBtn.Parent = PickerFrame
+            
+            local expanded = false
+            
+            local SliderContainer = Instance.new("Frame")
+            SliderContainer.Size = UDim2.new(1, 0, 0, 105)
+            SliderContainer.Position = UDim2.new(0, 0, 0, 35)
+            SliderContainer.BackgroundTransparency = 1
+            SliderContainer.Parent = PickerFrame
+            
+            local function createColorSlider(yPos, colorName, barColor, initialValue)
+                local SFrame = Instance.new("Frame")
+                SFrame.Size = UDim2.new(1, -20, 0, 25)
+                SFrame.Position = UDim2.new(0, 10, 0, yPos)
+                SFrame.BackgroundTransparency = 1
+                SFrame.Parent = SliderContainer
+                
+                local SLabel = Instance.new("TextLabel")
+                SLabel.Size = UDim2.new(0, 15, 1, 0)
+                SLabel.BackgroundTransparency = 1
+                SLabel.Text = colorName
+                SLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+                SLabel.TextSize = 12
+                SLabel.Font = Enum.Font.GothamBold
+                SLabel.Parent = SFrame
+                
+                local Track = Instance.new("Frame")
+                Track.Size = UDim2.new(1, -55, 0, 6)
+                Track.Position = UDim2.new(0, 20, 0.5, -3)
+                Track.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+                Track.Parent = SFrame
+                
+                local TCorner = Instance.new("UICorner")
+                TCorner.CornerRadius = UDim.new(1, 0)
+                TCorner.Parent = Track
+                
+                local Fill = Instance.new("Frame")
+                Fill.Size = UDim2.new(initialValue/255, 0, 1, 0)
+                Fill.BackgroundColor3 = barColor
+                Fill.Parent = Track
+                
+                local FCorner = Instance.new("UICorner")
+                FCorner.CornerRadius = UDim.new(1, 0)
+                FCorner.Parent = Fill
+                
+                local ValLabel = Instance.new("TextLabel")
+                ValLabel.Size = UDim2.new(0, 30, 1, 0)
+                ValLabel.Position = UDim2.new(1, -30, 0, 0)
+                ValLabel.BackgroundTransparency = 1
+                ValLabel.Text = tostring(math.floor(initialValue))
+                ValLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+                ValLabel.TextSize = 12
+                ValLabel.Font = Enum.Font.Gotham
+                ValLabel.Parent = SFrame
+                
+                local Btn = Instance.new("TextButton")
+                Btn.Size = UDim2.new(1, 0, 1, 0)
+                Btn.BackgroundTransparency = 1
+                Btn.Text = ""
+                Btn.Parent = SFrame
+                
+                return Btn, Track, Fill, ValLabel
+            end
+            
+            local rBtn, rTrack, rFill, rVal = createColorSlider(5, "R", Color3.fromRGB(255, 60, 60), currentColor.R * 255)
+            local gBtn, gTrack, gFill, gVal = createColorSlider(35, "G", Color3.fromRGB(60, 255, 60), currentColor.G * 255)
+            local bBtn, bTrack, bFill, bVal = createColorSlider(65, "B", Color3.fromRGB(60, 60, 255), currentColor.B * 255)
+            
+            local activeDrag = nil
+            
+            local function updateColor()
+                currentColor = Color3.fromRGB(tonumber(rVal.Text), tonumber(gVal.Text), tonumber(bVal.Text))
+                DisplayColor.BackgroundColor3 = currentColor
+                if flag then
+                    ConfigData[flag] = tostring(math.floor(currentColor.R*255)) .. "," .. tostring(math.floor(currentColor.G*255)) .. "," .. tostring(math.floor(currentColor.B*255))
+                    SaveConfig()
+                end
+                if callback then callback(currentColor) end
+            end
+            
+            local function bindSlider(btn, track, fill, valLabel, cName)
+                btn.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        activeDrag = cName
+                    end
+                end)
+                UserInputService.InputEnded:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 and activeDrag == cName then
+                        activeDrag = nil
+                    end
+                end)
+                UserInputService.InputChanged:Connect(function(input)
+                    if activeDrag == cName and input.UserInputType == Enum.UserInputType.MouseMovement then
+                        local mousePos = UserInputService:GetMouseLocation().X
+                        local rel = math.clamp((mousePos - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
+                        fill.Size = UDim2.new(rel, 0, 1, 0)
+                        local val = math.floor(rel * 255)
+                        valLabel.Text = tostring(val)
+                        updateColor()
+                    end
+                end)
+            end
+            
+            bindSlider(rBtn, rTrack, rFill, rVal, "R")
+            bindSlider(gBtn, gTrack, gFill, gVal, "G")
+            bindSlider(bBtn, bTrack, bFill, bVal, "B")
+            
+            ExpandBtn.MouseButton1Click:Connect(function()
+                expanded = not expanded
+                if expanded then
+                    PickerFrame.Size = UDim2.new(1, -6, 0, 140)
+                else
+                    PickerFrame.Size = UDim2.new(1, -6, 0, 35)
+                end
+            end)
+            
+            if callback then callback(currentColor) end
+        end
         
         function WindowObj:SetToggleKey(keyName)
             toggleKeyName = keyName
