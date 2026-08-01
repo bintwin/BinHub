@@ -63,9 +63,8 @@ PlayerTab:CreateToggle("Auto Dodge", false, function(state)
     PlayerSettings.AutoDodge = state
 end, "Player_AutoDodge")
 
-local vim = game:GetService("VirtualInputManager")
 local isDodging = false
-local dodgeKey = nil
+local dodgeDir = nil
 local dodgeEndTime = 0
 
 if getgenv().PlayerLoop then getgenv().PlayerLoop:Disconnect() end
@@ -90,9 +89,13 @@ getgenv().PlayerLoop = game:GetService("RunService").RenderStepped:Connect(funct
         -- Auto Dodge Logic
         if PlayerSettings.AutoDodge and not PlayerSettings.Freeze then
             local currentTime = tick()
-            if isDodging and currentTime > dodgeEndTime then
-                vim:SendKeyEvent(false, dodgeKey, false, game)
-                isDodging = false
+            if isDodging then
+                if currentTime > dodgeEndTime then
+                    isDodging = false
+                    hum:Move(Vector3.new(0, 0, 0), false)
+                else
+                    hum:Move(dodgeDir, false)
+                end
             end
             
             if not isDodging then
@@ -108,14 +111,14 @@ getgenv().PlayerLoop = game:GetService("RunService").RenderStepped:Connect(funct
                             local speed = pVel.Magnitude
                             local timeToReach = toPlayer.Magnitude / speed
                             
-                            if timeToReach < 1.0 then
+                            if timeToReach < 0.7 then
                                 -- Check distance to line
                                 local dir = pVel.Unit
                                 local projection = toPlayer:Dot(dir)
                                 local closestPoint = pPos + dir * projection
                                 local distToLine = (hrp.Position - closestPoint).Magnitude
                                 
-                                if distToLine < 6 then
+                                if distToLine < 5 then
                                     danger = true
                                     break
                                 end
@@ -134,16 +137,15 @@ getgenv().PlayerLoop = game:GetService("RunService").RenderStepped:Connect(funct
                     local leftRay = workspace:Raycast(hrp.Position, -hrp.CFrame.RightVector * 10, rayParams)
                     
                     if not rightRay then
-                        dodgeKey = Enum.KeyCode.D
+                        dodgeDir = hrp.CFrame.RightVector
                     elseif not leftRay then
-                        dodgeKey = Enum.KeyCode.A
+                        dodgeDir = -hrp.CFrame.RightVector
                     else
-                        dodgeKey = Enum.KeyCode.D -- Default to D if both blocked
+                        dodgeDir = hrp.CFrame.RightVector -- Default to Right if both blocked
                     end
                     
-                    vim:SendKeyEvent(true, dodgeKey, false, game)
                     isDodging = true
-                    dodgeEndTime = tick() + 0.5
+                    dodgeEndTime = tick() + 0.35
                 end
             end
         end
