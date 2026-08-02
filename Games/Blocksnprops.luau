@@ -133,12 +133,15 @@ getgenv().PlayerLoop = game:GetService("RunService").RenderStepped:Connect(funct
                 if wallHit then return false end
                 
                 local destPos = hrp.Position + (dir * 4)
-                local floorHit = workspace:Raycast(destPos, Vector3.new(0, -10, 0), safeRayParams)
+                local floorHit = workspace:Raycast(destPos, Vector3.new(0, -50, 0), safeRayParams)
                 if not floorHit or not floorHit.Instance.CanCollide then return false end
                 
-                local currentFloorHit = workspace:Raycast(hrp.Position, Vector3.new(0, -10, 0), safeRayParams)
-                local currentFloorY = currentFloorHit and currentFloorHit.Position.Y or (hrp.Position.Y - 3)
-                if math.abs(floorHit.Position.Y - currentFloorY) > 4 then return false end
+                local onGround = hum.FloorMaterial ~= Enum.Material.Air
+                if onGround then
+                    local currentFloorHit = workspace:Raycast(hrp.Position, Vector3.new(0, -50, 0), safeRayParams)
+                    local currentFloorY = currentFloorHit and currentFloorHit.Position.Y or (hrp.Position.Y - 3)
+                    if math.abs(floorHit.Position.Y - currentFloorY) > 4 then return false end
+                end
                 
                 return true
             end
@@ -166,12 +169,12 @@ getgenv().PlayerLoop = game:GetService("RunService").RenderStepped:Connect(funct
                         end
                     end
                     isDodging = true
-                    dodgeEndTime = currentTime + 1.5
                 end
+                dodgeEndTime = currentTime + 0.4
             end
             
             if isDodging then
-                if currentTime > dodgeEndTime then
+                if not danger and currentTime > dodgeEndTime then
                     isDodging = false
                     hum:Move(Vector3.new(0, 0, 0), false)
                 elseif dodgeDir.Magnitude > 0 and not isGroundAhead(dodgeDir) then
