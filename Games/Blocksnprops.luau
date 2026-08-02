@@ -13,7 +13,6 @@ local Window = UILibrary:CreateWindow({
 print("DEBUG: Window created")
 local PlayerTab = Window:CreateTab("Player", "user")
 local VisualsTab = Window:CreateTab("Visuals", "view")
-local MiscTab = Window:CreateTab("Misc", "box")
 local SettingsTab = Window:CreateTab("Settings", "settings")
 print("DEBUG: Tabs created")
 
@@ -480,14 +479,6 @@ getgenv().ESPLoop = RunService.RenderStepped:Connect(function()
         end
     end
 end)
-
--- Misc Tab
-MiscTab:CreateTextSection("Blocks n Props Features")
-
-MiscTab:CreateButton("Teleport to Map", function()
-    print("Teleport to Map clicked")
-end)
-
 -- Settings Tab
 SettingsTab:CreateTextSection("UI Settings")
 
