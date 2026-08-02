@@ -91,18 +91,20 @@ getgenv().PlayerLoop = game:GetService("RunService").RenderStepped:Connect(funct
             local danger = false
             local preferredDodgeDir = hrp.CFrame.RightVector
             
+            local safeRayParams = RaycastParams.new()
+            safeRayParams.FilterType = Enum.RaycastFilterType.Exclude
+            safeRayParams.FilterDescendantsInstances = {char, workspace.Projectiles}
+            
             for _, prop in ipairs(workspace.Projectiles:GetChildren()) do
                 if prop:IsA("BasePart") and prop.AssemblyLinearVelocity.Magnitude > 5 then
                     local pPos = prop.Position
                     local pVel = prop.AssemblyLinearVelocity
                     local toPlayer = hrp.Position - pPos
                     
-                    -- Check if moving towards player
                     if toPlayer:Dot(pVel) > 0 then
                         local speed = pVel.Magnitude
                         local timeToReach = toPlayer.Magnitude / speed
                         
-                        -- Dodge if it will hit within 7.0 seconds (massive range)
                         if timeToReach < 7.0 then
                             local dir = pVel.Unit
                             local projection = toPlayer:Dot(dir)
@@ -112,14 +114,11 @@ getgenv().PlayerLoop = game:GetService("RunService").RenderStepped:Connect(funct
                             
                             if distToLine < dangerRadius then
                                 danger = true
-                                -- Calculate which side it's passing on
                                 local toClosest = closestPoint - hrp.Position
                                 local isRight = toClosest:Dot(hrp.CFrame.RightVector) > 0
                                 if isRight then
-                                    -- Prop passing to our right, dodge LEFT
                                     preferredDodgeDir = -hrp.CFrame.RightVector
                                 else
-                                    -- Prop passing to our left, dodge RIGHT
                                     preferredDodgeDir = hrp.CFrame.RightVector
                                 end
                                 break
@@ -129,48 +128,35 @@ getgenv().PlayerLoop = game:GetService("RunService").RenderStepped:Connect(funct
                 end
             end
             
+            local function isGroundAhead(dir)
+                local wallHit = workspace:Raycast(hrp.Position, dir * 4, safeRayParams)
+                if wallHit then return false end
+                
+                local destPos = hrp.Position + (dir * 4)
+                local floorHit = workspace:Raycast(destPos, Vector3.new(0, -10, 0), safeRayParams)
+                if not floorHit or not floorHit.Instance.CanCollide then return false end
+                
+                local currentFloorHit = workspace:Raycast(hrp.Position, Vector3.new(0, -10, 0), safeRayParams)
+                local currentFloorY = currentFloorHit and currentFloorHit.Position.Y or (hrp.Position.Y - 3)
+                if math.abs(floorHit.Position.Y - currentFloorY) > 4 then return false end
+                
+                return true
+            end
+            
             if danger then
                 if not isDodging then
-                    -- Raycast to pick direction once to prevent zigzagging
-                    local rayParams = RaycastParams.new()
-                    rayParams.FilterType = Enum.RaycastFilterType.Exclude
-                    rayParams.FilterDescendantsInstances = {char, workspace.Projectiles}
-                    
-                    local function isSafeDirection(dir)
-                        -- Check for walls (horizontal)
-                        local wallHit = workspace:Raycast(hrp.Position, dir * 6, rayParams)
-                        if wallHit then return false end
-                        
-                        -- Check for floor (downward at destination)
-                        local destPos = hrp.Position + (dir * 6)
-                        local floorHit = workspace:Raycast(destPos, Vector3.new(0, -10, 0), rayParams)
-                        if not floorHit or not floorHit.Instance.CanCollide then return false end
-                        
-                        -- Compare height difference with current floor
-                        local currentFloorHit = workspace:Raycast(hrp.Position, Vector3.new(0, -10, 0), rayParams)
-                        local currentFloorY = currentFloorHit and currentFloorHit.Position.Y or (hrp.Position.Y - 3)
-                        
-                        if math.abs(floorHit.Position.Y - currentFloorY) > 4 then
-                            return false -- Too much of a drop or incline
-                        end
-                        
-                        return true
-                    end
-                    
-                    local rightSafe = isSafeDirection(hrp.CFrame.RightVector)
-                    local leftSafe = isSafeDirection(-hrp.CFrame.RightVector)
+                    local rightSafe = isGroundAhead(hrp.CFrame.RightVector)
+                    local leftSafe = isGroundAhead(-hrp.CFrame.RightVector)
                     
                     if preferredDodgeDir == hrp.CFrame.RightVector then
-                        -- Want to go right
                         if rightSafe then
                             dodgeDir = hrp.CFrame.RightVector
                         elseif leftSafe then
                             dodgeDir = -hrp.CFrame.RightVector
                         else
-                            dodgeDir = Vector3.new(0, 0, 0) -- Don't move if both are unsafe (walls or cliffs)
+                            dodgeDir = Vector3.new(0, 0, 0)
                         end
                     else
-                        -- Want to go left
                         if leftSafe then
                             dodgeDir = -hrp.CFrame.RightVector
                         elseif rightSafe then
@@ -180,13 +166,15 @@ getgenv().PlayerLoop = game:GetService("RunService").RenderStepped:Connect(funct
                         end
                     end
                     isDodging = true
+                    dodgeEndTime = currentTime + 1.5
                 end
-                -- Keep extending the dodge as long as we are still in danger!
-                dodgeEndTime = currentTime + 0.35
             end
             
             if isDodging then
                 if currentTime > dodgeEndTime then
+                    isDodging = false
+                    hum:Move(Vector3.new(0, 0, 0), false)
+                elseif dodgeDir.Magnitude > 0 and not isGroundAhead(dodgeDir) then
                     isDodging = false
                     hum:Move(Vector3.new(0, 0, 0), false)
                 else
