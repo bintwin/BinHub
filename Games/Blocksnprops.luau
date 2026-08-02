@@ -89,46 +89,38 @@ getgenv().PlayerLoop = game:GetService("RunService").RenderStepped:Connect(funct
         -- Auto Dodge Logic
         if PlayerSettings.AutoDodge and not PlayerSettings.Freeze then
             local currentTime = tick()
-            if isDodging then
-                if currentTime > dodgeEndTime then
-                    isDodging = false
-                    hum:Move(Vector3.new(0, 0, 0), false)
-                else
-                    hum:Move(dodgeDir, false)
-                end
-            end
+            local danger = false
             
-            if not isDodging then
-                local danger = false
-                for _, prop in ipairs(workspace.Projectiles:GetChildren()) do
-                    if prop:IsA("BasePart") and prop.AssemblyLinearVelocity.Magnitude > 15 then
-                        local pPos = prop.Position
-                        local pVel = prop.AssemblyLinearVelocity
-                        local toPlayer = hrp.Position - pPos
+            for _, prop in ipairs(workspace.Projectiles:GetChildren()) do
+                if prop:IsA("BasePart") and prop.AssemblyLinearVelocity.Magnitude > 15 then
+                    local pPos = prop.Position
+                    local pVel = prop.AssemblyLinearVelocity
+                    local toPlayer = hrp.Position - pPos
+                    
+                    -- Check if moving towards player
+                    if toPlayer:Dot(pVel) > 0 then
+                        local speed = pVel.Magnitude
+                        local timeToReach = toPlayer.Magnitude / speed
                         
-                        -- Check if moving towards player
-                        if toPlayer:Dot(pVel) > 0 then
-                            local speed = pVel.Magnitude
-                            local timeToReach = toPlayer.Magnitude / speed
+                        -- Dodge if it will hit within 2.5 seconds (sooner reaction)
+                        if timeToReach < 2.5 then
+                            local dir = pVel.Unit
+                            local projection = toPlayer:Dot(dir)
+                            local closestPoint = pPos + dir * projection
+                            local distToLine = (hrp.Position - closestPoint).Magnitude
                             
-                            if timeToReach < 0.7 then
-                                -- Check distance to line
-                                local dir = pVel.Unit
-                                local projection = toPlayer:Dot(dir)
-                                local closestPoint = pPos + dir * projection
-                                local distToLine = (hrp.Position - closestPoint).Magnitude
-                                
-                                if distToLine < 5 then
-                                    danger = true
-                                    break
-                                end
+                            if distToLine < 5 then
+                                danger = true
+                                break
                             end
                         end
                     end
                 end
-                
-                if danger then
-                    -- Raycast to check for walls
+            end
+            
+            if danger then
+                if not isDodging then
+                    -- Raycast to pick direction once to prevent zigzagging
                     local rayParams = RaycastParams.new()
                     rayParams.FilterType = Enum.RaycastFilterType.Exclude
                     rayParams.FilterDescendantsInstances = {char, workspace.Projectiles}
@@ -141,11 +133,20 @@ getgenv().PlayerLoop = game:GetService("RunService").RenderStepped:Connect(funct
                     elseif not leftRay then
                         dodgeDir = -hrp.CFrame.RightVector
                     else
-                        dodgeDir = hrp.CFrame.RightVector -- Default to Right if both blocked
+                        dodgeDir = hrp.CFrame.RightVector
                     end
-                    
                     isDodging = true
-                    dodgeEndTime = tick() + 0.35
+                end
+                -- Keep extending the dodge as long as we are still in danger!
+                dodgeEndTime = currentTime + 0.35
+            end
+            
+            if isDodging then
+                if currentTime > dodgeEndTime then
+                    isDodging = false
+                    hum:Move(Vector3.new(0, 0, 0), false)
+                else
+                    hum:Move(dodgeDir, false)
                 end
             end
         end
