@@ -102,13 +102,13 @@ getgenv().PlayerLoop = game:GetService("RunService").RenderStepped:Connect(funct
                         local speed = pVel.Magnitude
                         local timeToReach = toPlayer.Magnitude / speed
                         
-                        -- Dodge if it will hit within 3.5 seconds (sooner reaction)
-                        if timeToReach < 3.5 then
+                        -- Dodge if it will hit within 7.0 seconds (massive range)
+                        if timeToReach < 7.0 then
                             local dir = pVel.Unit
                             local projection = toPlayer:Dot(dir)
                             local closestPoint = pPos + dir * projection
                             local distToLine = (hrp.Position - closestPoint).Magnitude
-                            local dangerRadius = math.max(6, prop.Size.Magnitude / 2 + 3)
+                            local dangerRadius = math.max(8, prop.Size.Magnitude / 2 + 3)
                             
                             if distToLine < dangerRadius then
                                 danger = true
@@ -136,26 +136,47 @@ getgenv().PlayerLoop = game:GetService("RunService").RenderStepped:Connect(funct
                     rayParams.FilterType = Enum.RaycastFilterType.Exclude
                     rayParams.FilterDescendantsInstances = {char, workspace.Projectiles}
                     
-                    local rightRay = workspace:Raycast(hrp.Position, hrp.CFrame.RightVector * 10, rayParams)
-                    local leftRay = workspace:Raycast(hrp.Position, -hrp.CFrame.RightVector * 10, rayParams)
+                    local function isSafeDirection(dir)
+                        -- Check for walls (horizontal)
+                        local wallHit = workspace:Raycast(hrp.Position, dir * 6, rayParams)
+                        if wallHit then return false end
+                        
+                        -- Check for floor (downward at destination)
+                        local destPos = hrp.Position + (dir * 6)
+                        local floorHit = workspace:Raycast(destPos, Vector3.new(0, -10, 0), rayParams)
+                        if not floorHit or not floorHit.Instance.CanCollide then return false end
+                        
+                        -- Compare height difference with current floor
+                        local currentFloorHit = workspace:Raycast(hrp.Position, Vector3.new(0, -10, 0), rayParams)
+                        local currentFloorY = currentFloorHit and currentFloorHit.Position.Y or (hrp.Position.Y - 3)
+                        
+                        if math.abs(floorHit.Position.Y - currentFloorY) > 4 then
+                            return false -- Too much of a drop or incline
+                        end
+                        
+                        return true
+                    end
+                    
+                    local rightSafe = isSafeDirection(hrp.CFrame.RightVector)
+                    local leftSafe = isSafeDirection(-hrp.CFrame.RightVector)
                     
                     if preferredDodgeDir == hrp.CFrame.RightVector then
                         -- Want to go right
-                        if not rightRay then
+                        if rightSafe then
                             dodgeDir = hrp.CFrame.RightVector
-                        elseif not leftRay then
+                        elseif leftSafe then
                             dodgeDir = -hrp.CFrame.RightVector
                         else
-                            dodgeDir = hrp.CFrame.RightVector
+                            dodgeDir = Vector3.new(0, 0, 0) -- Don't move if both are unsafe (walls or cliffs)
                         end
                     else
                         -- Want to go left
-                        if not leftRay then
+                        if leftSafe then
                             dodgeDir = -hrp.CFrame.RightVector
-                        elseif not rightRay then
+                        elseif rightSafe then
                             dodgeDir = hrp.CFrame.RightVector
                         else
-                            dodgeDir = -hrp.CFrame.RightVector
+                            dodgeDir = Vector3.new(0, 0, 0)
                         end
                     end
                     isDodging = true
