@@ -105,7 +105,7 @@ getgenv().PlayerLoop = game:GetService("RunService").RenderStepped:Connect(funct
                         local speed = pVel.Magnitude
                         local timeToReach = toPlayer.Magnitude / speed
                         
-                        if timeToReach < 7.0 then
+                        if timeToReach < 12.0 then
                             local dir = pVel.Unit
                             local projection = toPlayer:Dot(dir)
                             local closestPoint = pPos + dir * projection
