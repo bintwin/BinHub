@@ -89,9 +89,10 @@ getgenv().PlayerLoop = game:GetService("RunService").RenderStepped:Connect(funct
         if PlayerSettings.AutoDodge and not PlayerSettings.Freeze then
             local currentTime = tick()
             local danger = false
+            local preferredDodgeDir = hrp.CFrame.RightVector
             
             for _, prop in ipairs(workspace.Projectiles:GetChildren()) do
-                if prop:IsA("BasePart") and prop.AssemblyLinearVelocity.Magnitude > 15 then
+                if prop:IsA("BasePart") and prop.AssemblyLinearVelocity.Magnitude > 5 then
                     local pPos = prop.Position
                     local pVel = prop.AssemblyLinearVelocity
                     local toPlayer = hrp.Position - pPos
@@ -101,15 +102,26 @@ getgenv().PlayerLoop = game:GetService("RunService").RenderStepped:Connect(funct
                         local speed = pVel.Magnitude
                         local timeToReach = toPlayer.Magnitude / speed
                         
-                        -- Dodge if it will hit within 2.5 seconds (sooner reaction)
-                        if timeToReach < 2.5 then
+                        -- Dodge if it will hit within 3.5 seconds (sooner reaction)
+                        if timeToReach < 3.5 then
                             local dir = pVel.Unit
                             local projection = toPlayer:Dot(dir)
                             local closestPoint = pPos + dir * projection
                             local distToLine = (hrp.Position - closestPoint).Magnitude
+                            local dangerRadius = math.max(6, prop.Size.Magnitude / 2 + 3)
                             
-                            if distToLine < 5 then
+                            if distToLine < dangerRadius then
                                 danger = true
+                                -- Calculate which side it's passing on
+                                local toClosest = closestPoint - hrp.Position
+                                local isRight = toClosest:Dot(hrp.CFrame.RightVector) > 0
+                                if isRight then
+                                    -- Prop passing to our right, dodge LEFT
+                                    preferredDodgeDir = -hrp.CFrame.RightVector
+                                else
+                                    -- Prop passing to our left, dodge RIGHT
+                                    preferredDodgeDir = hrp.CFrame.RightVector
+                                end
                                 break
                             end
                         end
@@ -127,12 +139,24 @@ getgenv().PlayerLoop = game:GetService("RunService").RenderStepped:Connect(funct
                     local rightRay = workspace:Raycast(hrp.Position, hrp.CFrame.RightVector * 10, rayParams)
                     local leftRay = workspace:Raycast(hrp.Position, -hrp.CFrame.RightVector * 10, rayParams)
                     
-                    if not rightRay then
-                        dodgeDir = hrp.CFrame.RightVector
-                    elseif not leftRay then
-                        dodgeDir = -hrp.CFrame.RightVector
+                    if preferredDodgeDir == hrp.CFrame.RightVector then
+                        -- Want to go right
+                        if not rightRay then
+                            dodgeDir = hrp.CFrame.RightVector
+                        elseif not leftRay then
+                            dodgeDir = -hrp.CFrame.RightVector
+                        else
+                            dodgeDir = hrp.CFrame.RightVector
+                        end
                     else
-                        dodgeDir = hrp.CFrame.RightVector
+                        -- Want to go left
+                        if not leftRay then
+                            dodgeDir = -hrp.CFrame.RightVector
+                        elseif not rightRay then
+                            dodgeDir = hrp.CFrame.RightVector
+                        else
+                            dodgeDir = -hrp.CFrame.RightVector
+                        end
                     end
                     isDodging = true
                 end
