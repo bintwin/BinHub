@@ -15,7 +15,7 @@ local Theme = {
     SubText = Color3.fromRGB(160, 160, 165),
     DisabledText = Color3.fromRGB(100, 100, 105),
     Border = Color3.fromRGB(35, 35, 42),
-    Outline = Color3.fromRGB(60, 60, 68)     -- Specifically for checkboxes
+    Outline = Color3.fromRGB(120, 120, 130)  -- HIGH VISIBILITY OUTLINE FOR ALL ELEMENTS
 }
 
 local Lucide = {
@@ -454,7 +454,7 @@ function Library:CreateWindow(options)
                 HTitle.BackgroundTransparency = 1
                 HTitle.Text = secName
                 HTitle.TextColor3 = Theme.Text
-                HTitle.Font = Enum.Font.GothamBold -- Restored and ensured boldness for card headers
+                HTitle.Font = Enum.Font.GothamBold -- Enforced Boldness for Card Headers!
                 HTitle.TextSize = 14
                 HTitle.TextXAlignment = Enum.TextXAlignment.Left
                 HTitle.Parent = Header
@@ -471,7 +471,10 @@ function Library:CreateWindow(options)
                 MCorner.CornerRadius = UDim.new(1, 0)
                 MCorner.Parent = MasterToggle
                 
-                -- No UIStroke on Master Toggle
+                local MStroke = Instance.new("UIStroke")
+                MStroke.Color = Theme.Outline
+                MStroke.Thickness = 1
+                MStroke.Parent = MasterToggle
                 
                 local MCircle = Instance.new("Frame")
                 MCircle.Size = UDim2.new(0, 12, 0, 12)
@@ -487,6 +490,7 @@ function Library:CreateWindow(options)
                 MasterToggle.MouseButton1Click:Connect(function()
                     masterState = not masterState
                     TweenService:Create(MasterToggle, TweenInfo.new(0.2), {BackgroundColor3 = masterState and Theme.Accent or Theme.MainBg}):Play()
+                    TweenService:Create(MStroke, TweenInfo.new(0.2), {Transparency = masterState and 1 or 0}):Play()
                     TweenService:Create(MCircle, TweenInfo.new(0.2), {
                         Position = masterState and UDim2.new(1, -15, 0.5, -6) or UDim2.new(0, 3, 0.5, -6),
                         BackgroundColor3 = masterState and Theme.Text or Theme.SubText
@@ -599,7 +603,10 @@ function Library:CreateWindow(options)
                     DropCorner.CornerRadius = UDim.new(0, 4)
                     DropCorner.Parent = DropBtn
                     
-                    -- No UIStroke on Dropdown
+                    local DropStroke = Instance.new("UIStroke")
+                    DropStroke.Color = Theme.Outline
+                    DropStroke.Thickness = 1
+                    DropStroke.Parent = DropBtn
                     
                     local SelectedLabel = Instance.new("TextLabel")
                     SelectedLabel.Size = UDim2.new(1, -25, 1, 0)
@@ -638,7 +645,10 @@ function Library:CreateWindow(options)
                         PopCorner.CornerRadius = UDim.new(0, 6)
                         PopCorner.Parent = PopupFrame
                         
-                        -- No UIStroke on PopupFrame
+                        local PopStroke = Instance.new("UIStroke")
+                        PopStroke.Color = Theme.Outline
+                        PopStroke.Thickness = 1
+                        PopStroke.Parent = PopupFrame
                         
                         local PopScroll = Instance.new("ScrollingFrame")
                         PopScroll.Size = UDim2.new(1, 0, 1, -10)
@@ -712,7 +722,10 @@ function Library:CreateWindow(options)
                     BgCorner.CornerRadius = UDim.new(1, 0)
                     BgCorner.Parent = SliderBg
                     
-                    -- No UIStroke on Slider
+                    local SliderStroke = Instance.new("UIStroke")
+                    SliderStroke.Color = Theme.Outline
+                    SliderStroke.Thickness = 1
+                    SliderStroke.Parent = SliderBg
                     
                     local SliderFill = Instance.new("Frame")
                     local pct = (default - min) / (max - min)
