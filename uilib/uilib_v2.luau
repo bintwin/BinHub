@@ -18,7 +18,8 @@ local Theme = {
     DisabledText = Color3.fromRGB(96, 96, 107),-- Inactive tabs
     CategoryText = Color3.fromRGB(74, 74, 85),-- "General" sidebar headers
     Border = Color3.fromRGB(28, 28, 34),      -- Separator lines
-    InputBg = Color3.fromRGB(32, 32, 38)      -- Flat color for unchecked boxes/dropdowns (NO BORDERS)
+    InputBg = Color3.fromRGB(32, 32, 38),     -- Flat color for unchecked boxes/dropdowns
+    InputOutline = Color3.fromRGB(60, 60, 70) -- Outline for unchecked inputs
 }
 
 local Icons = {
@@ -516,17 +517,26 @@ function Library:CreateWindow(options)
                     Label.TextXAlignment = Enum.TextXAlignment.Left
                     Label.Parent = ItemFrame
                     
-                    -- Removed all outlines for inputs to exactly match Image 5 reference
                     local CheckBtn = Instance.new("TextButton")
                     CheckBtn.Size = UDim2.new(0, 16, 0, 16)
                     CheckBtn.Position = UDim2.new(1, -28, 0.5, -8)
-                    CheckBtn.BackgroundColor3 = Theme.InputBg
+                    CheckBtn.BackgroundColor3 = Theme.InputOutline
                     CheckBtn.Text = ""
                     CheckBtn.Parent = ItemFrame
                     
                     local CheckCorner = Instance.new("UICorner")
                     CheckCorner.CornerRadius = UDim.new(0, 4)
                     CheckCorner.Parent = CheckBtn
+                    
+                    local InnerCheck = Instance.new("Frame")
+                    InnerCheck.Size = UDim2.new(1, -2, 1, -2)
+                    InnerCheck.Position = UDim2.new(0, 1, 0, 1)
+                    InnerCheck.BackgroundColor3 = Theme.InputBg
+                    InnerCheck.Parent = CheckBtn
+                    
+                    local InnerCorner = Instance.new("UICorner")
+                    InnerCorner.CornerRadius = UDim.new(0, 4)
+                    InnerCorner.Parent = InnerCheck
                     
                     local CheckIcon = Instance.new("ImageLabel")
                     CheckIcon.Size = UDim2.new(0, 12, 0, 12)
@@ -535,10 +545,16 @@ function Library:CreateWindow(options)
                     CheckIcon.Image = Icons.Check
                     CheckIcon.ImageColor3 = Theme.Text
                     CheckIcon.Visible = state
-                    CheckIcon.Parent = CheckBtn
+                    CheckIcon.Parent = InnerCheck
                     
                     local function UpdateState()
-                        CheckBtn.BackgroundColor3 = state and Theme.Accent or Theme.InputBg
+                        if state then
+                            CheckBtn.BackgroundColor3 = Theme.Accent
+                            InnerCheck.BackgroundColor3 = Theme.Accent
+                        else
+                            CheckBtn.BackgroundColor3 = Theme.InputOutline
+                            InnerCheck.BackgroundColor3 = Theme.InputBg
+                        end
                         CheckIcon.Visible = state
                         if callback then callback(state) end
                     end
