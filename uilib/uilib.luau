@@ -656,7 +656,7 @@ function UILibrary:CreateWindow(options)
             local Section = Instance.new("TextLabel")
             Section.Size = UDim2.new(1, -6, 0, 15)
             Section.BackgroundTransparency = 1
-            Section.Text = text
+            Section.Text = "↳ " .. text
             Section.TextColor3 = Color3.fromRGB(180, 180, 180)
             Section.Font = Enum.Font.GothamSemibold
             Section.TextSize = 12

@@ -1,20 +1,14 @@
--- Default Universal Hub Script for unsupported games
-local UILibrary = getgenv().UILibrary or loadstring(game:HttpGet("https://raw.githubusercontent.com/bintwin/BinHub/refs/heads/main/uilib/uilib.luau?t=" .. tostring(tick())))()
+-- Default Universal Hub Script for unsupported games (V2 Nebula Theme)
+local UILibrary = getgenv().UILibraryV2 or loadstring(game:HttpGet("https://raw.githubusercontent.com/bintwin/BinHub/refs/heads/main/uilib/uilib_v2.luau?t=" .. tostring(tick())))()
 
 if not UILibrary then
-    warn("Failed to load UILibrary")
+    warn("Failed to load UILibraryV2. Ensure it is pushed to github!")
     return
 end
 
 local Window = UILibrary:CreateWindow({
-    Name = "BinHUb - Universal"
+    Name = "binhub"
 })
-
--- TABS
-local PlayerTab = Window:CreateTab("Player", "user")
-local CombatTab = Window:CreateTab("Protection", "shield")
-local VisualsTab = Window:CreateTab("Visuals", "view")
-local SettingsTab = Window:CreateTab("Settings", "settings")
 
 -- SERVICES & GLOBALS
 local Players = game:GetService("Players")
@@ -37,26 +31,31 @@ local Settings = {
     ESPTeamCheck = false
 }
 
--- [PLAYER TAB] --
-PlayerTab:CreateTextSection("Movement")
+-- [CATEGORIES & TABS]
+local PlayersCat = Window:CreateCategory({Name = "Players", Icon = "rbxassetid://6034287525"})
+local VisualsCat = Window:CreateCategory({Name = "Visuals", Icon = "rbxassetid://6031265978"})
 
-PlayerTab:CreateSubSection("WalkSpeed Settings")
-PlayerTab:CreateToggle("Enable WalkSpeed", false, function(v) Settings.WalkSpeedEnabled = v end, "Uni_WSEn")
-PlayerTab:CreateSlider("WalkSpeed", 16, 200, 16, function(v) Settings.WalkSpeed = v end, "Uni_WS")
+local LocalTab = PlayersCat:CreateTab("Self")
+local CombatTab = PlayersCat:CreateTab("Protection")
 
-PlayerTab:CreateSubSection("Jump Settings")
-PlayerTab:CreateToggle("Enable JumpPower", false, function(v) Settings.JumpPowerEnabled = v end, "Uni_JPEn")
-PlayerTab:CreateSlider("JumpPower", 50, 200, 50, function(v) Settings.JumpPower = v end, "Uni_JP")
-PlayerTab:CreateToggle("Infinite Jump", false, function(v) Settings.InfJump = v end, "Uni_InfJump")
+local EspTab = VisualsCat:CreateTab("Enemies")
 
-PlayerTab:CreateTextSection("Advanced Options")
-PlayerTab:CreateToggle("Noclip", false, function(v) Settings.Noclip = v end, "Uni_Noclip")
+-- [LOCAL TAB - CARDS]
+local MovementCard = LocalTab:CreateSection("Movement", "rbxassetid://6031265978")
+MovementCard:CreateCheckbox("Enable WalkSpeed", false, function(v) Settings.WalkSpeedEnabled = v end)
+MovementCard:CreateSlider("WalkSpeed", 16, 200, 16, function(v) Settings.WalkSpeed = v end)
 
--- FLY LOGIC
+local JumpCard = LocalTab:CreateSection("Jumping", "rbxassetid://6031265978")
+JumpCard:CreateCheckbox("Enable JumpPower", false, function(v) Settings.JumpPowerEnabled = v end)
+JumpCard:CreateSlider("JumpPower", 50, 200, 50, function(v) Settings.JumpPower = v end)
+JumpCard:CreateCheckbox("Infinite Jump", false, function(v) Settings.InfJump = v end)
+
+local AdvancedCard = LocalTab:CreateSection("Advanced", "rbxassetid://6031265978")
+AdvancedCard:CreateCheckbox("Noclip", false, function(v) Settings.Noclip = v end)
+
 local flyBV, flyBG
-
-PlayerTab:CreateSubSection("Flight (Infinite Yield Style)")
-PlayerTab:CreateToggle("Enable Fly", false, function(state)
+local FlyCard = LocalTab:CreateSection("Flight", "rbxassetid://6031265978")
+FlyCard:CreateCheckbox("Enable Fly", false, function(state)
     Settings.Fly = state
     local char = LocalPlayer.Character
     if not char then return end
@@ -65,7 +64,6 @@ PlayerTab:CreateToggle("Enable Fly", false, function(state)
     if not hrp or not hum then return end
     
     if state then
-        -- Enable Fly
         hum.PlatformStand = true
         flyBG = Instance.new("BodyGyro")
         flyBG.P = 9e4
@@ -78,40 +76,31 @@ PlayerTab:CreateToggle("Enable Fly", false, function(state)
         flyBV.MaxForce = Vector3.new(9e9, 9e9, 9e9)
         flyBV.Parent = hrp
     else
-        -- Disable Fly
         hum.PlatformStand = false
         if flyBG then flyBG:Destroy() end
         if flyBV then flyBV:Destroy() end
-        
-        -- Reset Velocity so you fall naturally
         hrp.Velocity = Vector3.new(0, 0, 0)
     end
-end, "Uni_Fly")
+end)
+FlyCard:CreateSlider("Fly Speed", 10, 300, 50, function(v) Settings.FlySpeed = v end)
 
-PlayerTab:CreateSlider("Fly Speed", 10, 300, 50, function(v) Settings.FlySpeed = v end, "Uni_FlySpeed")
+-- [COMBAT TAB - CARDS]
+local ProtectionCard = CombatTab:CreateSection("Anti-Abuse", "rbxassetid://6031265978")
+ProtectionCard:CreateCheckbox("Anti-Fling", false, function(v) Settings.AntiFling = v end)
 
+-- [VISUALS TAB - CARDS]
+local EspCard = EspTab:CreateSection("General", "rbxassetid://6031265978")
+EspCard:CreateCheckbox("Enable ESP", false, function(v) Settings.ESP = v end)
+EspCard:CreateCheckbox("Team Check", false, function(v) Settings.ESPTeamCheck = v end)
 
--- [PROTECTION TAB] --
-CombatTab:CreateTextSection("Anti-Abuse Features")
-CombatTab:CreateSubSection("Collision Modifiers")
-CombatTab:CreateToggle("Anti-Fling", false, function(v) Settings.AntiFling = v end, "Uni_AntiFling")
-
-
--- [VISUALS TAB] --
-VisualsTab:CreateTextSection("ESP Settings")
-VisualsTab:CreateSubSection("Player ESP")
-VisualsTab:CreateToggle("Enable ESP", false, function(v) Settings.ESP = v end, "Uni_ESP")
-VisualsTab:CreateToggle("Team Check", false, function(v) Settings.ESPTeamCheck = v end, "Uni_ESPTeamCheck")
 
 -- ESP LOGIC
 local ESPDrawings = {}
-
 local function createESP(player)
     if ESPDrawings[player] then return end
-    
     local box = Drawing.new("Square")
     box.Visible = false
-    box.Color = Color3.fromRGB(255, 255, 255)
+    box.Color = Color3.fromRGB(123, 97, 255)
     box.Thickness = 1
     box.Filled = false
     
@@ -141,37 +130,20 @@ Players.PlayerAdded:Connect(function(p) createESP(p) end)
 Players.PlayerRemoving:Connect(function(p) removeESP(p) end)
 
 
--- [SETTINGS TAB] --
-SettingsTab:CreateTextSection("Menu Configuration")
-SettingsTab:CreateKeybind("Menu Keybind", Enum.KeyCode.RightControl, function()
-end, "Uni_MenuKey", function(newKeyName)
-    Window:SetToggleKey(newKeyName)
-end)
-
-
 -- [MAIN LOOPS] --
-
 if getgenv().UniRenderLoop then getgenv().UniRenderLoop:Disconnect() end
 getgenv().UniRenderLoop = RunService.RenderStepped:Connect(function()
     local char = LocalPlayer.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     
-    -- WalkSpeed & JumpPower
     if hum then
-        if Settings.WalkSpeedEnabled then
-            hum.WalkSpeed = Settings.WalkSpeed
-        end
-        if Settings.JumpPowerEnabled then
-            hum.JumpPower = Settings.JumpPower
-        end
+        if Settings.WalkSpeedEnabled then hum.WalkSpeed = Settings.WalkSpeed end
+        if Settings.JumpPowerEnabled then hum.JumpPower = Settings.JumpPower end
     end
     
-    -- Fly
     if Settings.Fly and hrp and hum and flyBG and flyBV then
-        -- Ensure platform stand stays true while flying
         hum.PlatformStand = true 
-        
         local ctrl = {f = 0, b = 0, l = 0, r = 0}
         if UserInputService:IsKeyDown(Enum.KeyCode.W) then ctrl.f = 1 end
         if UserInputService:IsKeyDown(Enum.KeyCode.S) then ctrl.b = -1 end
@@ -187,11 +159,9 @@ getgenv().UniRenderLoop = RunService.RenderStepped:Connect(function()
         else
             flyBV.Velocity = Vector3.new(0, 0, 0)
         end
-        
         flyBG.CFrame = Camera.CFrame
     end
     
-    -- ESP
     for player, draws in pairs(ESPDrawings) do
         if Settings.ESP and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health > 0 then
             if Settings.ESPTeamCheck and player.Team == LocalPlayer.Team then
@@ -211,10 +181,6 @@ getgenv().UniRenderLoop = RunService.RenderStepped:Connect(function()
                 
                 draws.Name.Position = Vector2.new(pos.X, pos.Y - draws.Box.Size.Y / 2 - 20)
                 draws.Name.Visible = true
-                
-                local col = player.TeamColor and player.TeamColor.Color or Color3.fromRGB(255, 255, 255)
-                draws.Box.Color = col
-                draws.Name.Color = col
             else
                 draws.Box.Visible = false
                 draws.Name.Visible = false
@@ -230,23 +196,17 @@ if getgenv().UniSteppedLoop then getgenv().UniSteppedLoop:Disconnect() end
 getgenv().UniSteppedLoop = RunService.Stepped:Connect(function()
     local char = LocalPlayer.Character
     
-    -- Noclip
     if Settings.Noclip and char then
         for _, part in pairs(char:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = false
-            end
+            if part:IsA("BasePart") then part.CanCollide = false end
         end
     end
     
-    -- Anti Fling (Infinite Yield Style)
     if Settings.AntiFling then
         for _, p in pairs(Players:GetPlayers()) do
             if p ~= LocalPlayer and p.Character then
                 for _, part in pairs(p.Character:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        part.CanCollide = false
-                    end
+                    if part:IsA("BasePart") then part.CanCollide = false end
                 end
             end
         end
@@ -258,20 +218,6 @@ getgenv().UniInfJump = UserInputService.JumpRequest:Connect(function()
     if Settings.InfJump then
         local char = LocalPlayer.Character
         local hum = char and char:FindFirstChildOfClass("Humanoid")
-        if hum then
-            hum:ChangeState(Enum.HumanoidStateType.Jumping)
-        end
+        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
     end
-end)
-
-Window:OnClose(function()
-    if getgenv().UniRenderLoop then getgenv().UniRenderLoop:Disconnect() getgenv().UniRenderLoop = nil end
-    if getgenv().UniSteppedLoop then getgenv().UniSteppedLoop:Disconnect() getgenv().UniSteppedLoop = nil end
-    if getgenv().UniInfJump then getgenv().UniInfJump:Disconnect() getgenv().UniInfJump = nil end
-    
-    for _, draws in pairs(ESPDrawings) do
-        draws.Box:Remove()
-        draws.Name:Remove()
-    end
-    ESPDrawings = {}
 end)
