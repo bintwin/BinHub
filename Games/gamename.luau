@@ -7,7 +7,10 @@ if not UILibrary then
 end
 
 local Window = UILibrary:CreateWindow({
-    Name = "binhub"
+    TitleFirst = "nebula",
+    TitleSecond = "tech",
+    FooterLeft = "Universal Script for Roblox",
+    FooterRight = "nebulatech"
 })
 
 -- SERVICES & GLOBALS
@@ -92,6 +95,7 @@ ProtectionCard:CreateCheckbox("Anti-Fling", false, function(v) Settings.AntiFlin
 local EspCard = EspTab:CreateSection("General", "rbxassetid://6031265978")
 EspCard:CreateCheckbox("Enable ESP", false, function(v) Settings.ESP = v end)
 EspCard:CreateCheckbox("Team Check", false, function(v) Settings.ESPTeamCheck = v end)
+EspCard:CreateDropdown("Dropdown", {"Scoped", "Flashed", "Knocked", "Touched", "Skid"}, "Scoped", function(v) print("Selected:", v) end)
 
 
 -- ESP LOGIC
