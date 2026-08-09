@@ -14,7 +14,8 @@ local Theme = {
     Text = Color3.fromRGB(235, 235, 240),
     SubText = Color3.fromRGB(160, 160, 165),
     DisabledText = Color3.fromRGB(100, 100, 105),
-    Border = Color3.fromRGB(35, 35, 42)
+    Border = Color3.fromRGB(35, 35, 42),
+    Outline = Color3.fromRGB(80, 80, 90)     -- Brighter outline so it absolutely shows
 }
 
 local Lucide = {
@@ -24,9 +25,6 @@ local Lucide = {
     Settings = "rbxassetid://10734898355",
     ExternalLink = "rbxassetid://10709791437"
 }
-
--- Global font definition to ensure NO BOLD is ever used
-local StandardFont = Enum.Font.Gotham
 
 function Library:CreateWindow(options)
     options = options or {}
@@ -124,7 +122,7 @@ function Library:CreateWindow(options)
     LeftFooterText.BackgroundTransparency = 1
     LeftFooterText.Text = FooterLeft
     LeftFooterText.TextColor3 = Theme.DisabledText
-    LeftFooterText.Font = StandardFont
+    LeftFooterText.Font = Enum.Font.GothamMedium
     LeftFooterText.TextSize = 11
     LeftFooterText.TextXAlignment = Enum.TextXAlignment.Left
     LeftFooterText.Parent = BottomBar
@@ -136,7 +134,7 @@ function Library:CreateWindow(options)
     RightFooterText.RichText = true
     RightFooterText.Text = "32 days left, <font color=\"rgb(155,139,255)\">" .. FooterRight .. "</font>"
     RightFooterText.TextColor3 = Theme.DisabledText
-    RightFooterText.Font = StandardFont
+    RightFooterText.Font = Enum.Font.GothamMedium
     RightFooterText.TextSize = 11
     RightFooterText.TextXAlignment = Enum.TextXAlignment.Right
     RightFooterText.Parent = BottomBar
@@ -167,15 +165,15 @@ function Library:CreateWindow(options)
     TitleLabel.RichText = true
     TitleLabel.Text = "<font color=\"rgb(155,139,255)\">" .. TitleFirst .. "</font>" .. TitleSecond
     TitleLabel.TextColor3 = Theme.Text
-    TitleLabel.Font = StandardFont
-    TitleLabel.TextSize = 22
+    TitleLabel.Font = Enum.Font.GothamBold
+    TitleLabel.TextSize = 24
     TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
     TitleLabel.Parent = TitleArea
     
-    local underlineWidth = string.len(TitleFirst) * 12 + 2
+    local underlineWidth = string.len(TitleFirst) * 13 + 4
     local Underline = Instance.new("Frame")
     Underline.Size = UDim2.new(0, underlineWidth, 0, 2)
-    Underline.Position = UDim2.new(0, 20, 0, 46)
+    Underline.Position = UDim2.new(0, 20, 0, 48)
     Underline.BackgroundColor3 = Theme.Accent
     Underline.BorderSizePixel = 0
     Underline.Parent = TitleArea
@@ -244,8 +242,8 @@ function Library:CreateWindow(options)
             secLabel.BackgroundTransparency = 1
             secLabel.Text = SectionTitle
             secLabel.TextColor3 = Theme.DisabledText
-            secLabel.Font = StandardFont
-            secLabel.TextSize = 11
+            secLabel.Font = Enum.Font.GothamMedium
+            secLabel.TextSize = 12
             secLabel.TextXAlignment = Enum.TextXAlignment.Left
             secLabel.Parent = CategoryContainer
         end
@@ -275,7 +273,7 @@ function Library:CreateWindow(options)
         Label.BackgroundTransparency = 1
         Label.Text = Name
         Label.TextColor3 = Theme.DisabledText
-        Label.Font = StandardFont
+        Label.Font = Enum.Font.GothamBold -- Restored boldness
         Label.TextSize = 13
         Label.TextXAlignment = Enum.TextXAlignment.Left
         Label.Parent = CategoryBtn
@@ -358,8 +356,8 @@ function Library:CreateWindow(options)
             TabBtn.BackgroundTransparency = 1
             TabBtn.Text = tabName
             TabBtn.TextColor3 = Theme.DisabledText
-            TabBtn.Font = StandardFont
-            TabBtn.TextSize = 13
+            TabBtn.Font = Enum.Font.GothamBold -- Restored boldness
+            TabBtn.TextSize = 14
             TabBtn.Parent = self.SubTabContainer
             
             local TabCorner = Instance.new("UICorner")
@@ -456,8 +454,8 @@ function Library:CreateWindow(options)
                 HTitle.BackgroundTransparency = 1
                 HTitle.Text = secName
                 HTitle.TextColor3 = Theme.Text
-                HTitle.Font = StandardFont
-                HTitle.TextSize = 13
+                HTitle.Font = Enum.Font.GothamBold -- Restored boldness
+                HTitle.TextSize = 14
                 HTitle.TextXAlignment = Enum.TextXAlignment.Left
                 HTitle.Parent = Header
                 
@@ -473,6 +471,11 @@ function Library:CreateWindow(options)
                 MCorner.CornerRadius = UDim.new(1, 0)
                 MCorner.Parent = MasterToggle
                 
+                local MStroke = Instance.new("UIStroke")
+                MStroke.Color = Theme.Outline
+                MStroke.Thickness = 1
+                MStroke.Parent = MasterToggle
+                
                 local MCircle = Instance.new("Frame")
                 MCircle.Size = UDim2.new(0, 12, 0, 12)
                 MCircle.Position = UDim2.new(0, 3, 0.5, -6)
@@ -487,6 +490,7 @@ function Library:CreateWindow(options)
                 MasterToggle.MouseButton1Click:Connect(function()
                     masterState = not masterState
                     TweenService:Create(MasterToggle, TweenInfo.new(0.2), {BackgroundColor3 = masterState and Theme.Accent or Theme.MainBg}):Play()
+                    TweenService:Create(MStroke, TweenInfo.new(0.2), {Transparency = masterState and 1 or 0}):Play()
                     TweenService:Create(MCircle, TweenInfo.new(0.2), {
                         Position = masterState and UDim2.new(1, -15, 0.5, -6) or UDim2.new(0, 3, 0.5, -6),
                         BackgroundColor3 = masterState and Theme.Text or Theme.SubText
@@ -527,8 +531,8 @@ function Library:CreateWindow(options)
                     Label.BackgroundTransparency = 1
                     Label.Text = itemName
                     Label.TextColor3 = Theme.Text
-                    Label.Font = StandardFont
-                    Label.TextSize = 12
+                    Label.Font = Enum.Font.GothamMedium
+                    Label.TextSize = 13
                     Label.TextXAlignment = Enum.TextXAlignment.Left
                     Label.Parent = ItemFrame
                     
@@ -544,7 +548,7 @@ function Library:CreateWindow(options)
                     CheckCorner.Parent = CheckBtn
                     
                     local CheckStroke = Instance.new("UIStroke")
-                    CheckStroke.Color = Color3.fromRGB(60, 60, 68) -- Faint gray/white border
+                    CheckStroke.Color = Theme.Outline
                     CheckStroke.Thickness = 1
                     CheckStroke.Parent = CheckBtn
                     
@@ -583,8 +587,8 @@ function Library:CreateWindow(options)
                     Label.BackgroundTransparency = 1
                     Label.Text = itemName
                     Label.TextColor3 = Theme.Text
-                    Label.Font = StandardFont
-                    Label.TextSize = 12
+                    Label.Font = Enum.Font.GothamMedium
+                    Label.TextSize = 13
                     Label.TextXAlignment = Enum.TextXAlignment.Left
                     Label.Parent = ItemFrame
                     
@@ -600,7 +604,7 @@ function Library:CreateWindow(options)
                     DropCorner.Parent = DropBtn
                     
                     local DropStroke = Instance.new("UIStroke")
-                    DropStroke.Color = Color3.fromRGB(60, 60, 68) -- Faint outline for dropdown
+                    DropStroke.Color = Theme.Outline
                     DropStroke.Thickness = 1
                     DropStroke.Parent = DropBtn
                     
@@ -610,8 +614,8 @@ function Library:CreateWindow(options)
                     SelectedLabel.BackgroundTransparency = 1
                     SelectedLabel.Text = default or options[1] or ""
                     SelectedLabel.TextColor3 = Theme.SubText
-                    SelectedLabel.Font = StandardFont
-                    SelectedLabel.TextSize = 11
+                    SelectedLabel.Font = Enum.Font.GothamMedium
+                    SelectedLabel.TextSize = 12
                     SelectedLabel.TextXAlignment = Enum.TextXAlignment.Left
                     SelectedLabel.TextTruncate = Enum.TextTruncate.AtEnd
                     SelectedLabel.Parent = DropBtn
@@ -641,6 +645,11 @@ function Library:CreateWindow(options)
                         PopCorner.CornerRadius = UDim.new(0, 6)
                         PopCorner.Parent = PopupFrame
                         
+                        local PopStroke = Instance.new("UIStroke")
+                        PopStroke.Color = Theme.Outline
+                        PopStroke.Thickness = 1
+                        PopStroke.Parent = PopupFrame
+                        
                         local PopScroll = Instance.new("ScrollingFrame")
                         PopScroll.Size = UDim2.new(1, 0, 1, -10)
                         PopScroll.Position = UDim2.new(0, 0, 0, 5)
@@ -658,8 +667,8 @@ function Library:CreateWindow(options)
                             OptBtn.BackgroundTransparency = 1
                             OptBtn.Text = "  " .. opt
                             OptBtn.TextColor3 = (opt == SelectedLabel.Text) and Theme.Accent or Theme.DisabledText
-                            OptBtn.Font = StandardFont
-                            OptBtn.TextSize = 12
+                            OptBtn.Font = Enum.Font.GothamMedium
+                            OptBtn.TextSize = 13
                             OptBtn.TextXAlignment = Enum.TextXAlignment.Left
                             OptBtn.Parent = PopScroll
                             
@@ -698,8 +707,8 @@ function Library:CreateWindow(options)
                     Label.BackgroundTransparency = 1
                     Label.Text = itemName .. ": " .. tostring(default)
                     Label.TextColor3 = Theme.Text
-                    Label.Font = StandardFont
-                    Label.TextSize = 12
+                    Label.Font = Enum.Font.GothamMedium
+                    Label.TextSize = 13
                     Label.TextXAlignment = Enum.TextXAlignment.Left
                     Label.Parent = ItemFrame
                     
@@ -712,6 +721,11 @@ function Library:CreateWindow(options)
                     local BgCorner = Instance.new("UICorner")
                     BgCorner.CornerRadius = UDim.new(1, 0)
                     BgCorner.Parent = SliderBg
+                    
+                    local SliderStroke = Instance.new("UIStroke")
+                    SliderStroke.Color = Theme.Outline
+                    SliderStroke.Thickness = 1
+                    SliderStroke.Parent = SliderBg
                     
                     local SliderFill = Instance.new("Frame")
                     local pct = (default - min) / (max - min)
