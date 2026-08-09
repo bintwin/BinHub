@@ -35,8 +35,8 @@ local Settings = {
 }
 
 -- [CATEGORIES & TABS]
-local PlayersCat = Window:CreateCategory({Name = "Players", Icon = "rbxassetid://6034287525"})
-local VisualsCat = Window:CreateCategory({Name = "Visuals", Icon = "rbxassetid://6031265978"})
+local PlayersCat = Window:CreateCategory({Name = "Players"})
+local VisualsCat = Window:CreateCategory({Name = "Visuals"})
 
 local LocalTab = PlayersCat:CreateTab("Self")
 local CombatTab = PlayersCat:CreateTab("Protection")
@@ -44,20 +44,20 @@ local CombatTab = PlayersCat:CreateTab("Protection")
 local EspTab = VisualsCat:CreateTab("Enemies")
 
 -- [LOCAL TAB - CARDS]
-local MovementCard = LocalTab:CreateSection("Movement", "rbxassetid://6031265978")
+local MovementCard = LocalTab:CreateSection("Movement")
 MovementCard:CreateCheckbox("Enable WalkSpeed", false, function(v) Settings.WalkSpeedEnabled = v end)
 MovementCard:CreateSlider("WalkSpeed", 16, 200, 16, function(v) Settings.WalkSpeed = v end)
 
-local JumpCard = LocalTab:CreateSection("Jumping", "rbxassetid://6031265978")
+local JumpCard = LocalTab:CreateSection("Jumping")
 JumpCard:CreateCheckbox("Enable JumpPower", false, function(v) Settings.JumpPowerEnabled = v end)
 JumpCard:CreateSlider("JumpPower", 50, 200, 50, function(v) Settings.JumpPower = v end)
 JumpCard:CreateCheckbox("Infinite Jump", false, function(v) Settings.InfJump = v end)
 
-local AdvancedCard = LocalTab:CreateSection("Advanced", "rbxassetid://6031265978")
+local AdvancedCard = LocalTab:CreateSection("Advanced")
 AdvancedCard:CreateCheckbox("Noclip", false, function(v) Settings.Noclip = v end)
 
 local flyBV, flyBG
-local FlyCard = LocalTab:CreateSection("Flight", "rbxassetid://6031265978")
+local FlyCard = LocalTab:CreateSection("Flight")
 FlyCard:CreateCheckbox("Enable Fly", false, function(state)
     Settings.Fly = state
     local char = LocalPlayer.Character
@@ -88,11 +88,11 @@ end)
 FlyCard:CreateSlider("Fly Speed", 10, 300, 50, function(v) Settings.FlySpeed = v end)
 
 -- [COMBAT TAB - CARDS]
-local ProtectionCard = CombatTab:CreateSection("Anti-Abuse", "rbxassetid://6031265978")
+local ProtectionCard = CombatTab:CreateSection("Anti-Abuse")
 ProtectionCard:CreateCheckbox("Anti-Fling", false, function(v) Settings.AntiFling = v end)
 
 -- [VISUALS TAB - CARDS]
-local EspCard = EspTab:CreateSection("General", "rbxassetid://6031265978")
+local EspCard = EspTab:CreateSection("General")
 EspCard:CreateCheckbox("Enable ESP", false, function(v) Settings.ESP = v end)
 EspCard:CreateCheckbox("Team Check", false, function(v) Settings.ESPTeamCheck = v end)
 EspCard:CreateDropdown("Dropdown", {"Scoped", "Flashed", "Knocked", "Touched", "Skid"}, "Scoped", function(v) print("Selected:", v) end)
