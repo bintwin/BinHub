@@ -58,7 +58,12 @@ function Library:CreateWindow(options)
     MainCorner.CornerRadius = UDim.new(0, 8)
     MainCorner.Parent = MainFrame
     
-    -- Removed all shadows as requested.
+    local Shadow = Instance.new("UIShadow")
+    Shadow.BlurRadius = 12
+    Shadow.Color = Color3.fromRGB(0, 0, 0)
+    Shadow.Offset = Vector2.new(0, 4)
+    Shadow.Transparency = 0.5
+    Shadow.Parent = MainFrame
     
     local dragging, dragInput, dragStart, startPos
     MainFrame.InputBegan:Connect(function(input)
