@@ -7,15 +7,15 @@ local Library = {}
 Library.__index = Library
 
 local Theme = {
-    MainBg = Color3.fromRGB(20, 20, 25),     -- Lighter dark gray
-    CardBg = Color3.fromRGB(26, 26, 31),     -- Card background
-    ActiveBg = Color3.fromRGB(33, 33, 38),   -- Sidebar active button background
+    MainBg = Color3.fromRGB(17, 17, 22),     -- Screenshot main background
+    CardBg = Color3.fromRGB(22, 22, 27),     -- Screenshot card background
+    ActiveBg = Color3.fromRGB(29, 29, 35),   -- Screenshot sidebar active background
     Accent = Color3.fromRGB(150, 132, 241),  -- Nebula purple
     Text = Color3.fromRGB(240, 240, 245),
     SubText = Color3.fromRGB(160, 160, 169),
     DisabledText = Color3.fromRGB(110, 110, 120),
-    Border = Color3.fromRGB(40, 40, 48),     -- Separator lines
-    InputBg = Color3.fromRGB(30, 30, 35),    -- Unchecked box / Toggle off background
+    Border = Color3.fromRGB(31, 31, 39),     -- Screenshot separator lines
+    InputBg = Color3.fromRGB(26, 26, 33),    -- Screenshot input background
     InputOutline = Color3.fromRGB(70, 70, 80) -- Guaranteed border color
 }
 
@@ -45,8 +45,9 @@ function Library:CreateWindow(options)
     
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
-    MainFrame.Size = UDim2.new(0, 720, 0, 480)
-    MainFrame.Position = UDim2.new(0.5, -360, 0.5, -240)
+    MainFrame.Size = UDim2.new(0, 750, 0, 500)
+    MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+    MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
     MainFrame.BackgroundColor3 = Theme.MainBg
     MainFrame.BorderSizePixel = 0
     MainFrame.Parent = gui
@@ -54,6 +55,21 @@ function Library:CreateWindow(options)
     local MainCorner = Instance.new("UICorner")
     MainCorner.CornerRadius = UDim.new(0, 8)
     MainCorner.Parent = MainFrame
+
+    local UIScale = Instance.new("UIScale")
+    UIScale.Parent = MainFrame
+
+    local function updateScale()
+        local camera = workspace.CurrentCamera
+        if not camera then return end
+        local viewport = camera.ViewportSize
+        UIScale.Scale = math.min(1, viewport.X / 800, viewport.Y / 550)
+    end
+
+    updateScale()
+    if workspace.CurrentCamera then
+        workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateScale)
+    end
     
     local dragging, dragInput, dragStart, startPos
     MainFrame.InputBegan:Connect(function(input)
@@ -109,7 +125,7 @@ function Library:CreateWindow(options)
     -- Sidebar
     local Sidebar = Instance.new("Frame")
     Sidebar.Name = "Sidebar"
-    Sidebar.Size = UDim2.new(0, 180, 1, -30)
+    Sidebar.Size = UDim2.new(0, 200, 1, -30)
     Sidebar.BackgroundTransparency = 1
     Sidebar.Parent = MainFrame
     
@@ -121,13 +137,13 @@ function Library:CreateWindow(options)
     SidebarBorder.Parent = Sidebar
     
     local TitleArea = Instance.new("Frame")
-    TitleArea.Size = UDim2.new(1, 0, 0, 60)
+    TitleArea.Size = UDim2.new(1, 0, 0, 75)
     TitleArea.BackgroundTransparency = 1
     TitleArea.Parent = Sidebar
     
     local TitleLabel = Instance.new("TextLabel")
     TitleLabel.Size = UDim2.new(1, -20, 1, 0)
-    TitleLabel.Position = UDim2.new(0, 20, 0, 0)
+    TitleLabel.Position = UDim2.new(0, 25, 0, 0)
     TitleLabel.BackgroundTransparency = 1
     TitleLabel.RichText = true
     TitleLabel.Text = "<font color=\"rgb(150,132,241)\">" .. TitleFirst .. "</font>" .. TitleSecond
@@ -139,8 +155,8 @@ function Library:CreateWindow(options)
     
     local CategoryContainer = Instance.new("ScrollingFrame")
     CategoryContainer.Name = "Categories"
-    CategoryContainer.Size = UDim2.new(1, 0, 1, -60)
-    CategoryContainer.Position = UDim2.new(0, 0, 0, 60)
+    CategoryContainer.Size = UDim2.new(1, 0, 1, -75)
+    CategoryContainer.Position = UDim2.new(0, 0, 0, 75)
     CategoryContainer.BackgroundTransparency = 1
     CategoryContainer.ScrollBarThickness = 0
     CategoryContainer.Parent = Sidebar
@@ -151,14 +167,14 @@ function Library:CreateWindow(options)
     CategoryListLayout.Parent = CategoryContainer
     
     local CategoryPadding = Instance.new("UIPadding")
-    CategoryPadding.PaddingLeft = UDim.new(0, 12)
-    CategoryPadding.PaddingRight = UDim.new(0, 12)
+    CategoryPadding.PaddingLeft = UDim.new(0, 15)
+    CategoryPadding.PaddingRight = UDim.new(0, 15)
     CategoryPadding.Parent = CategoryContainer
     
     local ContentContainer = Instance.new("Frame")
     ContentContainer.Name = "ContentContainer"
-    ContentContainer.Size = UDim2.new(1, -180, 1, -30)
-    ContentContainer.Position = UDim2.new(0, 180, 0, 0)
+    ContentContainer.Size = UDim2.new(1, -200, 1, -30)
+    ContentContainer.Position = UDim2.new(0, 200, 0, 0)
     ContentContainer.BackgroundTransparency = 1
     ContentContainer.Parent = MainFrame
     
@@ -224,6 +240,7 @@ function Library:CreateWindow(options)
         IconImg.BackgroundTransparency = 1
         IconImg.Image = Icon
         IconImg.ImageColor3 = Theme.DisabledText
+        IconImg.Visible = false
         IconImg.Parent = CategoryBtn
         
         local Label = Instance.new("TextLabel")
@@ -245,7 +262,7 @@ function Library:CreateWindow(options)
         
         -- Top Tabs Area
         local TopBar = Instance.new("Frame")
-        TopBar.Size = UDim2.new(1, 0, 0, 45)
+        TopBar.Size = UDim2.new(1, 0, 0, 60)
         TopBar.BackgroundTransparency = 1
         TopBar.Parent = CategoryContent
         
@@ -269,12 +286,12 @@ function Library:CreateWindow(options)
         SubTabListLayout.Parent = SubTabContainer
         
         local SubTabPadding = Instance.new("UIPadding")
-        SubTabPadding.PaddingLeft = UDim.new(0, 20)
+        SubTabPadding.PaddingLeft = UDim.new(0, 15)
         SubTabPadding.Parent = SubTabContainer
         
         local TabsContent = Instance.new("Frame")
-        TabsContent.Size = UDim2.new(1, 0, 1, -45)
-        TabsContent.Position = UDim2.new(0, 0, 0, 45)
+        TabsContent.Size = UDim2.new(1, 0, 1, -60)
+        TabsContent.Position = UDim2.new(0, 0, 0, 60)
         TabsContent.BackgroundTransparency = 1
         TabsContent.Parent = CategoryContent
         
@@ -320,8 +337,8 @@ function Library:CreateWindow(options)
             
             -- Padding inside the tab button to give it some breathing room if needed, but we keep it tight
             local BtnPad = Instance.new("UIPadding")
-            BtnPad.PaddingLeft = UDim.new(0, 2)
-            BtnPad.PaddingRight = UDim.new(0, 2)
+            BtnPad.PaddingLeft = UDim.new(0, 12)
+            BtnPad.PaddingRight = UDim.new(0, 12)
             BtnPad.Parent = TabBtn
             
             local Underline = Instance.new("Frame")
@@ -348,7 +365,7 @@ function Library:CreateWindow(options)
             
             local TabLayout = Instance.new("UIGridLayout")
             TabLayout.SortOrder = Enum.SortOrder.LayoutOrder
-            TabLayout.CellSize = UDim2.new(0.5, -8, 0, 240)
+            TabLayout.CellSize = UDim2.new(0.5, -25, 0, 230)
             TabLayout.CellPadding = UDim2.new(0, 15, 0, 15)
             TabLayout.Parent = TabContent
             
@@ -393,7 +410,7 @@ function Library:CreateWindow(options)
                 CardCorner.Parent = SectionCard
                 
                 local Header = Instance.new("Frame")
-                Header.Size = UDim2.new(1, 0, 0, 40)
+                Header.Size = UDim2.new(1, 0, 0, 42)
                 Header.BackgroundTransparency = 1
                 Header.Parent = SectionCard
                 
@@ -403,11 +420,12 @@ function Library:CreateWindow(options)
                 HIcon.BackgroundTransparency = 1
                 HIcon.Image = secIcon
                 HIcon.ImageColor3 = Theme.Accent
+                HIcon.Visible = false
                 HIcon.Parent = Header
                 
                 local HTitle = Instance.new("TextLabel")
                 HTitle.Size = UDim2.new(1, -70, 1, 0)
-                HTitle.Position = UDim2.new(0, 34, 0, 0)
+                HTitle.Position = UDim2.new(0, 36, 0, 0)
                 HTitle.BackgroundTransparency = 1
                 HTitle.Text = secName
                 HTitle.TextColor3 = Theme.Text
@@ -418,7 +436,7 @@ function Library:CreateWindow(options)
                 
                 local MasterToggle = Instance.new("TextButton")
                 MasterToggle.Size = UDim2.new(0, 38, 0, 20)
-                MasterToggle.Position = UDim2.new(1, -50, 0.5, -10)
+                MasterToggle.Position = UDim2.new(1, -48, 0.5, -10)
                 MasterToggle.BackgroundColor3 = Theme.InputBg
                 MasterToggle.Text = ""
                 MasterToggle.AutoButtonColor = false
@@ -450,14 +468,14 @@ function Library:CreateWindow(options)
                 
                 local Divider = Instance.new("Frame")
                 Divider.Size = UDim2.new(1, -24, 0, 1)
-                Divider.Position = UDim2.new(0, 12, 0, 40)
+                Divider.Position = UDim2.new(0, 12, 0, 42)
                 Divider.BackgroundColor3 = Theme.Border
                 Divider.BorderSizePixel = 0
                 Divider.Parent = SectionCard
                 
                 local ItemsContainer = Instance.new("ScrollingFrame")
-                ItemsContainer.Size = UDim2.new(1, 0, 1, -41)
-                ItemsContainer.Position = UDim2.new(0, 0, 0, 41)
+                ItemsContainer.Size = UDim2.new(1, 0, 1, -43)
+                ItemsContainer.Position = UDim2.new(0, 0, 0, 43)
                 ItemsContainer.BackgroundTransparency = 1
                 ItemsContainer.ScrollBarThickness = 0
                 ItemsContainer.Parent = SectionCard
@@ -490,7 +508,7 @@ function Library:CreateWindow(options)
                     local CheckBtn = Instance.new("TextButton")
                     CheckBtn.Size = UDim2.new(0, 18, 0, 18)
                     CheckBtn.Position = UDim2.new(1, -30, 0.5, -9)
-                    CheckBtn.BackgroundColor3 = Theme.InputOutline -- Fake border base
+                    CheckBtn.BackgroundColor3 = Theme.InputBg
                     CheckBtn.Text = ""
                     CheckBtn.Parent = ItemFrame
                     
@@ -522,7 +540,7 @@ function Library:CreateWindow(options)
                             CheckBtn.BackgroundColor3 = Theme.Accent
                             InnerCheck.BackgroundColor3 = Theme.Accent
                         else
-                            CheckBtn.BackgroundColor3 = Theme.InputOutline
+                            CheckBtn.BackgroundColor3 = Theme.InputBg
                             InnerCheck.BackgroundColor3 = Theme.InputBg
                         end
                         CheckIcon.Visible = state
