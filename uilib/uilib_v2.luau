@@ -1462,6 +1462,7 @@ function Library:CreateWindow(options)
                         PopScroll.Position = UDim2.new(0, 0, 0, 5)
                         PopScroll.BackgroundTransparency = 1
                         PopScroll.ScrollBarThickness = 0
+                        PopScroll.ZIndex = 102
                         PopScroll.Parent = PopupFrame
                         
                         local PopLayout = Instance.new("UIListLayout")
@@ -1477,6 +1478,7 @@ function Library:CreateWindow(options)
                             OptBtn.Font = Enum.Font.GothamMedium
                             OptBtn.TextSize = 14
                             OptBtn.TextXAlignment = Enum.TextXAlignment.Left
+                            OptBtn.ZIndex = 103
                             OptBtn.Parent = PopScroll
                             
                             OptBtn.MouseButton1Click:Connect(function()
