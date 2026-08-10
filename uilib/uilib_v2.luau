@@ -159,7 +159,7 @@ function Library:CreateWindow(options)
     NebulaGlow.Size = UDim2.new(0, 160, 0, 160)
     NebulaGlow.Position = UDim2.new(0, -20, 0, -48)
     NebulaGlow.BackgroundTransparency = 1
-    NebulaGlow.Image = "rbxassetid://1316045217"
+    NebulaGlow.Image = "rbxassetid://5538771868"
     NebulaGlow.ImageColor3 = Theme.Accent
     NebulaGlow.ImageTransparency = 0.4
     NebulaGlow.ZIndex = 0
