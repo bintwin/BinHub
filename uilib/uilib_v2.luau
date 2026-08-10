@@ -8,10 +8,10 @@ Library.__index = Library
 
 -- Exactly matched color palette from Image 5 reference
 local Theme = {
-    MainBg = Color3.fromRGB(14, 14, 18),      -- Darkest background (Sidebar & Main content)
-    CardBg = Color3.fromRGB(19, 19, 24),      -- Slightly lighter for Cards
-    BottomBarBg = Color3.fromRGB(16, 16, 20), -- Footer background
-    ActiveBg = Color3.fromRGB(28, 28, 34),    -- Active tabs and sidebar buttons
+    MainBg = Color3.fromRGB(8, 8, 12),      -- Darkest background (Sidebar & Main content)
+    CardBg = Color3.fromRGB(12, 12, 16),      -- Slightly lighter for Cards
+    BottomBarBg = Color3.fromRGB(10, 10, 14), -- Footer background
+    ActiveBg = Color3.fromRGB(24, 24, 28),    -- Active tabs and sidebar buttons
     Accent = Color3.fromRGB(139, 122, 227),   -- Accurate Nebula purple
     Text = Color3.fromRGB(235, 235, 239),     -- Main text
     SubText = Color3.fromRGB(143, 143, 153),  -- Secondary text
@@ -63,7 +63,7 @@ function Library:CreateWindow(options)
     Shadow.BlurRadius = UDim.new(0, 12)
     Shadow.Color = Color3.fromRGB(0, 0, 0)
     Shadow.Offset = UDim2.new(0, 0, 0, 4)
-    Shadow.Transparency = 0.5
+    Shadow.Transparency = 0.15
     Shadow.Parent = MainFrame
     
     local dragging, dragInput, dragStart, startPos
@@ -162,7 +162,7 @@ function Library:CreateWindow(options)
     TitleLabel.RichText = true
     TitleLabel.Text = "<font color=\"rgb(139,122,227)\">" .. TitleFirst .. "</font>" .. TitleSecond
     TitleLabel.TextColor3 = Theme.Text
-    TitleLabel.Font = Enum.Font.GothamBold -- Restored to GothamBold for precise match, GothamBlack was too thick
+    TitleLabel.Font = Enum.Font.GothamBold
     TitleLabel.TextSize = 22
     TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
     TitleLabel.Parent = TitleArea
@@ -200,7 +200,7 @@ function Library:CreateWindow(options)
     PopupContainer.BackgroundTransparency = 1
     PopupContainer.ZIndex = 100
     PopupContainer.Visible = false
-    PopupContainer.Parent = MainFrame
+    PopupContainer.Parent = gui
     
     local WindowObj = {
         Gui = gui,
@@ -233,7 +233,7 @@ function Library:CreateWindow(options)
             secLabel.BackgroundTransparency = 1
             secLabel.Text = SectionTitle
             secLabel.TextColor3 = Theme.CategoryText -- Darker grey color
-            secLabel.Font = Enum.Font.GothamBold     -- Noticeably bolder as requested
+            secLabel.Font = Enum.Font.GothamBold
             secLabel.TextSize = 11
             secLabel.TextXAlignment = Enum.TextXAlignment.Left
             secLabel.Parent = CategoryContainer
@@ -452,38 +452,6 @@ function Library:CreateWindow(options)
                 HTitle.TextXAlignment = Enum.TextXAlignment.Left
                 HTitle.Parent = Header
                 
-                local MasterToggle = Instance.new("TextButton")
-                MasterToggle.Size = UDim2.new(0, 34, 0, 18)
-                MasterToggle.Position = UDim2.new(1, -46, 0.5, -9)
-                MasterToggle.BackgroundColor3 = Theme.InputBg
-                MasterToggle.Text = ""
-                MasterToggle.AutoButtonColor = false
-                MasterToggle.Parent = Header
-                
-                local MCorner = Instance.new("UICorner")
-                MCorner.CornerRadius = UDim.new(1, 0)
-                MCorner.Parent = MasterToggle
-                
-                local MCircle = Instance.new("Frame")
-                MCircle.Size = UDim2.new(0, 12, 0, 12)
-                MCircle.Position = UDim2.new(0, 3, 0.5, -6)
-                MCircle.BackgroundColor3 = Theme.SubText
-                MCircle.Parent = MasterToggle
-                
-                local MCircleCorner = Instance.new("UICorner")
-                MCircleCorner.CornerRadius = UDim.new(1, 0)
-                MCircleCorner.Parent = MCircle
-                
-                local masterState = false
-                MasterToggle.MouseButton1Click:Connect(function()
-                    masterState = not masterState
-                    TweenService:Create(MasterToggle, TweenInfo.new(0.2), {BackgroundColor3 = masterState and Theme.Accent or Theme.InputBg}):Play()
-                    TweenService:Create(MCircle, TweenInfo.new(0.2), {
-                        Position = masterState and UDim2.new(1, -15, 0.5, -6) or UDim2.new(0, 3, 0.5, -6),
-                        BackgroundColor3 = masterState and Color3.fromRGB(255,255,255) or Theme.SubText
-                    }):Play()
-                end)
-                
                 local Divider = Instance.new("Frame")
                 Divider.Size = UDim2.new(1, -24, 0, 1)
                 Divider.Position = UDim2.new(0, 12, 0, 40)
@@ -671,7 +639,7 @@ function Library:CreateWindow(options)
                         PickShadow.BlurRadius = UDim.new(0, 8)
                         PickShadow.Color = Color3.fromRGB(0, 0, 0)
                         PickShadow.Offset = UDim2.new(0, 0, 0, 2)
-                        PickShadow.Transparency = 0.4
+                        PickShadow.Transparency = 0.15
                         PickShadow.Parent = PickerFrame
                         
                         local hue, sat, val = 0.7, 0.8, 0.8
@@ -995,7 +963,7 @@ function Library:CreateWindow(options)
                         PickShadow.BlurRadius = UDim.new(0, 8)
                         PickShadow.Color = Color3.fromRGB(0, 0, 0)
                         PickShadow.Offset = UDim2.new(0, 0, 0, 2)
-                        PickShadow.Transparency = 0.4
+                        PickShadow.Transparency = 0.15
                         PickShadow.Parent = PickerFrame
                         
                         local hue, sat, val = Color3.toHSV(currentColor)
