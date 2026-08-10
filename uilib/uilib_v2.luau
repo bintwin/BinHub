@@ -487,7 +487,8 @@ function Library:CreateWindow(options)
                 
                 local Header = Instance.new("Frame")
                 Header.Size = UDim2.new(1, 0, 0, 40)
-                Header.BackgroundColor3 = Theme.MainBg`n                Header.BackgroundTransparency = 0
+                Header.BackgroundColor3 = Theme.MainBg
+                Header.BackgroundTransparency = 0
                 Header.Parent = SectionCard
                 
                 local IconBg = Instance.new("Frame")
@@ -607,7 +608,7 @@ function Library:CreateWindow(options)
                     ItemDivider.Size = UDim2.new(1, -24, 0, 1)
                     ItemDivider.Position = UDim2.new(0, 12, 1, -1)
                     ItemDivider.BackgroundColor3 = Theme.Border
-                    ItemDivider.BackgroundTransparency = 0.5
+                    ItemDivider.BackgroundTransparency = 0
                     ItemDivider.BorderSizePixel = 0
                     ItemDivider.Parent = ItemFrame
                     
@@ -683,7 +684,7 @@ function Library:CreateWindow(options)
                     ItemDivider.Size = UDim2.new(1, -24, 0, 1)
                     ItemDivider.Position = UDim2.new(0, 12, 1, -1)
                     ItemDivider.BackgroundColor3 = Theme.Border
-                    ItemDivider.BackgroundTransparency = 0.5
+                    ItemDivider.BackgroundTransparency = 0
                     ItemDivider.BorderSizePixel = 0
                     ItemDivider.Parent = ItemFrame
                     
@@ -1003,7 +1004,7 @@ function Library:CreateWindow(options)
                     ItemDivider.Size = UDim2.new(1, -24, 0, 1)
                     ItemDivider.Position = UDim2.new(0, 12, 1, -1)
                     ItemDivider.BackgroundColor3 = Theme.Border
-                    ItemDivider.BackgroundTransparency = 0.5
+                    ItemDivider.BackgroundTransparency = 0
                     ItemDivider.BorderSizePixel = 0
                     ItemDivider.Parent = ItemFrame
                     
@@ -1329,7 +1330,7 @@ function Library:CreateWindow(options)
                     ItemDivider.Size = UDim2.new(1, -24, 0, 1)
                     ItemDivider.Position = UDim2.new(0, 12, 1, -1)
                     ItemDivider.BackgroundColor3 = Theme.Border
-                    ItemDivider.BackgroundTransparency = 0.5
+                    ItemDivider.BackgroundTransparency = 0
                     ItemDivider.BorderSizePixel = 0
                     ItemDivider.Parent = ItemFrame
                     
@@ -1447,7 +1448,7 @@ function Library:CreateWindow(options)
                     ItemDivider.Size = UDim2.new(1, -24, 0, 1)
                     ItemDivider.Position = UDim2.new(0, 12, 1, -1)
                     ItemDivider.BackgroundColor3 = Theme.Border
-                    ItemDivider.BackgroundTransparency = 0.5
+                    ItemDivider.BackgroundTransparency = 0
                     ItemDivider.BorderSizePixel = 0
                     ItemDivider.Parent = ItemFrame
                     
