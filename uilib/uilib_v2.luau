@@ -157,7 +157,7 @@ function Library:CreateWindow(options)
     
     local NebulaGlow = Instance.new("ImageLabel")
     NebulaGlow.Size = UDim2.new(0, 160, 0, 160)
-    NebulaGlow.Position = UDim2.new(0, 4, 0, -48)
+    NebulaGlow.Position = UDim2.new(0, -9, 0, -48)
     NebulaGlow.BackgroundTransparency = 1
     NebulaGlow.Image = "rbxassetid://5538771868"
     NebulaGlow.ImageColor3 = Theme.Accent
@@ -166,14 +166,14 @@ function Library:CreateWindow(options)
     NebulaGlow.Parent = TitleArea
     local TitleLabel = Instance.new("TextLabel")
     TitleLabel.Size = UDim2.new(1, 0, 1, 0)
-    TitleLabel.Position = UDim2.new(0, 42, 0, 0)
+    TitleLabel.Position = UDim2.new(0, 0, 0, 0)
     TitleLabel.BackgroundTransparency = 1
     TitleLabel.RichText = true
     TitleLabel.Text = "<font color=\"rgb(139,122,227)\">" .. TitleFirst .. "</font>" .. TitleSecond
     
     local TitleUnderline = Instance.new("Frame")
-    TitleUnderline.Size = UDim2.new(0, 84, 0, 1)
-    TitleUnderline.Position = UDim2.new(0, 42, 0, 46)
+    TitleUnderline.Size = UDim2.new(0, 92, 0, 1)
+    TitleUnderline.Position = UDim2.new(0, 25, 0, 46)
     TitleUnderline.BackgroundColor3 = Theme.Accent
     TitleUnderline.BorderSizePixel = 0
     TitleUnderline.Parent = TitleArea
@@ -181,7 +181,7 @@ function Library:CreateWindow(options)
     TitleLabel.TextColor3 = Theme.Text
     TitleLabel.Font = Enum.Font.GothamBold
     TitleLabel.TextSize = 27
-    TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    TitleLabel.TextXAlignment = Enum.TextXAlignment.Center
     TitleLabel.Parent = TitleArea
     
     -- Explicity removed the underline from the title as requested by the user.
@@ -487,8 +487,7 @@ function Library:CreateWindow(options)
                 
                 local Header = Instance.new("Frame")
                 Header.Size = UDim2.new(1, 0, 0, 40)
-                Header.BackgroundColor3 = Theme.MainBg
-                Header.BackgroundTransparency = 1
+                Header.BackgroundColor3 = Theme.MainBg`n                Header.BackgroundTransparency = 0
                 Header.Parent = SectionCard
                 
                 local IconBg = Instance.new("Frame")

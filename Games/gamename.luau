@@ -31,7 +31,8 @@ local Settings = {
     FlySpeed = 50,
     AntiFling = false,
     ESP = false,
-    ESPTeamCheck = false
+    ESPTeamCheck = false,
+    ESPColor = Color3.fromRGB(123, 97, 255)
 }
 
 -- [CATEGORIES & TABS]
@@ -93,7 +94,14 @@ ProtectionCard:CreateCheckbox("Anti-Fling", false, function(v) Settings.AntiFlin
 
 -- [VISUALS TAB - CARDS]
 local EspCard = EspTab:CreateSection("General")
-EspCard:CreateCheckbox("Enable ESP", false, function(v) Settings.ESP = v end)
+EspCard:CreateColorCheckbox("Enable Box ESP", Color3.fromRGB(123, 97, 255), false, function(color)
+    Settings.ESPColor = color
+    for _, draws in pairs(ESPDrawings) do
+        if draws.Box then draws.Box.Color = color end
+    end
+end, function(v)
+    Settings.ESP = v
+end)
 EspCard:CreateCheckbox("Team Check", false, function(v) Settings.ESPTeamCheck = v end)
 EspCard:CreateDropdown("Dropdown", {"Scoped", "Flashed", "Knocked", "Touched", "Skid"}, "Scoped", function(v) print("Selected:", v) end)
 
@@ -104,7 +112,7 @@ local function createESP(player)
     if ESPDrawings[player] then return end
     local box = Drawing.new("Square")
     box.Visible = false
-    box.Color = Color3.fromRGB(123, 97, 255)
+    box.Color = Settings.ESPColor
     box.Thickness = 1
     box.Filled = false
     
@@ -142,8 +150,8 @@ getgenv().UniRenderLoop = RunService.RenderStepped:Connect(function()
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     
     if hum then
-        if Settings.WalkSpeedEnabled then hum.WalkSpeed = Settings.WalkSpeed end
-        if Settings.JumpPowerEnabled then hum.JumpPower = Settings.JumpPower end
+        if Settings.WalkSpeedEnabled then hum.WalkSpeed = Settings.WalkSpeed else hum.WalkSpeed = 16 end
+        if Settings.JumpPowerEnabled then hum.JumpPower = Settings.JumpPower else hum.JumpPower = 50 end
     end
     
     if Settings.Fly and hrp and hum and flyBG and flyBV then
