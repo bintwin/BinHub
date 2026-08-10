@@ -236,12 +236,13 @@ function Library:CreateWindow(options)
         CategoryContainer = CategoryContainer,
         ContentContainer = ContentContainer,
         PopupContainer = PopupContainer,
-        Categories = {}
+        Categories = {},
+        ToggleKey = Enum.KeyCode.LeftAlt
     }
     
     UserInputService.InputBegan:Connect(function(input, gp)
         if gp then return end
-        if input.KeyCode == Enum.KeyCode.RightControl then
+        if input.KeyCode == WindowObj.ToggleKey then
             gui.Enabled = not gui.Enabled
         end
     end)
@@ -798,21 +799,27 @@ function Library:CreateWindow(options)
                         SVCorner.CornerRadius = UDim.new(0, 4)
                         SVCorner.Parent = SVBox
                         
+                        local WhiteOverlay = Instance.new("Frame")
+                        WhiteOverlay.Size = UDim2.new(1, 0, 1, 0)
+                        WhiteOverlay.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                        WhiteOverlay.ZIndex = 104
+                        WhiteOverlay.Parent = SVBox
+                        
+                        local WhiteCorner = Instance.new("UICorner")
+                        WhiteCorner.CornerRadius = UDim.new(0, 4)
+                        WhiteCorner.Parent = WhiteOverlay
+                        
                         local WhiteGrad = Instance.new("UIGradient")
-                        WhiteGrad.Color = ColorSequence.new({
-                            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-                            ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
-                        })
                         WhiteGrad.Transparency = NumberSequence.new({
                             NumberSequenceKeypoint.new(0, 0),
                             NumberSequenceKeypoint.new(1, 1)
                         })
-                        WhiteGrad.Parent = SVBox
+                        WhiteGrad.Parent = WhiteOverlay
                         
                         local BlackOverlay = Instance.new("Frame")
                         BlackOverlay.Size = UDim2.new(1, 0, 1, 0)
                         BlackOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-                        BlackOverlay.ZIndex = 104
+                        BlackOverlay.ZIndex = 105
                         BlackOverlay.Parent = SVBox
                         
                         local BlackCorner = Instance.new("UICorner")
@@ -1144,21 +1151,27 @@ function Library:CreateWindow(options)
                         SVCorner.CornerRadius = UDim.new(0, 4)
                         SVCorner.Parent = SVBox
                         
+                        local WhiteOverlay = Instance.new("Frame")
+                        WhiteOverlay.Size = UDim2.new(1, 0, 1, 0)
+                        WhiteOverlay.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                        WhiteOverlay.ZIndex = 104
+                        WhiteOverlay.Parent = SVBox
+                        
+                        local WhiteCorner = Instance.new("UICorner")
+                        WhiteCorner.CornerRadius = UDim.new(0, 4)
+                        WhiteCorner.Parent = WhiteOverlay
+                        
                         local WhiteGrad = Instance.new("UIGradient")
-                        WhiteGrad.Color = ColorSequence.new({
-                            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-                            ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
-                        })
                         WhiteGrad.Transparency = NumberSequence.new({
                             NumberSequenceKeypoint.new(0, 0),
                             NumberSequenceKeypoint.new(1, 1)
                         })
-                        WhiteGrad.Parent = SVBox
+                        WhiteGrad.Parent = WhiteOverlay
                         
                         local BlackOverlay = Instance.new("Frame")
                         BlackOverlay.Size = UDim2.new(1, 0, 1, 0)
                         BlackOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-                        BlackOverlay.ZIndex = 104
+                        BlackOverlay.ZIndex = 105
                         BlackOverlay.Parent = SVBox
                         
                         local BlackCorner = Instance.new("UICorner")
@@ -1560,6 +1573,97 @@ function Library:CreateWindow(options)
                             local val = math.floor(min + (max - min) * percent)
                             ValueLabel.Text = tostring(val)
                             if callback then callback(val) end
+                        end
+                    end)
+                end
+                
+                function SecObj:CreateButton(itemName, callback)
+                    local ItemFrame = Instance.new("Frame")
+                    ItemFrame.Size = UDim2.new(1, 0, 0, 42)
+                    ItemFrame.BackgroundTransparency = 1
+                    ItemFrame.Parent = self.Container
+                    
+                    local ItemDivider = Instance.new("Frame")
+                    ItemDivider.Size = UDim2.new(1, -24, 0, 1)
+                    ItemDivider.Position = UDim2.new(0, 12, 1, -1)
+                    ItemDivider.BackgroundColor3 = Theme.Border
+                    ItemDivider.BackgroundTransparency = 0
+                    ItemDivider.BorderSizePixel = 0
+                    ItemDivider.Parent = ItemFrame
+                    
+                    local Btn = Instance.new("TextButton")
+                    Btn.Size = UDim2.new(1, -24, 1, -10)
+                    Btn.Position = UDim2.new(0, 12, 0, 5)
+                    Btn.BackgroundColor3 = Theme.InputBg
+                    Btn.Text = itemName
+                    Btn.TextColor3 = Theme.Text
+                    Btn.Font = Enum.Font.GothamMedium
+                    Btn.TextSize = 14
+                    Btn.AutoButtonColor = false
+                    Btn.Parent = ItemFrame
+                    
+                    local Corner = Instance.new("UICorner")
+                    Corner.CornerRadius = UDim.new(0, 4)
+                    Corner.Parent = Btn
+                    
+                    Btn.MouseButton1Click:Connect(function()
+                        if callback then callback() end
+                    end)
+                end
+                
+                function SecObj:CreateKeybind(itemName, defaultKey, callback)
+                    local ItemFrame = Instance.new("Frame")
+                    ItemFrame.Size = UDim2.new(1, 0, 0, 42)
+                    ItemFrame.BackgroundTransparency = 1
+                    ItemFrame.Parent = self.Container
+                    
+                    local ItemDivider = Instance.new("Frame")
+                    ItemDivider.Size = UDim2.new(1, -24, 0, 1)
+                    ItemDivider.Position = UDim2.new(0, 12, 1, -1)
+                    ItemDivider.BackgroundColor3 = Theme.Border
+                    ItemDivider.BackgroundTransparency = 0
+                    ItemDivider.BorderSizePixel = 0
+                    ItemDivider.Parent = ItemFrame
+                    
+                    local Label = Instance.new("TextLabel")
+                    Label.Size = UDim2.new(1, -120, 1, 0)
+                    Label.Position = UDim2.new(0, 12, 0, 0)
+                    Label.BackgroundTransparency = 1
+                    Label.Text = itemName
+                    Label.TextColor3 = Theme.Text
+                    Label.FontFace = Font.new("rbxasset://fonts/families/Roboto.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+                    Label.TextSize = 16
+                    Label.TextXAlignment = Enum.TextXAlignment.Left
+                    Label.Parent = ItemFrame
+                    
+                    local BindBtn = Instance.new("TextButton")
+                    BindBtn.Size = UDim2.new(0, 90, 0, 24)
+                    BindBtn.Position = UDim2.new(1, -102, 0.5, -12)
+                    BindBtn.BackgroundColor3 = Theme.InputBg
+                    BindBtn.Text = defaultKey.Name
+                    BindBtn.TextColor3 = Theme.Text
+                    BindBtn.Font = Enum.Font.Gotham
+                    BindBtn.TextSize = 12
+                    BindBtn.Parent = ItemFrame
+                    
+                    local Corner = Instance.new("UICorner")
+                    Corner.CornerRadius = UDim.new(0, 4)
+                    Corner.Parent = BindBtn
+                    
+                    local currentKey = defaultKey
+                    local binding = false
+                    
+                    BindBtn.MouseButton1Click:Connect(function()
+                        binding = true
+                        BindBtn.Text = "..."
+                    end)
+                    
+                    UserInputService.InputBegan:Connect(function(input, gp)
+                        if binding and input.UserInputType == Enum.UserInputType.Keyboard then
+                            binding = false
+                            currentKey = input.KeyCode
+                            BindBtn.Text = currentKey.Name
+                            if callback then callback(currentKey) end
                         end
                     end)
                 end

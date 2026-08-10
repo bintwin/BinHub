@@ -40,11 +40,14 @@ local Settings = {
 -- [CATEGORIES & TABS]
 local PlayersCat = Window:CreateCategory({Name = "Players"})
 local VisualsCat = Window:CreateCategory({Name = "Visuals"})
+local MiscCat = Window:CreateCategory({Name = "Misc"})
 
 local LocalTab = PlayersCat:CreateTab("Self")
 local CombatTab = PlayersCat:CreateTab("Protection")
 
 local EspTab = VisualsCat:CreateTab("Enemies")
+
+local SettingsTab = MiscCat:CreateTab("Settings")
 
 -- [LOCAL TAB - CARDS]
 local MovementCard = LocalTab:CreateSection("Movement")
@@ -110,6 +113,26 @@ end)
 
 EspCard:CreateCheckbox("Team Check", false, function(v) Settings.ESPTeamCheck = v end)
 EspCard:CreateDropdown("Dropdown", {"Scoped", "Flashed", "Knocked", "Touched", "Skid"}, "Scoped", function(v) print("Selected:", v) end)
+
+-- [MISC TAB - CARDS]
+local ConfigCard = SettingsTab:CreateSection("Configuration", "rbxassetid://7734053495")
+ConfigCard:CreateKeybind("Toggle UI", Enum.KeyCode.LeftAlt, function(key)
+    Window.ToggleKey = key
+end)
+ConfigCard:CreateButton("Unload UI", function()
+    if getgenv().UniRenderLoop then getgenv().UniRenderLoop:Disconnect() end
+    if getgenv().UniSteppedLoop then getgenv().UniSteppedLoop:Disconnect() end
+    if getgenv().UniInfJump then getgenv().UniInfJump:Disconnect() end
+    
+    for _, draws in pairs(ESPDrawings) do
+        if draws.Box then draws.Box:Remove() end
+        if draws.Name then draws.Name:Remove() end
+    end
+    table.clear(ESPDrawings)
+    
+    local success, core = pcall(function() return game:GetService("CoreGui"):FindFirstChild("BinHubV2") end)
+    if success and core then core:Destroy() end
+end)
 
 
 -- ESP LOGIC
