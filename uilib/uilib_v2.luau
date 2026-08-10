@@ -172,8 +172,8 @@ function Library:CreateWindow(options)
     TitleLabel.Text = "<font color=\"rgb(139,122,227)\">" .. TitleFirst .. "</font>" .. TitleSecond
     
     local TitleUnderline = Instance.new("Frame")
-    TitleUnderline.Size = UDim2.new(0, 92, 0, 1)
-    TitleUnderline.Position = UDim2.new(0, 25, 0, 46)
+    TitleUnderline.Size = UDim2.new(0, 120, 0, 1)
+    TitleUnderline.Position = UDim2.new(0.5, -60, 0, 46)
     TitleUnderline.BackgroundColor3 = Theme.Accent
     TitleUnderline.BorderSizePixel = 0
     TitleUnderline.Parent = TitleArea
@@ -1597,7 +1597,7 @@ function Library:CreateWindow(options)
                     Btn.BackgroundColor3 = Theme.InputBg
                     Btn.Text = itemName
                     Btn.TextColor3 = Theme.Text
-                    Btn.Font = Enum.Font.GothamMedium
+                    Btn.Font = Enum.Font.GothamBold
                     Btn.TextSize = 14
                     Btn.AutoButtonColor = false
                     Btn.Parent = ItemFrame
@@ -1642,7 +1642,7 @@ function Library:CreateWindow(options)
                     BindBtn.BackgroundColor3 = Theme.InputBg
                     BindBtn.Text = defaultKey.Name
                     BindBtn.TextColor3 = Theme.Text
-                    BindBtn.Font = Enum.Font.Gotham
+                    BindBtn.Font = Enum.Font.GothamBold
                     BindBtn.TextSize = 12
                     BindBtn.Parent = ItemFrame
                     
