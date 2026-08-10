@@ -49,8 +49,8 @@ function Library:CreateWindow(options)
     
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
-    MainFrame.Size = UDim2.new(0, 800, 0, 550)
-    MainFrame.Position = UDim2.new(0.5, -400, 0.5, -275)
+    MainFrame.Size = UDim2.new(0, 740, 0, 580)
+    MainFrame.Position = UDim2.new(0.5, -370, 0.5, -290)
     MainFrame.BackgroundColor3 = Theme.MainBg
     MainFrame.BorderSizePixel = 0
     MainFrame.Parent = gui
@@ -60,10 +60,10 @@ function Library:CreateWindow(options)
     MainCorner.Parent = MainFrame
     
     local Shadow = Instance.new("UIShadow")
-    Shadow.BlurRadius = UDim.new(0, 48)
+    Shadow.BlurRadius = UDim.new(0, 80)
     Shadow.Color = Color3.fromRGB(0, 0, 0)
     Shadow.Offset = UDim2.new(0, 0, 0, 0)
-    Shadow.Transparency = 0.25
+    Shadow.Transparency = 0.1
     Shadow.Parent = MainFrame
     
     local dragging, dragInput, dragStart, startPos
@@ -129,7 +129,7 @@ function Library:CreateWindow(options)
     RightFooterText.Position = UDim2.new(0.5, 0, 0, 0)
     RightFooterText.BackgroundTransparency = 1
     RightFooterText.RichText = true
-    RightFooterText.Text = "32 days left, <font color=\"rgb(255,120,210)\"><b>" .. FooterRight .. "</b></font>" -- Made nebulatech noticeably bolder in footer
+    RightFooterText.Text = "32 days left, <font color=\"rgb(139,122,227)\"><b>nebula</b></font><b>tech</b>"
     RightFooterText.TextColor3 = Theme.DisabledText
     RightFooterText.Font = Enum.Font.GothamBold
     RightFooterText.TextSize = 11
@@ -155,15 +155,7 @@ function Library:CreateWindow(options)
     TitleArea.BackgroundTransparency = 1
     TitleArea.Parent = Sidebar
     
-    local NebulaGlow = Instance.new("ImageLabel")
-    NebulaGlow.Size = UDim2.new(0, 180, 0, 180)
-    NebulaGlow.Position = UDim2.new(0, -40, 0, -58)
-    NebulaGlow.BackgroundTransparency = 1
-    NebulaGlow.Image = "rbxassetid://5028857472"
-    NebulaGlow.ImageColor3 = Color3.fromRGB(158, 136, 255)
-    NebulaGlow.ImageTransparency = 0.2
-    NebulaGlow.ZIndex = 0
-    NebulaGlow.Parent = TitleArea
+    -- Removed NebulaGlow to fix the purple box issue
 
     local TitleLabel = Instance.new("TextLabel")
     TitleLabel.Size = UDim2.new(1, -20, 1, 0)
@@ -173,7 +165,7 @@ function Library:CreateWindow(options)
     TitleLabel.Text = "<font color=\"rgb(139,122,227)\">" .. TitleFirst .. "</font>" .. TitleSecond
     
     local TitleUnderline = Instance.new("Frame")
-    TitleUnderline.Size = UDim2.new(0, 58, 0, 1)
+    TitleUnderline.Size = UDim2.new(0, 76, 0, 1)
     TitleUnderline.Position = UDim2.new(0, 20, 0, 42)
     TitleUnderline.BackgroundColor3 = Theme.Accent
     TitleUnderline.BorderSizePixel = 0
@@ -408,7 +400,7 @@ function Library:CreateWindow(options)
             
             local TabLayout = Instance.new("UIGridLayout")
             TabLayout.SortOrder = Enum.SortOrder.LayoutOrder
-            TabLayout.CellSize = UDim2.new(0.5, -10, 0, 270)
+            TabLayout.CellSize = UDim2.new(0.5, -10, 0, 310)
             TabLayout.CellPadding = UDim2.new(0, 15, 0, 15)
             TabLayout.Parent = TabContent
             
@@ -558,7 +550,7 @@ function Library:CreateWindow(options)
                     Label.BackgroundTransparency = 1
                     Label.Text = itemName
                     Label.TextColor3 = Theme.Text
-                    Label.Font = Enum.Font.Gotham
+                    Label.Font = Enum.Font.GothamMedium
                     Label.TextSize = 12
                     Label.TextXAlignment = Enum.TextXAlignment.Left
                     Label.Parent = ItemFrame
@@ -626,7 +618,7 @@ function Library:CreateWindow(options)
                     Label.BackgroundTransparency = 1
                     Label.Text = itemName
                     Label.TextColor3 = Theme.Text
-                    Label.Font = Enum.Font.Gotham
+                    Label.Font = Enum.Font.GothamMedium
                     Label.TextSize = 12
                     Label.TextXAlignment = Enum.TextXAlignment.Left
                     Label.Parent = ItemFrame
@@ -938,7 +930,7 @@ function Library:CreateWindow(options)
                     Label.BackgroundTransparency = 1
                     Label.Text = itemName
                     Label.TextColor3 = Theme.Text
-                    Label.Font = Enum.Font.Gotham
+                    Label.Font = Enum.Font.GothamMedium
                     Label.TextSize = 12
                     Label.TextXAlignment = Enum.TextXAlignment.Left
                     Label.Parent = ItemFrame
@@ -1256,7 +1248,7 @@ function Library:CreateWindow(options)
                     Label.BackgroundTransparency = 1
                     Label.Text = itemName
                     Label.TextColor3 = Theme.Text
-                    Label.Font = Enum.Font.Gotham
+                    Label.Font = Enum.Font.GothamMedium
                     Label.TextSize = 12
                     Label.TextXAlignment = Enum.TextXAlignment.Left
                     Label.Parent = ItemFrame
@@ -1366,7 +1358,7 @@ function Library:CreateWindow(options)
                     Label.BackgroundTransparency = 1
                     Label.Text = itemName
                     Label.TextColor3 = Theme.Text
-                    Label.Font = Enum.Font.Gotham
+                    Label.Font = Enum.Font.GothamMedium
                     Label.TextSize = 12
                     Label.TextXAlignment = Enum.TextXAlignment.Left
                     Label.Parent = ItemFrame
