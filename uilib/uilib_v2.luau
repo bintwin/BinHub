@@ -12,7 +12,7 @@ local Theme = {
     CardBg = Color3.fromRGB(24, 24, 24),      -- Slightly lighter for Cards
     BottomBarBg = Color3.fromRGB(12, 12, 12), -- Footer background
     ActiveBg = Color3.fromRGB(24, 24, 28),    -- Active tabs and sidebar buttons
-    Accent = Color3.fromRGB(255, 120, 210),   -- Accurate Nebula purple
+    Accent = Color3.fromRGB(139, 122, 227),   -- Accurate Nebula purple
     Text = Color3.fromRGB(235, 235, 239),     -- Main text
     SubText = Color3.fromRGB(143, 143, 153),  -- Secondary text
     DisabledText = Color3.fromRGB(96, 96, 107),-- Inactive tabs
@@ -149,22 +149,32 @@ function Library:CreateWindow(options)
     SidebarBorder.BackgroundColor3 = Theme.Border
     SidebarBorder.BorderSizePixel = 0
     SidebarBorder.Parent = Sidebar
-    
+
     local TitleArea = Instance.new("Frame")
     TitleArea.Size = UDim2.new(1, 0, 0, 65)
     TitleArea.BackgroundTransparency = 1
     TitleArea.Parent = Sidebar
     
+    local NebulaGlow = Instance.new("ImageLabel")
+    NebulaGlow.Size = UDim2.new(0, 100, 0, 100)
+    NebulaGlow.Position = UDim2.new(0, 0, 0, -18)
+    NebulaGlow.BackgroundTransparency = 1
+    NebulaGlow.Image = "rbxassetid://5028857472"
+    NebulaGlow.ImageColor3 = Theme.Accent
+    NebulaGlow.ImageTransparency = 0.4
+    NebulaGlow.ZIndex = 0
+    NebulaGlow.Parent = TitleArea
+
     local TitleLabel = Instance.new("TextLabel")
     TitleLabel.Size = UDim2.new(1, -20, 1, 0)
     TitleLabel.Position = UDim2.new(0, 20, 0, 0)
     TitleLabel.BackgroundTransparency = 1
     TitleLabel.RichText = true
-    TitleLabel.Text = "<font color=\"rgb(255,120,210)\">" .. TitleFirst .. "</font> " .. TitleSecond
+    TitleLabel.Text = "<font color="rgb(139,122,227)">" .. TitleFirst .. "</font>" .. TitleSecond
     
     local TitleUnderline = Instance.new("Frame")
-    TitleUnderline.Size = UDim2.new(0, 80, 0, 2)
-    TitleUnderline.Position = UDim2.new(0, 20, 0.5, 9)
+    TitleUnderline.Size = UDim2.new(0, 58, 0, 1)
+    TitleUnderline.Position = UDim2.new(0, 20, 0, 42)
     TitleUnderline.BackgroundColor3 = Theme.Accent
     TitleUnderline.BorderSizePixel = 0
     TitleUnderline.Parent = TitleArea
@@ -175,14 +185,8 @@ function Library:CreateWindow(options)
     TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
     TitleLabel.Parent = TitleArea
     
-    local TitleGlow = Instance.new("UIStroke")
-    TitleGlow.Color = Theme.Accent
-    TitleGlow.Transparency = 0.5
-    TitleGlow.Thickness = 1.2
-    TitleGlow.Parent = TitleLabel
-    
     -- Explicity removed the underline from the title as requested by the user.
-    
+
     local CategoryContainer = Instance.new("ScrollingFrame")
     CategoryContainer.Name = "Categories"
     CategoryContainer.Size = UDim2.new(1, 0, 1, -65)
@@ -278,7 +282,7 @@ function Library:CreateWindow(options)
         Label.BackgroundTransparency = 1
         Label.Text = Name
         Label.TextColor3 = Theme.DisabledText
-        Label.Font = Enum.Font.GothamBold
+        Label.Font = Enum.Font.GothamMedium
         Label.TextSize = 13
         Label.TextXAlignment = Enum.TextXAlignment.Left
         Label.Parent = CategoryBtn
@@ -486,6 +490,40 @@ function Library:CreateWindow(options)
                 HTitle.TextXAlignment = Enum.TextXAlignment.Left
                 HTitle.Parent = Header
                 
+                local SecToggleBtn = Instance.new("TextButton")
+                SecToggleBtn.Size = UDim2.new(0, 32, 0, 16)
+                SecToggleBtn.Position = UDim2.new(1, -44, 0.5, -8)
+                SecToggleBtn.BackgroundColor3 = Theme.InputBg
+                SecToggleBtn.Text = ""
+                SecToggleBtn.AutoButtonColor = false
+                SecToggleBtn.Parent = Header
+                
+                local SecToggleCorner = Instance.new("UICorner")
+                SecToggleCorner.CornerRadius = UDim.new(1, 0)
+                SecToggleCorner.Parent = SecToggleBtn
+                
+                local SecToggleCircle = Instance.new("Frame")
+                SecToggleCircle.Size = UDim2.new(0, 12, 0, 12)
+                SecToggleCircle.Position = UDim2.new(0, 2, 0.5, -6)
+                SecToggleCircle.BackgroundColor3 = Theme.SubText
+                SecToggleCircle.Parent = SecToggleBtn
+                
+                local SecCircleCorner = Instance.new("UICorner")
+                SecCircleCorner.CornerRadius = UDim.new(1, 0)
+                SecCircleCorner.Parent = SecToggleCircle
+                
+                local secState = false
+                SecToggleBtn.MouseButton1Click:Connect(function()
+                    secState = not secState
+                    if secState then
+                        TweenService:Create(SecToggleBtn, TweenInfo.new(0.2), {BackgroundColor3 = Theme.Accent}):Play()
+                        TweenService:Create(SecToggleCircle, TweenInfo.new(0.2), {Position = UDim2.new(1, -14, 0.5, -6), BackgroundColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+                    else
+                        TweenService:Create(SecToggleBtn, TweenInfo.new(0.2), {BackgroundColor3 = Theme.InputBg}):Play()
+                        TweenService:Create(SecToggleCircle, TweenInfo.new(0.2), {Position = UDim2.new(0, 2, 0.5, -6), BackgroundColor3 = Theme.SubText}):Play()
+                    end
+                end)
+                
                 local Divider = Instance.new("Frame")
                 Divider.Size = UDim2.new(1, -24, 0, 1)
                 Divider.Position = UDim2.new(0, 12, 0, 40)
@@ -520,7 +558,7 @@ function Library:CreateWindow(options)
                     Label.BackgroundTransparency = 1
                     Label.Text = itemName
                     Label.TextColor3 = Theme.Text
-                    Label.Font = Enum.Font.GothamBold
+                    Label.Font = Enum.Font.Gotham
                     Label.TextSize = 12
                     Label.TextXAlignment = Enum.TextXAlignment.Left
                     Label.Parent = ItemFrame
@@ -594,7 +632,7 @@ function Library:CreateWindow(options)
                     Label.BackgroundTransparency = 1
                     Label.Text = itemName
                     Label.TextColor3 = Theme.Text
-                    Label.Font = Enum.Font.GothamBold
+                    Label.Font = Enum.Font.Gotham
                     Label.TextSize = 12
                     Label.TextXAlignment = Enum.TextXAlignment.Left
                     Label.Parent = ItemFrame
@@ -912,7 +950,7 @@ function Library:CreateWindow(options)
                     Label.BackgroundTransparency = 1
                     Label.Text = itemName
                     Label.TextColor3 = Theme.Text
-                    Label.Font = Enum.Font.GothamBold
+                    Label.Font = Enum.Font.Gotham
                     Label.TextSize = 12
                     Label.TextXAlignment = Enum.TextXAlignment.Left
                     Label.Parent = ItemFrame
@@ -1236,7 +1274,7 @@ function Library:CreateWindow(options)
                     Label.BackgroundTransparency = 1
                     Label.Text = itemName
                     Label.TextColor3 = Theme.Text
-                    Label.Font = Enum.Font.GothamBold
+                    Label.Font = Enum.Font.Gotham
                     Label.TextSize = 12
                     Label.TextXAlignment = Enum.TextXAlignment.Left
                     Label.Parent = ItemFrame
@@ -1258,7 +1296,7 @@ function Library:CreateWindow(options)
                     SelectedLabel.BackgroundTransparency = 1
                     SelectedLabel.Text = default or options[1] or ""
                     SelectedLabel.TextColor3 = Theme.SubText
-                    SelectedLabel.Font = Enum.Font.GothamBold
+                    SelectedLabel.Font = Enum.Font.Gotham
                     SelectedLabel.TextSize = 11
                     SelectedLabel.TextXAlignment = Enum.TextXAlignment.Left
                     SelectedLabel.TextTruncate = Enum.TextTruncate.AtEnd
@@ -1352,7 +1390,7 @@ function Library:CreateWindow(options)
                     Label.BackgroundTransparency = 1
                     Label.Text = itemName
                     Label.TextColor3 = Theme.Text
-                    Label.Font = Enum.Font.GothamBold
+                    Label.Font = Enum.Font.Gotham
                     Label.TextSize = 12
                     Label.TextXAlignment = Enum.TextXAlignment.Left
                     Label.Parent = ItemFrame
@@ -1363,7 +1401,7 @@ function Library:CreateWindow(options)
                     ValueLabel.BackgroundTransparency = 1
                     ValueLabel.Text = tostring(default)
                     ValueLabel.TextColor3 = Theme.SubText
-                    ValueLabel.Font = Enum.Font.GothamBold
+                    ValueLabel.Font = Enum.Font.Gotham
                     ValueLabel.TextSize = 12
                     ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
                     ValueLabel.Parent = ItemFrame
