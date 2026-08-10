@@ -139,7 +139,7 @@ function Library:CreateWindow(options)
     -- Sidebar
     local Sidebar = Instance.new("Frame")
     Sidebar.Name = "Sidebar"
-    Sidebar.Size = UDim2.new(0, 180, 1, -32)
+    Sidebar.Size = UDim2.new(0, 205, 1, -32)
     Sidebar.BackgroundTransparency = 1
     Sidebar.Parent = MainFrame
     
@@ -156,24 +156,24 @@ function Library:CreateWindow(options)
     TitleArea.Parent = Sidebar
     
     local NebulaGlow = Instance.new("ImageLabel")
-    NebulaGlow.Size = UDim2.new(0, 110, 0, 110)
-    NebulaGlow.Position = UDim2.new(0, 15, 0, -23)
+    NebulaGlow.Size = UDim2.new(0, 160, 0, 160)
+    NebulaGlow.Position = UDim2.new(0, 4, 0, -48)
     NebulaGlow.BackgroundTransparency = 1
     NebulaGlow.Image = "rbxassetid://5538771868"
     NebulaGlow.ImageColor3 = Theme.Accent
-    NebulaGlow.ImageTransparency = 0.8
+    NebulaGlow.ImageTransparency = 0.88
     NebulaGlow.ZIndex = 2
     NebulaGlow.Parent = TitleArea
     local TitleLabel = Instance.new("TextLabel")
     TitleLabel.Size = UDim2.new(1, 0, 1, 0)
-    TitleLabel.Position = UDim2.new(0, 28, 0, 0)
+    TitleLabel.Position = UDim2.new(0, 42, 0, 0)
     TitleLabel.BackgroundTransparency = 1
     TitleLabel.RichText = true
     TitleLabel.Text = "<font color=\"rgb(139,122,227)\">" .. TitleFirst .. "</font>" .. TitleSecond
     
     local TitleUnderline = Instance.new("Frame")
     TitleUnderline.Size = UDim2.new(0, 84, 0, 1)
-    TitleUnderline.Position = UDim2.new(0, 28, 0, 46)
+    TitleUnderline.Position = UDim2.new(0, 42, 0, 46)
     TitleUnderline.BackgroundColor3 = Theme.Accent
     TitleUnderline.BorderSizePixel = 0
     TitleUnderline.Parent = TitleArea
@@ -206,10 +206,22 @@ function Library:CreateWindow(options)
     
     local ContentContainer = Instance.new("Frame")
     ContentContainer.Name = "ContentContainer"
-    ContentContainer.Size = UDim2.new(1, -180, 1, -32)
-    ContentContainer.Position = UDim2.new(0, 180, 0, 0)
+    ContentContainer.Size = UDim2.new(1, -205, 1, -32)
+    ContentContainer.Position = UDim2.new(0, 205, 0, 0)
     ContentContainer.BackgroundTransparency = 1
     ContentContainer.Parent = MainFrame
+    
+    local FadeFrame = Instance.new("Frame")
+    FadeFrame.Name = "FadeFrame"
+    FadeFrame.Size = UDim2.new(1, -205, 1, -32)
+    FadeFrame.Position = UDim2.new(0, 205, 0, 0)
+    FadeFrame.BackgroundColor3 = Theme.MainBg
+    FadeFrame.BackgroundTransparency = 1
+    FadeFrame.ZIndex = 100
+    FadeFrame.Visible = false
+    FadeFrame.Parent = MainFrame
+    
+    Library.FadeFrame = FadeFrame
     
     local PopupContainer = Instance.new("Frame")
     PopupContainer.Name = "PopupContainer"
@@ -282,7 +294,7 @@ function Library:CreateWindow(options)
         Label.Text = Name
         Label.TextColor3 = Theme.DisabledText
         Label.FontFace = Font.new("rbxasset://fonts/families/Roboto.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-        Label.TextSize = 15
+        Label.TextSize = 16
         Label.TextXAlignment = Enum.TextXAlignment.Left
         Label.Parent = CategoryBtn
         
@@ -347,6 +359,12 @@ function Library:CreateWindow(options)
             CategoryContent.Visible = true
             Label.TextColor3 = Theme.Text
             IconImg.ImageColor3 = Theme.Text
+            
+            if Library.FadeFrame then
+                Library.FadeFrame.BackgroundTransparency = 0
+                Library.FadeFrame.Visible = true
+                TweenService:Create(Library.FadeFrame, TweenInfo.new(0.35, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
+            end
         end)
         
         if #self.Categories == 1 then
@@ -433,6 +451,12 @@ function Library:CreateWindow(options)
                 TabBtn.TextColor3 = Theme.Text
                 Underline.BackgroundTransparency = 0
                 TabContent.Visible = true
+                
+                if Library.FadeFrame then
+                    Library.FadeFrame.BackgroundTransparency = 0
+                    Library.FadeFrame.Visible = true
+                    TweenService:Create(Library.FadeFrame, TweenInfo.new(0.35, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
+                end
             end)
             
             if #self.Tabs == 1 then
@@ -442,20 +466,28 @@ function Library:CreateWindow(options)
                 TabContent.Visible = true
             end
             
-            function TabObj:CreateSection(secName, secIcon)
+            function TabObj:CreateSection(secName, secIcon, secToggleCallback)
                 secIcon = secIcon or Icons.User
                 
                 local SectionCard = Instance.new("Frame")
                 SectionCard.BackgroundColor3 = Theme.CardBg
                 SectionCard.BorderSizePixel = 0
+                SectionCard.ClipsDescendants = true
                 SectionCard.Parent = self.Content
                 
                 local CardCorner = Instance.new("UICorner")
                 CardCorner.CornerRadius = UDim.new(0, 8)
                 CardCorner.Parent = SectionCard
                 
+                local CardStroke = Instance.new("UIStroke")
+                CardStroke.Color = Theme.Border
+                CardStroke.Thickness = 1
+                CardStroke.Transparency = 0.5
+                CardStroke.Parent = SectionCard
+                
                 local Header = Instance.new("Frame")
                 Header.Size = UDim2.new(1, 0, 0, 40)
+                Header.BackgroundColor3 = Theme.MainBg
                 Header.BackgroundTransparency = 1
                 Header.Parent = SectionCard
                 
@@ -485,7 +517,7 @@ function Library:CreateWindow(options)
                 HTitle.Text = secName
                 HTitle.TextColor3 = Theme.Text
                 HTitle.FontFace = Font.new("rbxasset://fonts/families/Roboto.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-                HTitle.TextSize = 16
+                HTitle.TextSize = 17
                 HTitle.TextXAlignment = Enum.TextXAlignment.Left
                 HTitle.Parent = Header
                 
@@ -517,17 +549,20 @@ function Library:CreateWindow(options)
                     if secState then
                         TweenService:Create(SecToggleBtn, TweenInfo.new(0.2), {BackgroundColor3 = Theme.Accent}):Play()
                         TweenService:Create(SecToggleCircle, TweenInfo.new(0.2), {Position = UDim2.new(1, -18, 0.5, -8), BackgroundColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+                        TweenService:Create(Header, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
                         if SectionCard:FindFirstChild("BlockerFrame") then SectionCard.BlockerFrame.Visible = false end
                     else
                         TweenService:Create(SecToggleBtn, TweenInfo.new(0.2), {BackgroundColor3 = Theme.InputBg}):Play()
                         TweenService:Create(SecToggleCircle, TweenInfo.new(0.2), {Position = UDim2.new(0, 2, 0.5, -8), BackgroundColor3 = Theme.SubText}):Play()
+                        TweenService:Create(Header, TweenInfo.new(0.2), {BackgroundTransparency = 0}):Play()
                         if SectionCard:FindFirstChild("BlockerFrame") then SectionCard.BlockerFrame.Visible = true end
                     end
+                    if secToggleCallback then secToggleCallback(secState) end
                 end)
                 
                 local Divider = Instance.new("Frame")
-                Divider.Size = UDim2.new(1, -24, 0, 1)
-                Divider.Position = UDim2.new(0, 12, 0, 40)
+                Divider.Size = UDim2.new(1, 0, 0, 1)
+                Divider.Position = UDim2.new(0, 0, 0, 40)
                 Divider.BackgroundColor3 = Theme.Border
                 Divider.BorderSizePixel = 0
                 Divider.Parent = SectionCard
@@ -569,6 +604,14 @@ function Library:CreateWindow(options)
                     ItemFrame.BackgroundTransparency = 1
                     ItemFrame.Parent = self.Container
                     
+                    local ItemDivider = Instance.new("Frame")
+                    ItemDivider.Size = UDim2.new(1, -24, 0, 1)
+                    ItemDivider.Position = UDim2.new(0, 12, 1, -1)
+                    ItemDivider.BackgroundColor3 = Theme.Border
+                    ItemDivider.BackgroundTransparency = 0.5
+                    ItemDivider.BorderSizePixel = 0
+                    ItemDivider.Parent = ItemFrame
+                    
                     local Label = Instance.new("TextLabel")
                     Label.Size = UDim2.new(1, -60, 1, 0)
                     Label.Position = UDim2.new(0, 12, 0, 0)
@@ -576,13 +619,13 @@ function Library:CreateWindow(options)
                     Label.Text = itemName
                     Label.TextColor3 = Theme.Text
                     Label.FontFace = Font.new("rbxasset://fonts/families/Roboto.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-                    Label.TextSize = 15
+                    Label.TextSize = 16
                     Label.TextXAlignment = Enum.TextXAlignment.Left
                     Label.Parent = ItemFrame
                     
                     local CheckBtn = Instance.new("TextButton")
-                    CheckBtn.Size = UDim2.new(0, 22, 0, 22)
-                    CheckBtn.Position = UDim2.new(1, -34, 0.5, -11)
+                    CheckBtn.Size = UDim2.new(0, 18, 0, 18)
+                    CheckBtn.Position = UDim2.new(1, -30, 0.5, -9)
                     CheckBtn.BackgroundColor3 = Theme.InputOutline
                     CheckBtn.Text = ""
                     CheckBtn.Parent = ItemFrame
@@ -637,6 +680,14 @@ function Library:CreateWindow(options)
                     ItemFrame.BackgroundTransparency = 1
                     ItemFrame.Parent = self.Container
                     
+                    local ItemDivider = Instance.new("Frame")
+                    ItemDivider.Size = UDim2.new(1, -24, 0, 1)
+                    ItemDivider.Position = UDim2.new(0, 12, 1, -1)
+                    ItemDivider.BackgroundColor3 = Theme.Border
+                    ItemDivider.BackgroundTransparency = 0.5
+                    ItemDivider.BorderSizePixel = 0
+                    ItemDivider.Parent = ItemFrame
+                    
                     local Label = Instance.new("TextLabel")
                     Label.Size = UDim2.new(1, -80, 1, 0)
                     Label.Position = UDim2.new(0, 12, 0, 0)
@@ -644,7 +695,7 @@ function Library:CreateWindow(options)
                     Label.Text = itemName
                     Label.TextColor3 = Theme.Text
                     Label.FontFace = Font.new("rbxasset://fonts/families/Roboto.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-                    Label.TextSize = 15
+                    Label.TextSize = 16
                     Label.TextXAlignment = Enum.TextXAlignment.Left
                     Label.Parent = ItemFrame
                     
@@ -660,8 +711,8 @@ function Library:CreateWindow(options)
                     ColorCorner.Parent = ColorBox
                     
                     local CheckBtn = Instance.new("TextButton")
-                    CheckBtn.Size = UDim2.new(0, 22, 0, 22)
-                    CheckBtn.Position = UDim2.new(1, -34, 0.5, -11)
+                    CheckBtn.Size = UDim2.new(0, 18, 0, 18)
+                    CheckBtn.Position = UDim2.new(1, -30, 0.5, -9)
                     CheckBtn.BackgroundColor3 = Theme.InputOutline
                     CheckBtn.Text = ""
                     CheckBtn.Parent = ItemFrame
@@ -949,6 +1000,14 @@ function Library:CreateWindow(options)
                     ItemFrame.BackgroundTransparency = 1
                     ItemFrame.Parent = self.Container
                     
+                    local ItemDivider = Instance.new("Frame")
+                    ItemDivider.Size = UDim2.new(1, -24, 0, 1)
+                    ItemDivider.Position = UDim2.new(0, 12, 1, -1)
+                    ItemDivider.BackgroundColor3 = Theme.Border
+                    ItemDivider.BackgroundTransparency = 0.5
+                    ItemDivider.BorderSizePixel = 0
+                    ItemDivider.Parent = ItemFrame
+                    
                     local Label = Instance.new("TextLabel")
                     Label.Size = UDim2.new(1, -100, 1, 0)
                     Label.Position = UDim2.new(0, 12, 0, 0)
@@ -956,7 +1015,7 @@ function Library:CreateWindow(options)
                     Label.Text = itemName
                     Label.TextColor3 = Theme.Text
                     Label.FontFace = Font.new("rbxasset://fonts/families/Roboto.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-                    Label.TextSize = 15
+                    Label.TextSize = 16
                     Label.TextXAlignment = Enum.TextXAlignment.Left
                     Label.Parent = ItemFrame
                     
@@ -984,8 +1043,8 @@ function Library:CreateWindow(options)
                     end)
                     
                     local CheckBtn = Instance.new("TextButton")
-                    CheckBtn.Size = UDim2.new(0, 22, 0, 22)
-                    CheckBtn.Position = UDim2.new(1, -34, 0.5, -11)
+                    CheckBtn.Size = UDim2.new(0, 18, 0, 18)
+                    CheckBtn.Position = UDim2.new(1, -30, 0.5, -9)
                     CheckBtn.BackgroundColor3 = Theme.InputOutline
                     CheckBtn.Text = ""
                     CheckBtn.Parent = ItemFrame
@@ -1267,6 +1326,14 @@ function Library:CreateWindow(options)
                     ItemFrame.BackgroundTransparency = 1
                     ItemFrame.Parent = self.Container
                     
+                    local ItemDivider = Instance.new("Frame")
+                    ItemDivider.Size = UDim2.new(1, -24, 0, 1)
+                    ItemDivider.Position = UDim2.new(0, 12, 1, -1)
+                    ItemDivider.BackgroundColor3 = Theme.Border
+                    ItemDivider.BackgroundTransparency = 0.5
+                    ItemDivider.BorderSizePixel = 0
+                    ItemDivider.Parent = ItemFrame
+                    
                     local Label = Instance.new("TextLabel")
                     Label.Size = UDim2.new(0, 80, 1, 0)
                     Label.Position = UDim2.new(0, 12, 0, 0)
@@ -1274,7 +1341,7 @@ function Library:CreateWindow(options)
                     Label.Text = itemName
                     Label.TextColor3 = Theme.Text
                     Label.FontFace = Font.new("rbxasset://fonts/families/Roboto.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-                    Label.TextSize = 15
+                    Label.TextSize = 16
                     Label.TextXAlignment = Enum.TextXAlignment.Left
                     Label.Parent = ItemFrame
                     
@@ -1296,7 +1363,7 @@ function Library:CreateWindow(options)
                     SelectedLabel.Text = default or options[1] or ""
                     SelectedLabel.TextColor3 = Theme.SubText
                     SelectedLabel.FontFace = Font.new("rbxasset://fonts/families/Roboto.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-                    SelectedLabel.TextSize = 13
+                    SelectedLabel.TextSize = 14
                     SelectedLabel.TextXAlignment = Enum.TextXAlignment.Left
                     SelectedLabel.TextTruncate = Enum.TextTruncate.AtEnd
                     SelectedLabel.Parent = DropBtn
@@ -1344,7 +1411,7 @@ function Library:CreateWindow(options)
                             OptBtn.Text = "  " .. opt
                             OptBtn.TextColor3 = (opt == SelectedLabel.Text) and Theme.Accent or Theme.DisabledText
                             OptBtn.Font = Enum.Font.GothamMedium
-                            OptBtn.TextSize = 13
+                            OptBtn.TextSize = 14
                             OptBtn.TextXAlignment = Enum.TextXAlignment.Left
                             OptBtn.Parent = PopScroll
                             
@@ -1377,6 +1444,14 @@ function Library:CreateWindow(options)
                     ItemFrame.BackgroundTransparency = 1
                     ItemFrame.Parent = self.Container
                     
+                    local ItemDivider = Instance.new("Frame")
+                    ItemDivider.Size = UDim2.new(1, -24, 0, 1)
+                    ItemDivider.Position = UDim2.new(0, 12, 1, -1)
+                    ItemDivider.BackgroundColor3 = Theme.Border
+                    ItemDivider.BackgroundTransparency = 0.5
+                    ItemDivider.BorderSizePixel = 0
+                    ItemDivider.Parent = ItemFrame
+                    
                     local Label = Instance.new("TextLabel")
                     Label.Size = UDim2.new(1, -50, 0, 16)
                     Label.Position = UDim2.new(0, 12, 0, 4)
@@ -1384,7 +1459,7 @@ function Library:CreateWindow(options)
                     Label.Text = itemName
                     Label.TextColor3 = Theme.Text
                     Label.FontFace = Font.new("rbxasset://fonts/families/Roboto.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-                    Label.TextSize = 15
+                    Label.TextSize = 16
                     Label.TextXAlignment = Enum.TextXAlignment.Left
                     Label.Parent = ItemFrame
                     
@@ -1395,7 +1470,7 @@ function Library:CreateWindow(options)
                     ValueLabel.Text = tostring(default)
                     ValueLabel.TextColor3 = Theme.SubText
                     ValueLabel.Font = Enum.Font.Gotham
-                    ValueLabel.TextSize = 15
+                    ValueLabel.TextSize = 16
                     ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
                     ValueLabel.Parent = ItemFrame
                     
