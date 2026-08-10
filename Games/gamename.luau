@@ -32,7 +32,9 @@ local Settings = {
     AntiFling = false,
     ESP = false,
     ESPTeamCheck = false,
-    ESPColor = Color3.fromRGB(123, 97, 255)
+    ESPColor = Color3.fromRGB(123, 97, 255),
+    ESPName = false,
+    ESPNameColor = Color3.fromRGB(255, 255, 255)
 }
 
 -- [CATEGORIES & TABS]
@@ -96,12 +98,16 @@ ProtectionCard:CreateCheckbox("Anti-Fling", false, function(v) Settings.AntiFlin
 local EspCard = EspTab:CreateSection("General")
 EspCard:CreateColorCheckbox("Enable Box ESP", Color3.fromRGB(123, 97, 255), false, function(color)
     Settings.ESPColor = color
-    for _, draws in pairs(ESPDrawings) do
-        if draws.Box then draws.Box.Color = color end
-    end
 end, function(v)
     Settings.ESP = v
 end)
+
+EspCard:CreateColorCheckbox("Enable Name ESP", Color3.fromRGB(255, 255, 255), false, function(color)
+    Settings.ESPNameColor = color
+end, function(v)
+    Settings.ESPName = v
+end)
+
 EspCard:CreateCheckbox("Team Check", false, function(v) Settings.ESPTeamCheck = v end)
 EspCard:CreateDropdown("Dropdown", {"Scoped", "Flashed", "Knocked", "Touched", "Skid"}, "Scoped", function(v) print("Selected:", v) end)
 
@@ -175,7 +181,7 @@ getgenv().UniRenderLoop = RunService.RenderStepped:Connect(function()
     end
     
     for player, draws in pairs(ESPDrawings) do
-        if Settings.ESP and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health > 0 then
+        if (Settings.ESP or Settings.ESPName) and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health > 0 then
             if Settings.ESPTeamCheck and player.Team == LocalPlayer.Team then
                 draws.Box.Visible = false
                 draws.Name.Visible = false
@@ -187,12 +193,23 @@ getgenv().UniRenderLoop = RunService.RenderStepped:Connect(function()
             
             if onScreen then
                 local size = 3000 / pos.Z
-                draws.Box.Size = Vector2.new(size, size * 1.5)
-                draws.Box.Position = Vector2.new(pos.X - draws.Box.Size.X / 2, pos.Y - draws.Box.Size.Y / 2)
-                draws.Box.Visible = true
                 
-                draws.Name.Position = Vector2.new(pos.X, pos.Y - draws.Box.Size.Y / 2 - 20)
-                draws.Name.Visible = true
+                if Settings.ESP then
+                    draws.Box.Size = Vector2.new(size, size * 1.5)
+                    draws.Box.Position = Vector2.new(pos.X - draws.Box.Size.X / 2, pos.Y - draws.Box.Size.Y / 2)
+                    draws.Box.Color = Settings.ESPColor
+                    draws.Box.Visible = true
+                else
+                    draws.Box.Visible = false
+                end
+                
+                if Settings.ESPName then
+                    draws.Name.Position = Vector2.new(pos.X, pos.Y - (size * 1.5) / 2 - 20)
+                    draws.Name.Color = Settings.ESPNameColor
+                    draws.Name.Visible = true
+                else
+                    draws.Name.Visible = false
+                end
             else
                 draws.Box.Visible = false
                 draws.Name.Visible = false

@@ -933,7 +933,13 @@ function Library:CreateWindow(options)
                         
                         local svDrag = false
                         SVBox.InputBegan:Connect(function(inp)
-                            if inp.UserInputType == Enum.UserInputType.MouseButton1 then svDrag = true end
+                            if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+                                svDrag = true
+                                sat = math.clamp((inp.Position.X - SVBox.AbsolutePosition.X) / SVBox.AbsoluteSize.X, 0, 1)
+                                val = 1 - math.clamp((inp.Position.Y - SVBox.AbsolutePosition.Y) / SVBox.AbsoluteSize.Y, 0, 1)
+                                SVCursor.Position = UDim2.new(sat, -5, 1 - val, -5)
+                                applyColor()
+                            end
                         end)
                         UserInputService.InputEnded:Connect(function(inp)
                             if inp.UserInputType == Enum.UserInputType.MouseButton1 then svDrag = false end
@@ -951,7 +957,12 @@ function Library:CreateWindow(options)
                         
                         local hueDrag = false
                         HueBar.InputBegan:Connect(function(inp)
-                            if inp.UserInputType == Enum.UserInputType.MouseButton1 then hueDrag = true end
+                            if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+                                hueDrag = true
+                                hue = math.clamp((inp.Position.X - HueBar.AbsolutePosition.X) / HueBar.AbsoluteSize.X, 0, 1)
+                                HueCursor.Position = UDim2.new(hue, -5, 0.5, -5)
+                                applyColor()
+                            end
                         end)
                         UserInputService.InputEnded:Connect(function(inp)
                             if inp.UserInputType == Enum.UserInputType.MouseButton1 then hueDrag = false end
@@ -966,7 +977,12 @@ function Library:CreateWindow(options)
                         
                         local alphaDrag = false
                         AlphaBar.InputBegan:Connect(function(inp)
-                            if inp.UserInputType == Enum.UserInputType.MouseButton1 then alphaDrag = true end
+                            if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+                                alphaDrag = true
+                                val = math.clamp((inp.Position.X - AlphaBar.AbsolutePosition.X) / AlphaBar.AbsoluteSize.X, 0, 1)
+                                AlphaCursor.Position = UDim2.new(val, -5, 0.5, -5)
+                                applyColor()
+                            end
                         end)
                         UserInputService.InputEnded:Connect(function(inp)
                             if inp.UserInputType == Enum.UserInputType.MouseButton1 then alphaDrag = false end
@@ -1263,7 +1279,13 @@ function Library:CreateWindow(options)
                         
                         local svDrag = false
                         SVBox.InputBegan:Connect(function(inp)
-                            if inp.UserInputType == Enum.UserInputType.MouseButton1 then svDrag = true end
+                            if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+                                svDrag = true
+                                sat = math.clamp((inp.Position.X - SVBox.AbsolutePosition.X) / SVBox.AbsoluteSize.X, 0, 1)
+                                val = 1 - math.clamp((inp.Position.Y - SVBox.AbsolutePosition.Y) / SVBox.AbsoluteSize.Y, 0, 1)
+                                SVCursor.Position = UDim2.new(sat, -5, 1 - val, -5)
+                                applyColor()
+                            end
                         end)
                         UserInputService.InputEnded:Connect(function(inp)
                             if inp.UserInputType == Enum.UserInputType.MouseButton1 then svDrag = false end
@@ -1279,7 +1301,12 @@ function Library:CreateWindow(options)
                         
                         local hueDrag = false
                         HueBar.InputBegan:Connect(function(inp)
-                            if inp.UserInputType == Enum.UserInputType.MouseButton1 then hueDrag = true end
+                            if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+                                hueDrag = true
+                                hue = math.clamp((inp.Position.X - HueBar.AbsolutePosition.X) / HueBar.AbsoluteSize.X, 0, 1)
+                                HueCursor.Position = UDim2.new(hue, -5, 0.5, -5)
+                                applyColor()
+                            end
                         end)
                         UserInputService.InputEnded:Connect(function(inp)
                             if inp.UserInputType == Enum.UserInputType.MouseButton1 then hueDrag = false end
@@ -1294,7 +1321,12 @@ function Library:CreateWindow(options)
                         
                         local alphaDrag = false
                         AlphaBar.InputBegan:Connect(function(inp)
-                            if inp.UserInputType == Enum.UserInputType.MouseButton1 then alphaDrag = true end
+                            if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+                                alphaDrag = true
+                                val = math.clamp((inp.Position.X - AlphaBar.AbsolutePosition.X) / AlphaBar.AbsoluteSize.X, 0, 1)
+                                AlphaCursor.Position = UDim2.new(val, -5, 0.5, -5)
+                                applyColor()
+                            end
                         end)
                         UserInputService.InputEnded:Connect(function(inp)
                             if inp.UserInputType == Enum.UserInputType.MouseButton1 then alphaDrag = false end
