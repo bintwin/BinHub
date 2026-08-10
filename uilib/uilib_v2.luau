@@ -24,8 +24,8 @@ local Theme = {
 
 local Icons = {
     Sidebar = "rbxassetid://7733799275", -- Reply/Arrow left
-    User = "rbxassetid://14753064483",   -- Solid User Circle (Closest to reference)
-    Check = "rbxassetid://7733779610",   
+    User = "rbxassetid://2795572803",   -- Solid User Circle (Closest to reference)
+    Check = "rbxassetid://6031094667",   
     Dropdown = "rbxassetid://7733765103",
     Settings = "rbxassetid://7734053495"
 }
@@ -60,10 +60,10 @@ function Library:CreateWindow(options)
     MainCorner.Parent = MainFrame
     
     local Shadow = Instance.new("UIShadow")
-    Shadow.BlurRadius = UDim.new(0, 12)
+    Shadow.BlurRadius = UDim.new(0, 32)
     Shadow.Color = Color3.fromRGB(0, 0, 0)
-    Shadow.Offset = UDim2.new(0, 0, 0, 4)
-    Shadow.Transparency = 0.15
+    Shadow.Offset = UDim2.new(0, 0, 0, 12)
+    Shadow.Transparency = 0.25
     Shadow.Parent = MainFrame
     
     local dragging, dragInput, dragStart, startPos
@@ -119,7 +119,7 @@ function Library:CreateWindow(options)
     LeftFooterText.BackgroundTransparency = 1
     LeftFooterText.Text = FooterLeft
     LeftFooterText.TextColor3 = Theme.DisabledText
-    LeftFooterText.Font = Enum.Font.GothamMedium
+    LeftFooterText.Font = Enum.Font.GothamBlack
     LeftFooterText.TextSize = 11
     LeftFooterText.TextXAlignment = Enum.TextXAlignment.Left
     LeftFooterText.Parent = BottomBar
@@ -131,7 +131,7 @@ function Library:CreateWindow(options)
     RightFooterText.RichText = true
     RightFooterText.Text = "32 days left, <font color=\"rgb(139,122,227)\"><b>" .. FooterRight .. "</b></font>" -- Made nebulatech noticeably bolder in footer
     RightFooterText.TextColor3 = Theme.DisabledText
-    RightFooterText.Font = Enum.Font.GothamMedium
+    RightFooterText.Font = Enum.Font.GothamBlack
     RightFooterText.TextSize = 11
     RightFooterText.TextXAlignment = Enum.TextXAlignment.Right
     RightFooterText.Parent = BottomBar
@@ -160,9 +160,9 @@ function Library:CreateWindow(options)
     TitleLabel.Position = UDim2.new(0, 20, 0, 0)
     TitleLabel.BackgroundTransparency = 1
     TitleLabel.RichText = true
-    TitleLabel.Text = "<font color=\"rgb(139,122,227)\">" .. TitleFirst .. "</font>" .. TitleSecond
+    TitleLabel.Text = "<u><font color=\"rgb(139,122,227)\">" .. TitleFirst .. "</font></u>" .. TitleSecond
     TitleLabel.TextColor3 = Theme.Text
-    TitleLabel.Font = Enum.Font.GothamBold
+    TitleLabel.Font = Enum.Font.GothamBlack
     TitleLabel.TextSize = 22
     TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
     TitleLabel.Parent = TitleArea
@@ -233,8 +233,8 @@ function Library:CreateWindow(options)
             secLabel.BackgroundTransparency = 1
             secLabel.Text = SectionTitle
             secLabel.TextColor3 = Theme.CategoryText -- Darker grey color
-            secLabel.Font = Enum.Font.GothamBold
-            secLabel.TextSize = 11
+            secLabel.Font = Enum.Font.GothamBlack
+            secLabel.TextSize = 14
             secLabel.TextXAlignment = Enum.TextXAlignment.Left
             secLabel.Parent = CategoryContainer
         end
@@ -264,7 +264,7 @@ function Library:CreateWindow(options)
         Label.BackgroundTransparency = 1
         Label.Text = Name
         Label.TextColor3 = Theme.DisabledText
-        Label.Font = Enum.Font.GothamBold
+        Label.Font = Enum.Font.GothamBlack
         Label.TextSize = 13
         Label.TextXAlignment = Enum.TextXAlignment.Left
         Label.Parent = CategoryBtn
@@ -349,7 +349,7 @@ function Library:CreateWindow(options)
             TabBtn.BackgroundTransparency = 1
             TabBtn.Text = tabName
             TabBtn.TextColor3 = Theme.DisabledText
-            TabBtn.Font = Enum.Font.GothamBold
+            TabBtn.Font = Enum.Font.GothamBlack
             TabBtn.TextSize = 13
             TabBtn.Parent = self.SubTabContainer
             
@@ -433,21 +433,32 @@ function Library:CreateWindow(options)
                 Header.BackgroundTransparency = 1
                 Header.Parent = SectionCard
                 
+                local IconBg = Instance.new("Frame")
+                IconBg.Size = UDim2.new(0, 24, 0, 24)
+                IconBg.Position = UDim2.new(0, 12, 0.5, -12)
+                IconBg.BackgroundColor3 = Theme.Accent
+                IconBg.BackgroundTransparency = 0.8
+                IconBg.Parent = Header
+                
+                local IconCorner = Instance.new("UICorner")
+                IconCorner.CornerRadius = UDim.new(1, 0)
+                IconCorner.Parent = IconBg
+                
                 local HIcon = Instance.new("ImageLabel")
-                HIcon.Size = UDim2.new(0, 16, 0, 16)
-                HIcon.Position = UDim2.new(0, 12, 0.5, -8)
+                HIcon.Size = UDim2.new(0, 14, 0, 14)
+                HIcon.Position = UDim2.new(0.5, -7, 0.5, -7)
                 HIcon.BackgroundTransparency = 1
                 HIcon.Image = secIcon
                 HIcon.ImageColor3 = Theme.Accent
-                HIcon.Parent = Header
+                HIcon.Parent = IconBg
                 
                 local HTitle = Instance.new("TextLabel")
                 HTitle.Size = UDim2.new(1, -70, 1, 0)
-                HTitle.Position = UDim2.new(0, 36, 0, 0)
+                HTitle.Position = UDim2.new(0, 44, 0, 0)
                 HTitle.BackgroundTransparency = 1
                 HTitle.Text = secName
                 HTitle.TextColor3 = Theme.Text
-                HTitle.Font = Enum.Font.GothamBold
+                HTitle.Font = Enum.Font.GothamBlack
                 HTitle.TextSize = 13
                 HTitle.TextXAlignment = Enum.TextXAlignment.Left
                 HTitle.Parent = Header
@@ -486,7 +497,7 @@ function Library:CreateWindow(options)
                     Label.BackgroundTransparency = 1
                     Label.Text = itemName
                     Label.TextColor3 = Theme.Text
-                    Label.Font = Enum.Font.GothamMedium
+                    Label.Font = Enum.Font.GothamBlack
                     Label.TextSize = 12
                     Label.TextXAlignment = Enum.TextXAlignment.Left
                     Label.Parent = ItemFrame
@@ -520,6 +531,12 @@ function Library:CreateWindow(options)
                     CheckIcon.ImageColor3 = Theme.Text
                     CheckIcon.Visible = state
                     CheckIcon.Parent = InnerCheck
+                    local ItemDiv = Instance.new("Frame")
+                    ItemDiv.Size = UDim2.new(1, -24, 0, 1)
+                    ItemDiv.Position = UDim2.new(0, 12, 1, -1)
+                    ItemDiv.BackgroundColor3 = Theme.Border
+                    ItemDiv.BorderSizePixel = 0
+                    ItemDiv.Parent = ItemFrame
                     
                     local function UpdateState()
                         if state then
@@ -554,7 +571,7 @@ function Library:CreateWindow(options)
                     Label.BackgroundTransparency = 1
                     Label.Text = itemName
                     Label.TextColor3 = Theme.Text
-                    Label.Font = Enum.Font.GothamMedium
+                    Label.Font = Enum.Font.GothamBlack
                     Label.TextSize = 12
                     Label.TextXAlignment = Enum.TextXAlignment.Left
                     Label.Parent = ItemFrame
@@ -599,6 +616,12 @@ function Library:CreateWindow(options)
                     CheckIcon.ImageColor3 = Theme.Text
                     CheckIcon.Visible = state
                     CheckIcon.Parent = InnerCheck
+                    local ItemDiv = Instance.new("Frame")
+                    ItemDiv.Size = UDim2.new(1, -24, 0, 1)
+                    ItemDiv.Position = UDim2.new(0, 12, 1, -1)
+                    ItemDiv.BackgroundColor3 = Theme.Border
+                    ItemDiv.BorderSizePixel = 0
+                    ItemDiv.Parent = ItemFrame
                     
                     local function UpdateCheckState()
                         if state then
@@ -639,7 +662,7 @@ function Library:CreateWindow(options)
                         PickShadow.BlurRadius = UDim.new(0, 8)
                         PickShadow.Color = Color3.fromRGB(0, 0, 0)
                         PickShadow.Offset = UDim2.new(0, 0, 0, 2)
-                        PickShadow.Transparency = 0.15
+                        PickShadow.Transparency = 0.3
                         PickShadow.Parent = PickerFrame
                         
                         local hue, sat, val = 0.7, 0.8, 0.8
@@ -866,7 +889,7 @@ function Library:CreateWindow(options)
                     Label.BackgroundTransparency = 1
                     Label.Text = itemName
                     Label.TextColor3 = Theme.Text
-                    Label.Font = Enum.Font.GothamMedium
+                    Label.Font = Enum.Font.GothamBlack
                     Label.TextSize = 12
                     Label.TextXAlignment = Enum.TextXAlignment.Left
                     Label.Parent = ItemFrame
@@ -923,6 +946,12 @@ function Library:CreateWindow(options)
                     CheckIcon.ImageColor3 = Theme.Text
                     CheckIcon.Visible = state
                     CheckIcon.Parent = InnerCheck
+                    local ItemDiv = Instance.new("Frame")
+                    ItemDiv.Size = UDim2.new(1, -24, 0, 1)
+                    ItemDiv.Position = UDim2.new(0, 12, 1, -1)
+                    ItemDiv.BackgroundColor3 = Theme.Border
+                    ItemDiv.BorderSizePixel = 0
+                    ItemDiv.Parent = ItemFrame
                     
                     local function UpdateCheckState()
                         if state then
@@ -963,7 +992,7 @@ function Library:CreateWindow(options)
                         PickShadow.BlurRadius = UDim.new(0, 8)
                         PickShadow.Color = Color3.fromRGB(0, 0, 0)
                         PickShadow.Offset = UDim2.new(0, 0, 0, 2)
-                        PickShadow.Transparency = 0.15
+                        PickShadow.Transparency = 0.3
                         PickShadow.Parent = PickerFrame
                         
                         local hue, sat, val = Color3.toHSV(currentColor)
@@ -1184,7 +1213,7 @@ function Library:CreateWindow(options)
                     Label.BackgroundTransparency = 1
                     Label.Text = itemName
                     Label.TextColor3 = Theme.Text
-                    Label.Font = Enum.Font.GothamMedium
+                    Label.Font = Enum.Font.GothamBlack
                     Label.TextSize = 12
                     Label.TextXAlignment = Enum.TextXAlignment.Left
                     Label.Parent = ItemFrame
@@ -1206,7 +1235,7 @@ function Library:CreateWindow(options)
                     SelectedLabel.BackgroundTransparency = 1
                     SelectedLabel.Text = default or options[1] or ""
                     SelectedLabel.TextColor3 = Theme.SubText
-                    SelectedLabel.Font = Enum.Font.GothamMedium
+                    SelectedLabel.Font = Enum.Font.GothamBlack
                     SelectedLabel.TextSize = 11
                     SelectedLabel.TextXAlignment = Enum.TextXAlignment.Left
                     SelectedLabel.TextTruncate = Enum.TextTruncate.AtEnd
@@ -1219,6 +1248,12 @@ function Library:CreateWindow(options)
                     DropIcon.Image = Icons.Dropdown
                     DropIcon.ImageColor3 = Theme.SubText
                     DropIcon.Parent = DropBtn
+                    local ItemDiv = Instance.new("Frame")
+                    ItemDiv.Size = UDim2.new(1, -24, 0, 1)
+                    ItemDiv.Position = UDim2.new(0, 12, 1, -1)
+                    ItemDiv.BackgroundColor3 = Theme.Border
+                    ItemDiv.BorderSizePixel = 0
+                    ItemDiv.Parent = ItemFrame
                     
                     DropBtn.MouseButton1Click:Connect(function()
                         PopupContainer.Visible = true
@@ -1254,7 +1289,7 @@ function Library:CreateWindow(options)
                             OptBtn.BackgroundTransparency = 1
                             OptBtn.Text = "  " .. opt
                             OptBtn.TextColor3 = (opt == SelectedLabel.Text) and Theme.Accent or Theme.DisabledText
-                            OptBtn.Font = Enum.Font.GothamMedium
+                            OptBtn.Font = Enum.Font.GothamBold
                             OptBtn.TextSize = 12
                             OptBtn.TextXAlignment = Enum.TextXAlignment.Left
                             OptBtn.Parent = PopScroll
@@ -1294,7 +1329,7 @@ function Library:CreateWindow(options)
                     Label.BackgroundTransparency = 1
                     Label.Text = itemName
                     Label.TextColor3 = Theme.Text
-                    Label.Font = Enum.Font.GothamMedium
+                    Label.Font = Enum.Font.GothamBlack
                     Label.TextSize = 12
                     Label.TextXAlignment = Enum.TextXAlignment.Left
                     Label.Parent = ItemFrame
@@ -1305,7 +1340,7 @@ function Library:CreateWindow(options)
                     ValueLabel.BackgroundTransparency = 1
                     ValueLabel.Text = tostring(default)
                     ValueLabel.TextColor3 = Theme.SubText
-                    ValueLabel.Font = Enum.Font.GothamMedium
+                    ValueLabel.Font = Enum.Font.GothamBlack
                     ValueLabel.TextSize = 12
                     ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
                     ValueLabel.Parent = ItemFrame
