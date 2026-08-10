@@ -172,8 +172,8 @@ function Library:CreateWindow(options)
     TitleLabel.Text = "<font color=\"rgb(139,122,227)\">" .. TitleFirst .. "</font>" .. TitleSecond
     
     local TitleUnderline = Instance.new("Frame")
-    TitleUnderline.Size = UDim2.new(0, 120, 0, 1)
-    TitleUnderline.Position = UDim2.new(0.5, -60, 0, 46)
+    TitleUnderline.Size = UDim2.new(0, 86, 0, 1)
+    TitleUnderline.Position = UDim2.new(0.5, -72, 0, 46)
     TitleUnderline.BackgroundColor3 = Theme.Accent
     TitleUnderline.BorderSizePixel = 0
     TitleUnderline.Parent = TitleArea
@@ -1645,7 +1645,31 @@ function Library:CreateWindow(options)
                     Corner.CornerRadius = UDim.new(0, 4)
                     Corner.Parent = Btn
                     
+                    Btn.ClipsDescendants = true
+                    
                     Btn.MouseButton1Click:Connect(function()
+                        local ripple = Instance.new("Frame")
+                        ripple.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                        ripple.BackgroundTransparency = 0.8
+                        ripple.BorderSizePixel = 0
+                        ripple.AnchorPoint = Vector2.new(0.5, 0.5)
+                        ripple.Position = UDim2.new(0.5, 0, 0.5, 0)
+                        ripple.Size = UDim2.new(0, 0, 0, 0)
+                        ripple.ZIndex = 2
+                        
+                        local ripCorner = Instance.new("UICorner")
+                        ripCorner.CornerRadius = UDim.new(1, 0)
+                        ripCorner.Parent = ripple
+                        
+                        ripple.Parent = Btn
+                        
+                        TweenService:Create(ripple, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                            Size = UDim2.new(0, 200, 0, 200),
+                            BackgroundTransparency = 1
+                        }):Play()
+                        
+                        game:GetService("Debris"):AddItem(ripple, 0.4)
+                        
                         if callback then callback() end
                     end)
                 end

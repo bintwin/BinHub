@@ -274,51 +274,58 @@ Players.PlayerRemoving:Connect(function(p) removeESP(p) end)
 if getgenv().UniRenderLoop then getgenv().UniRenderLoop:Disconnect() end
 getgenv().UniRenderLoop = RunService.RenderStepped:Connect(function()
     local char = LocalPlayer.Character
-    local hum = char and char:FindFirstChildOfClass("Humanoid")
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if not char then return end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    local hrp = char:FindFirstChild("HumanoidRootPart")
     
     if hum then
-        if Settings.WalkSpeedEnabled then hum.WalkSpeed = Settings.WalkSpeed else hum.WalkSpeed = 16 end
-        if Settings.JumpPowerEnabled then hum.JumpPower = Settings.JumpPower else hum.JumpPower = 50 end
+        if Settings.WalkSpeedEnabled then hum.WalkSpeed = Settings.WalkSpeed end
+        if Settings.JumpPowerEnabled then hum.JumpPower = Settings.JumpPower end
     end
     
     if Settings.Fly and hrp and hum and flyBG and flyBV then
         hum.PlatformStand = true 
-        local ctrl = {f = 0, b = 0, l = 0, r = 0}
-        if UserInputService:IsKeyDown(Enum.KeyCode.W) then ctrl.f = 1 end
-        if UserInputService:IsKeyDown(Enum.KeyCode.S) then ctrl.b = -1 end
-        if UserInputService:IsKeyDown(Enum.KeyCode.A) then ctrl.l = -1 end
-        if UserInputService:IsKeyDown(Enum.KeyCode.D) then ctrl.r = 1 end
+        local cf = Camera.CFrame
+        local look = cf.LookVector
+        local right = cf.RightVector
+        local f = (UserInputService:IsKeyDown(Enum.KeyCode.W) and 1 or 0) + (UserInputService:IsKeyDown(Enum.KeyCode.S) and -1 or 0)
+        local r = (UserInputService:IsKeyDown(Enum.KeyCode.A) and -1 or 0) + (UserInputService:IsKeyDown(Enum.KeyCode.D) and 1 or 0)
         
-        local look = Camera.CFrame.LookVector
-        local right = Camera.CFrame.RightVector
-        
-        local moveVec = ((look * (ctrl.f + ctrl.b)) + (right * (ctrl.l + ctrl.r)))
-        if moveVec.Magnitude > 0 then
-            flyBV.Velocity = moveVec.Unit * Settings.FlySpeed
-        else
-            flyBV.Velocity = Vector3.new(0, 0, 0)
-        end
-        flyBG.CFrame = Camera.CFrame
+        local moveVec = (look * f) + (right * r)
+        flyBV.Velocity = moveVec.Magnitude > 0 and moveVec.Unit * Settings.FlySpeed or Vector3.zero
+        flyBG.CFrame = cf
     end
     
+    if not Settings.ESP and not Settings.ESPName then
+        for _, draws in pairs(ESPDrawings) do
+            draws.Box.Visible = false
+            draws.Name.Visible = false
+        end
+        return
+    end
+    
+    local cam = Camera
+    local myTeam = LocalPlayer.Team
     for player, draws in pairs(ESPDrawings) do
-        if (Settings.ESP or Settings.ESPName) and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health > 0 then
-            if Settings.ESPTeamCheck and player.Team == LocalPlayer.Team then
+        local pChar = player.Character
+        local pRoot = pChar and pChar:FindFirstChild("HumanoidRootPart")
+        local pHum = pChar and pChar:FindFirstChildOfClass("Humanoid")
+        
+        if pRoot and pHum and pHum.Health > 0 then
+            if Settings.ESPTeamCheck and player.Team == myTeam then
                 draws.Box.Visible = false
                 draws.Name.Visible = false
                 continue
             end
             
-            local root = player.Character.HumanoidRootPart
-            local pos, onScreen = Camera:WorldToViewportPoint(root.Position)
+            local pos, onScreen = cam:WorldToViewportPoint(pRoot.Position)
             
             if onScreen then
                 local size = 3000 / pos.Z
                 
                 if Settings.ESP then
                     draws.Box.Size = Vector2.new(size, size * 1.5)
-                    draws.Box.Position = Vector2.new(pos.X - draws.Box.Size.X / 2, pos.Y - draws.Box.Size.Y / 2)
+                    draws.Box.Position = Vector2.new(pos.X - size / 2, pos.Y - (size * 1.5) / 2)
                     draws.Box.Color = Settings.ESPColor
                     draws.Box.Visible = true
                 else
@@ -343,8 +350,10 @@ getgenv().UniRenderLoop = RunService.RenderStepped:Connect(function()
     end
 end)
 
+local steppedTick = 0
 if getgenv().UniSteppedLoop then getgenv().UniSteppedLoop:Disconnect() end
 getgenv().UniSteppedLoop = RunService.Stepped:Connect(function()
+    steppedTick = steppedTick + 1
     local char = LocalPlayer.Character
     
     if Settings.Noclip and char then
@@ -353,7 +362,7 @@ getgenv().UniSteppedLoop = RunService.Stepped:Connect(function()
         end
     end
     
-    if Settings.AntiFling then
+    if Settings.AntiFling and steppedTick % 3 == 0 then
         for _, p in pairs(Players:GetPlayers()) do
             if p ~= LocalPlayer and p.Character then
                 for _, part in pairs(p.Character:GetDescendants()) do
