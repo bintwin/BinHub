@@ -88,6 +88,35 @@ function Library:CreateWindow(options)
     end)
     
     -- Restored Bottom Bar with accurate darker grey color and top border line
+    
+    local ResizeHandle = Instance.new("TextButton")
+    ResizeHandle.Size = UDim2.new(0, 20, 0, 20)
+    ResizeHandle.Position = UDim2.new(1, -20, 1, -20)
+    ResizeHandle.BackgroundTransparency = 1
+    ResizeHandle.Text = ""
+    ResizeHandle.ZIndex = 1000
+    ResizeHandle.Parent = MainFrame
+    
+    local resizing, resizeStart, resizeStartSize
+    ResizeHandle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            resizing = true
+            resizeStart = input.Position
+            resizeStartSize = MainFrame.AbsoluteSize
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then resizing = false end
+            end)
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if resizing and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - resizeStart
+            local newX = math.max(450, resizeStartSize.X + delta.X)
+            local newY = math.max(300, resizeStartSize.Y + delta.Y)
+            MainFrame.Size = UDim2.new(0, newX, 0, newY)
+        end
+    end)
+
     local BottomBar = Instance.new("Frame")
     BottomBar.Size = UDim2.new(1, 0, 0, 32)
     BottomBar.Position = UDim2.new(0, 0, 1, -32)
@@ -1424,12 +1453,13 @@ function Library:CreateWindow(options)
                     SelectedLabel.Size = UDim2.new(1, -25, 1, 0)
                     SelectedLabel.Position = UDim2.new(0, 10, 0, 0)
                     SelectedLabel.BackgroundTransparency = 1
+                    SelectedLabel.RichText = true
+                    SelectedLabel.ClipsDescendants = true
                     SelectedLabel.Text = default or options[1] or ""
                     SelectedLabel.TextColor3 = Theme.SubText
                     SelectedLabel.FontFace = Font.new("rbxasset://fonts/families/Roboto.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
                     SelectedLabel.TextSize = 14
                     SelectedLabel.TextXAlignment = Enum.TextXAlignment.Left
-                    SelectedLabel.TextTruncate = Enum.TextTruncate.AtEnd
                     SelectedLabel.Parent = DropBtn
                     
                     local DropIcon = Instance.new("ImageLabel")
@@ -1447,11 +1477,15 @@ function Library:CreateWindow(options)
                         local absolutePos = DropBtn.AbsolutePosition
                         local absoluteSize = DropBtn.AbsoluteSize
                         
+                        local targetHeight = math.min(#options * 26 + 10, 250)
                         local PopupFrame = Instance.new("Frame")
-                        PopupFrame.Size = UDim2.new(0, absoluteSize.X, 0, math.min(#options * 26 + 10, 140))
+                        PopupFrame.Size = UDim2.new(0, absoluteSize.X, 0, 0)
                         PopupFrame.Position = UDim2.new(0, absolutePos.X, 0, absolutePos.Y + absoluteSize.Y + 4)
                         PopupFrame.BackgroundColor3 = Theme.CardBg
+                        PopupFrame.ClipsDescendants = true
                         PopupFrame.Parent = PopupContainer
+                        
+                        game:GetService("TweenService"):Create(PopupFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(0, absoluteSize.X, 0, targetHeight)}):Play()
                         
                         local PopCorner = Instance.new("UICorner")
                         PopCorner.CornerRadius = UDim.new(0, 6)
@@ -1461,7 +1495,8 @@ function Library:CreateWindow(options)
                         PopScroll.Size = UDim2.new(1, 0, 1, -10)
                         PopScroll.Position = UDim2.new(0, 0, 0, 5)
                         PopScroll.BackgroundTransparency = 1
-                        PopScroll.ScrollBarThickness = 0
+                        PopScroll.ScrollBarThickness = 4
+                        PopScroll.ScrollBarImageColor3 = Theme.SubText
                         PopScroll.ZIndex = 102
                         PopScroll.Parent = PopupFrame
                         
@@ -1473,6 +1508,9 @@ function Library:CreateWindow(options)
                             local OptBtn = Instance.new("TextButton")
                             OptBtn.Size = UDim2.new(1, 0, 0, 26)
                             OptBtn.BackgroundTransparency = 1
+                            OptBtn.RichText = true
+                            OptBtn.TextWrapped = true
+                            OptBtn.ClipsDescendants = true
                             OptBtn.Text = "  " .. opt
                             OptBtn.TextColor3 = (opt == SelectedLabel.Text) and Theme.Accent or Theme.DisabledText
                             OptBtn.Font = Enum.Font.GothamMedium
@@ -1484,8 +1522,12 @@ function Library:CreateWindow(options)
                             OptBtn.MouseButton1Click:Connect(function()
                                 SelectedLabel.Text = opt
                                 if callback then callback(opt) end
-                                PopupContainer.Visible = false
-                                PopupFrame:Destroy()
+                                local closeTween = game:GetService("TweenService"):Create(PopupFrame, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, absoluteSize.X, 0, 0)})
+                                closeTween:Play()
+                                task.delay(0.15, function()
+                                    PopupContainer.Visible = false
+                                    PopupFrame:Destroy()
+                                end)
                             end)
                         end
                         PopScroll.CanvasSize = UDim2.new(0, 0, 0, #options * 26)
@@ -1497,8 +1539,12 @@ function Library:CreateWindow(options)
                         CloseBtn.ZIndex = 99
                         CloseBtn.Parent = PopupContainer
                         CloseBtn.MouseButton1Click:Connect(function()
-                            PopupContainer.Visible = false
-                            PopupContainer:ClearAllChildren()
+                            local closeTween = game:GetService("TweenService"):Create(PopupFrame, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, absoluteSize.X, 0, 0)})
+                            closeTween:Play()
+                            task.delay(0.15, function()
+                                PopupContainer.Visible = false
+                                PopupContainer:ClearAllChildren()
+                            end)
                         end)
                         PopupFrame.ZIndex = 101
                     end)
@@ -1515,7 +1561,7 @@ function Library:CreateWindow(options)
                 
                 function SecObj:CreateSlider(itemName, min, max, default, callback)
                     local ItemFrame = Instance.new("Frame")
-                    ItemFrame.Size = UDim2.new(1, 0, 0, 42)
+                    ItemFrame.Size = UDim2.new( 1, 0, 0, 48 )
                     ItemFrame.BackgroundTransparency = 1
                     ItemFrame.Parent = self.Container
                     
@@ -1529,7 +1575,7 @@ function Library:CreateWindow(options)
                     
                     local Label = Instance.new("TextLabel")
                     Label.Size = UDim2.new(1, -50, 0, 16)
-                    Label.Position = UDim2.new(0, 12, 0, 4)
+                    Label.Position = UDim2.new(0, 12, 0, 8 )
                     Label.BackgroundTransparency = 1
                     Label.Text = itemName
                     Label.TextColor3 = Theme.Text
@@ -1540,7 +1586,7 @@ function Library:CreateWindow(options)
                     
                     local ValueLabel = Instance.new("TextLabel")
                     ValueLabel.Size = UDim2.new(0, 40, 0, 16)
-                    ValueLabel.Position = UDim2.new(1, -52, 0, 4)
+                    ValueLabel.Position = UDim2.new(1, -52, 0, 8 )
                     ValueLabel.BackgroundTransparency = 1
                     ValueLabel.Text = tostring(default)
                     ValueLabel.TextColor3 = Theme.SubText
@@ -1551,7 +1597,7 @@ function Library:CreateWindow(options)
                     
                     local SliderBg = Instance.new("Frame")
                     SliderBg.Size = UDim2.new(1, -24, 0, 6)
-                    SliderBg.Position = UDim2.new(0, 12, 0, 28)
+                    SliderBg.Position = UDim2.new(0, 12, 0, 32 )
                     SliderBg.BackgroundColor3 = Theme.InputBg
                     SliderBg.Parent = ItemFrame
                     

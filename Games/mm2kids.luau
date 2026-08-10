@@ -29,6 +29,8 @@ local Camera = workspace.CurrentCamera
 
 -- removed useless variables
 
+local UISettings = {}
+
 local State = {
     Chams = false,
     Nametags = false,
@@ -36,21 +38,29 @@ local State = {
     InfiniteJump = false,
     WalkSpeed = 16,
     AntiAFK = false,
-    AntiSit = false,
-    AntiFling = false,
+        AntiFling = false,
 
     AutoKillAll = false,
     AutoGrabGun = false,
     SilentAim = false,
     AutofarmCoins = false,
-    AutoRemoveToyCars = false,
-
+    
     SelectedPlayer = nil,
 }
 
 local Connections = {}
 local VisualObjects = {}
 local SafePlatform = nil
+
+local function notify(text, kind, duration)
+    pcall(function()
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Nebula UI",
+            Text = tostring(text),
+            Duration = duration or 3,
+        })
+    end)
+end
 
 local function disconnect(name)
     local connection = Connections[name]
@@ -141,9 +151,9 @@ end
 -- -------------------------------------------------------------------------
 
 local ROLE_TAGS = {
-    murderer = '<font color="#FF0000">[M] ',
-    sheriff = '<font color="#0096FF">[S] ',
-    innocent = '<font color="#00FF00">[I] ',
+    murderer = '<font color="#FF0000">[MU] ',
+    sheriff = '<font color="#0096FF">[SH] ',
+    innocent = '<font color="#00FF00">[IN] ',
     unknown = '<font color="#808080">[?] ',
 }
 
@@ -154,242 +164,158 @@ local ROLE_COLORS = {
     unknown = Color3.fromRGB(128, 128, 128),
 }
 
-local function clearVisual(player)
-    local stored = VisualObjects[player]
-    if stored then
-        for _, object in pairs(stored) do
-            pcall(function()
-                object:Destroy()
-            end)
+
+-- [DRAWING ESP]
+local ESPDrawings = {}
+
+local function CreateESP(player)
+    if ESPDrawings[player] then return end
+    
+    local box = Drawing.new("Square")
+    box.Visible = false
+    box.Thickness = 1
+    box.Filled = false
+    
+    local text = Drawing.new("Text")
+    text.Visible = false
+    text.Center = true
+    text.Outline = true
+    text.Size = 14
+    
+    local lines = {}
+    for i = 1, 15 do
+        local line = Drawing.new("Line")
+        line.Visible = false
+        line.Thickness = 1
+        table.insert(lines, line)
+    end
+    
+    ESPDrawings[player] = {Box = box, Text = text, Lines = lines}
+end
+
+local function RemoveESP(player)
+    local esp = ESPDrawings[player]
+    if esp then
+        esp.Box:Remove()
+        esp.Text:Remove()
+        for _, line in ipairs(esp.Lines) do
+            line:Remove()
         end
-        VisualObjects[player] = nil
-    end
-
-    local character = getCharacter(player)
-    if character then
-        local existingChams = character:FindFirstChild("VigilChams")
-        if existingChams then
-            existingChams:Destroy()
-        end
-
-        local head = character:FindFirstChild("Head")
-        if head then
-            local existingTag = head:FindFirstChild("VigilNametag")
-            if existingTag then
-                existingTag:Destroy()
-            end
-        end
+        ESPDrawings[player] = nil
     end
 end
 
-local function updateVisual(player)
-    if player == LocalPlayer then
-        return
-    end
-
-    clearVisual(player)
-
-    local character = getCharacter(player)
-    local head = character and character:FindFirstChild("Head")
-    if not character then
-        return
-    end
-
-    local role = getRole(player)
-    local stored = {}
-    VisualObjects[player] = stored
-
-    if State.Chams then
-        local highlight = Instance.new("Highlight")
-        highlight.Name = "VigilChams"
-        highlight.OutlineTransparency = 1
-        highlight.FillTransparency = 0.5
-        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-        highlight.FillColor = ROLE_COLORS[role] or ROLE_COLORS.unknown
-        highlight.Adornee = character
-        highlight.Parent = character
-        stored.Chams = highlight
-    end
-
-    if State.Nametags and head then
-        local billboard = Instance.new("BillboardGui")
-        billboard.Name = "VigilNametag"
-        billboard.Size = UDim2.new(0, 200, 0, 50)
-        billboard.StudsOffset = Vector3.new(0, 2, 0)
-        billboard.AlwaysOnTop = true
-        billboard.Adornee = head
-        billboard.Parent = head
-
-        local label = Instance.new("TextLabel")
-        label.BackgroundTransparency = 1
-        label.Size = UDim2.new(1, 0, 1, 0)
-        label.Font = Enum.Font.SourceSansBold
-        label.TextSize = 14
-        label.TextStrokeTransparency = 0
-        label.TextColor3 = ROLE_COLORS[role] or ROLE_COLORS.unknown
-        label.RichText = true
-        label.Text = (ROLE_TAGS[role] or ROLE_TAGS.unknown) .. player.Name .. "</font>"
-        label.Parent = billboard
-
-        stored.Nametag = billboard
-    end
+for _, player in ipairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer then CreateESP(player) end
 end
+Players.PlayerAdded:Connect(function(player)
+    if player ~= LocalPlayer then CreateESP(player) end
+end)
+Players.PlayerRemoving:Connect(RemoveESP)
 
-local function refreshVisuals()
-    for _, player in ipairs(Players:GetPlayers()) do
-        updateVisual(player)
-    end
-end
+Connections.ESPLoop = RunService.RenderStepped:Connect(function()
+    local camera = workspace.CurrentCamera
+    for player, esp in pairs(ESPDrawings) do
+        local character = player.Character
+        local root = character and character:FindFirstChild("HumanoidRootPart")
+        local head = character and character:FindFirstChild("Head")
+        local humanoid = character and character:FindFirstChild("Humanoid")
+        
+        if character and root and head and humanoid and humanoid.Health > 0 and (State.ESPBox or State.ESPSkeleton or State.ESPName) then
+            local rootPos, rootVis = camera:WorldToViewportPoint(root.Position)
+            local headPos, headVis = camera:WorldToViewportPoint(head.Position + Vector3.new(0, 1, 0))
+            local legPos = camera:WorldToViewportPoint(root.Position - Vector3.new(0, 3, 0))
+            
+            local role = getRole(player)
+            local color = ROLE_COLORS[role]
+            if not color then color = Color3.fromRGB(255, 255, 255) end
+            
+            if rootVis then
+                if State.ESPBox then
+                    local height = math.abs(headPos.Y - legPos.Y)
+                    local width = height / 2
+                    esp.Box.Size = Vector2.new(width, height)
+                    esp.Box.Position = Vector2.new(rootPos.X - width / 2, headPos.Y)
+                    esp.Box.Color = color
+                    esp.Box.Visible = true
+                else
+                    esp.Box.Visible = false
+                end
+                
 
--- -------------------------------------------------------------------------
--- Local-player features
--- -------------------------------------------------------------------------
-
-local function setInfiniteJump(enabled)
-    State.InfiniteJump = enabled
-    disconnect("InfiniteJump")
-
-    if enabled then
-        Connections.InfiniteJump = UserInputService.JumpRequest:Connect(function()
-            local humanoid = getHumanoid()
-            if humanoid then
-                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-            end
-        end)
-    end
-end
-
-local function applyNoclip()
-    if not State.Noclip then
-        return
-    end
-
-    local character = getCharacter()
-    if not character then
-        return
-    end
-
-    for _, descendant in ipairs(character:GetDescendants()) do
-        if descendant:IsA("BasePart") then
-            descendant.CanCollide = false
-        end
-    end
-end
-
-local function applyWalkSpeed()
-    local humanoid = getHumanoid()
-    if humanoid then
-        humanoid.WalkSpeed = State.WalkSpeed
-    end
-end
-
-local function bindWalkSpeedLoop(character)
-    if Connections.WalkSpeedChanged then
-        Connections.WalkSpeedChanged:Disconnect()
-        Connections.WalkSpeedChanged = nil
-    end
-
-    character = character or LocalPlayer.Character
-    local humanoid = character and character:FindFirstChildWhichIsA("Humanoid")
-    if not humanoid then
-        return
-    end
-
-    local function WalkSpeedChange()
-        if humanoid and humanoid.Parent then
-            humanoid.WalkSpeed = State.WalkSpeed
-        end
-    end
-
-    -- Same pattern used by Infinite Yield loopspeed: set it once, then
-    -- restore it whenever something changes Humanoid.WalkSpeed.
-    WalkSpeedChange()
-    Connections.WalkSpeedChanged = humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(WalkSpeedChange)
-end
-
-local function setWalkSpeed(value)
-    value = tonumber(value)
-    if not value then
-        return
-    end
-
-    State.WalkSpeed = value
-    bindWalkSpeedLoop(LocalPlayer.Character)
-end
-
-local function applyAntiSit()
-    if not State.AntiSit then
-        return
-    end
-
-    local humanoid = getHumanoid()
-    if not humanoid then
-        return
-    end
-
-    humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
-    if humanoid.Sit then
-        humanoid.Sit = false
-    end
-end
-
-local function setAntiSit(enabled)
-    State.AntiSit = enabled
-
-    if not enabled then
-        local humanoid = getHumanoid()
-        if humanoid then
-            humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
-        end
-    end
-end
-
--- The original "Anti-Fling" does not zero our own velocity.  The recovered
--- Stepped callback disables collision on BaseParts belonging to another player
--- when that player's HumanoidRootPart is within 3 studs of our root.
-local function applyAntiFling()
-    if not State.AntiFling then
-        return
-    end
-
-    local localRoot = getRoot()
-    if not localRoot then
-        return
-    end
-
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer then
-            local character = getCharacter(player)
-            local targetRoot = getRoot(player)
-
-            if character and targetRoot then
-                local distance = (localRoot.Position - targetRoot.Position).Magnitude
-                if distance < 3 then
-                    for _, descendant in ipairs(character:GetDescendants()) do
-                        if descendant:IsA("BasePart") and descendant.CanCollide then
-                            descendant.CanCollide = false
+                if State.ESPName then
+                    local roleName = ""
+                    if role == "murderer" then roleName = "[Murderer] "
+                    elseif role == "sheriff" then roleName = "[Sheriff] "
+                    elseif role == "hero" then roleName = "[Hero] " end
+                    esp.Text.Text = roleName .. player.Name
+                    esp.Text.Position = Vector2.new(headPos.X, headPos.Y - 20)
+                    esp.Text.Color = color
+                    esp.Text.Visible = true
+                else
+                    esp.Text.Visible = false
+                end
+                
+                                if State.ESPSkeleton then
+                    local isR15 = character:FindFirstChild("UpperTorso") ~= nil
+                    local jointPairs = {}
+                    
+                    if isR15 then
+                        jointPairs = {
+                            {"Head", "UpperTorso"}, {"UpperTorso", "LowerTorso"},
+                            {"UpperTorso", "LeftUpperArm"}, {"LeftUpperArm", "LeftLowerArm"}, {"LeftLowerArm", "LeftHand"},
+                            {"UpperTorso", "RightUpperArm"}, {"RightUpperArm", "RightLowerArm"}, {"RightLowerArm", "RightHand"},
+                            {"LowerTorso", "LeftUpperLeg"}, {"LeftUpperLeg", "LeftLowerLeg"}, {"LeftLowerLeg", "LeftFoot"},
+                            {"LowerTorso", "RightUpperLeg"}, {"RightUpperLeg", "RightLowerLeg"}, {"RightLowerLeg", "RightFoot"}
+                        }
+                    else
+                        jointPairs = {
+                            {"Head", "Torso"},
+                            {"Torso", "Left Arm"},
+                            {"Torso", "Right Arm"},
+                            {"Torso", "Left Leg"},
+                            {"Torso", "Right Leg"}
+                        }
+                    end
+                    
+                    local activeLines = 0
+                    for i, pair in ipairs(jointPairs) do
+                        local part1 = character:FindFirstChild(pair[1])
+                        local part2 = character:FindFirstChild(pair[2])
+                        if part1 and part2 then
+                            local pos1, vis1 = camera:WorldToViewportPoint(part1.Position)
+                            local pos2, vis2 = camera:WorldToViewportPoint(part2.Position)
+                            if vis1 or vis2 then
+                                activeLines = activeLines + 1
+                                local line = esp.Lines[activeLines]
+                                line.From = Vector2.new(pos1.X, pos1.Y)
+                                line.To = Vector2.new(pos2.X, pos2.Y)
+                                line.Color = color
+                                line.Visible = true
+                            end
                         end
                     end
+                    
+                    for i = activeLines + 1, 15 do
+                        esp.Lines[i].Visible = false
+                    end
+                else
+                    for i=1, 15 do esp.Lines[i].Visible = false end
                 end
+
+            else
+                esp.Box.Visible = false
+                esp.Text.Visible = false
+                for i=1, 15 do esp.Lines[i].Visible = false end
             end
+        else
+            esp.Box.Visible = false
+            esp.Text.Visible = false
+            for i=1, 15 do esp.Lines[i].Visible = false end
         end
     end
-end
+end)
 
-local function installAntiAFK()
-    disconnect("AntiAFK")
-
-    Connections.AntiAFK = LocalPlayer.Idled:Connect(function()
-        if not State.AntiAFK then
-            return
-        end
-
-        local camera = workspace.CurrentCamera
-        VirtualUser:Button2Down(Vector2.new(0, 0), camera.CFrame)
-        task.wait(1)
-        VirtualUser:Button2Up(Vector2.new(0, 0), camera.CFrame)
-    end)
-end
 
 -- -------------------------------------------------------------------------
 -- Game helpers
@@ -413,12 +339,6 @@ local function removeToyCar(instance)
         pcall(function()
             instance:Destroy()
         end)
-    end
-end
-
-local function removeExistingToyCars()
-    for _, descendant in ipairs(workspace:GetDescendants()) do
-        removeToyCar(descendant)
     end
 end
 
@@ -463,14 +383,14 @@ local function safeTeleport()
         SafePlatform = Instance.new("Part")
         SafePlatform.Name = "SafeVigilPlatform"
         SafePlatform.Size = Vector3.new(50, 1, 50)
-        SafePlatform.Position = Vector3.new(0, 500, 0)
+        SafePlatform.Position = Vector3.new(0, 5000, 0)
         SafePlatform.Anchored = true
         SafePlatform.Parent = workspace
     end
 
     local root = getRoot()
     if root then
-        root.CFrame = CFrame.new(0, 505, 0)
+        root.CFrame = CFrame.new(0, 5005, 0)
         notify("Teleported to Safe Platform", "success", 2)
     end
 end
@@ -963,14 +883,6 @@ local function playerNames()
     return result
 end
 
-local function refreshPlayerSelector()
-    if PlayerSelector and type(PlayerSelector.UpdateOptions) == "function" then
-        pcall(function()
-            PlayerSelector:UpdateOptions(playerNames())
-        end)
-    end
-    task.defer(refreshRoleRichText)
-end
 
 local function selectPlayer(value)
     local selected = tostring(value or "")
@@ -1006,9 +918,65 @@ end
 -- Runtime connections recovered from the dispatcher
 -- -------------------------------------------------------------------------
 
+local function setInfiniteJump(enabled)
+    State.InfiniteJump = enabled
+    if Connections.InfiniteJump then Connections.InfiniteJump:Disconnect() Connections.InfiniteJump = nil end
+    if enabled then
+        Connections.InfiniteJump = game:GetService("UserInputService").JumpRequest:Connect(function()
+            local character = game.Players.LocalPlayer.Character
+            local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+            if humanoid then humanoid:ChangeState(Enum.HumanoidStateType.Jumping) end
+        end)
+    end
+end
+
+local function applyNoclip()
+    if not State.Noclip then return end
+    local character = game.Players.LocalPlayer.Character
+    if not character then return end
+    for _, descendant in ipairs(character:GetDescendants()) do
+        if descendant:IsA("BasePart") then descendant.CanCollide = false end
+    end
+end
+
+local function applyAntiFling()
+    if not State.AntiFling then return end
+    local character = game.Players.LocalPlayer.Character
+    if not character then return end
+    for _, part in ipairs(character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.CustomPhysicalProperties = PhysicalProperties.new(100, 0.3, 0.5)
+        end
+    end
+    for _, player in ipairs(game.Players:GetPlayers()) do
+        if player ~= game.Players.LocalPlayer and player.Character then
+            for _, part in ipairs(player.Character:GetDescendants()) do
+                if part:IsA("BasePart") then part.CanCollide = false end
+            end
+        end
+    end
+end
+
+local function setWalkSpeed(value)
+    State.WalkSpeed = value
+    local character = game.Players.LocalPlayer.Character
+    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+    if humanoid then humanoid.WalkSpeed = value end
+end
+
+local function bindWalkSpeedLoop(character)
+    if Connections.WalkSpeedLoop then Connections.WalkSpeedLoop:Disconnect() end
+    if not character then return end
+    local humanoid = character:WaitForChild("Humanoid", 3)
+    if humanoid then
+        Connections.WalkSpeedLoop = game:GetService("RunService").Heartbeat:Connect(function()
+            humanoid.WalkSpeed = State.WalkSpeed
+        end)
+    end
+end
+
 Connections.Stepped = RunService.Stepped:Connect(function()
     applyNoclip()
-    applyAntiSit()
     applyAntiFling()
 end)
 
@@ -1020,26 +988,31 @@ Connections.WalkSpeedCharacterAdded = LocalPlayer.CharacterAdded:Connect(functio
         bindWalkSpeedLoop(character)
     end
 end)
+local function installAntiAFK()
+    local VirtualUser = game:GetService("VirtualUser")
+    if not VirtualUser then return end
+    game.Players.LocalPlayer.Idled:Connect(function()
+        if State.AntiAFK then
+            VirtualUser:CaptureController()
+            VirtualUser:ClickButton2(Vector2.new())
+        end
+    end)
+end
 
 installAntiAFK()
 
 Connections.DescendantAdded = workspace.DescendantAdded:Connect(function(instance)
-    if State.AutoRemoveToyCars then
-        removeToyCar(instance)
-    end
 end)
 
 Connections.PlayerAdded = Players.PlayerAdded:Connect(function(player)
     refreshPlayerSelector()
     player.CharacterAdded:Connect(function()
         task.wait()
-        updateVisual(player)
-    end)
+            end)
 end)
 
 Connections.PlayerRemoving = Players.PlayerRemoving:Connect(function(player)
-    clearVisual(player)
-    if State.SelectedPlayer == player then
+        if State.SelectedPlayer == player then
         State.SelectedPlayer = nil
     end
     refreshPlayerSelector()
@@ -1049,8 +1022,7 @@ for _, player in ipairs(Players:GetPlayers()) do
     if player ~= LocalPlayer then
         player.CharacterAdded:Connect(function()
             task.wait()
-            updateVisual(player)
-        end)
+                    end)
     end
 end
 
@@ -1060,46 +1032,44 @@ end
 -- UI integration (uilib_v2)
 -- -------------------------------------------------------------------------
 
-local PlayersCat = Window:CreateCategory({Name = "Players"})
+local PlayersCat = Window:CreateCategory({Name = "Player"})
 local VisualsCat = Window:CreateCategory({Name = "Visuals"})
 local MiscCat = Window:CreateCategory({Name = "Misc"})
 
-local LocalTab = PlayersCat:CreateTab("Self")
-local CombatTab = PlayersCat:CreateTab("Protection")
-local VisualsTab = VisualsCat:CreateTab("Enemies")
+local LocalTab = PlayersCat:CreateTab("Player")
+local CombatTab = PlayersCat:CreateTab("Autofarm/Fling")
+local VisualsTab = VisualsCat:CreateTab("ESP")
 local MiscTab = MiscCat:CreateTab("Settings")
 
 -- [VISUALS]
-local EspCard = VisualsTab:CreateSection("ESP Settings")
-EspCard:CreateCheckbox("Enable Chams", false, function(value)
-    State.Chams = value
-    refreshVisuals()
+local EspCard = VisualsTab:CreateSection("ESP Options")
+UISettings.ESPBox = EspCard:CreateCheckbox("Enable Box ESP", false, function(value)
+    State.ESPBox = value
 end)
-EspCard:CreateCheckbox("Enable Nametags", false, function(value)
-    State.Nametags = value
-    refreshVisuals()
+UISettings.ESPName = EspCard:CreateCheckbox("Enable Name ESP", false, function(value)
+    State.ESPName = value
+end)
+UISettings.ESPSkeleton = EspCard:CreateCheckbox("Enable Skeleton ESP", false, function(value)
+    State.ESPSkeleton = value
 end)
 
 -- [LOCAL PLAYER]
 local MovementCard = LocalTab:CreateSection("Movement")
-MovementCard:CreateSlider("WalkSpeed", 16, 500, 16, function(value)
+UISettings.WalkSpeed = MovementCard:CreateSlider("WalkSpeed", 16, 500, 16, function(value)
     setWalkSpeed(value)
 end)
-MovementCard:CreateCheckbox("Noclip", false, function(value)
+UISettings.Noclip = MovementCard:CreateCheckbox("Noclip", false, function(value)
     State.Noclip = value
 end)
-MovementCard:CreateCheckbox("Infinite Jump", false, function(value)
+UISettings.InfiniteJump = MovementCard:CreateCheckbox("Infinite Jump", false, function(value)
     setInfiniteJump(value)
 end)
 
 local ProtectionCard = LocalTab:CreateSection("Protection")
-ProtectionCard:CreateCheckbox("Anti-AFK", false, function(value)
+UISettings.AntiAFK = ProtectionCard:CreateCheckbox("Anti-AFK", false, function(value)
     State.AntiAFK = value
 end)
-ProtectionCard:CreateCheckbox("Anti-Sit", false, function(value)
-    setAntiSit(value)
-end)
-ProtectionCard:CreateCheckbox("Anti-Fling", false, function(value)
+UISettings.AntiFling = ProtectionCard:CreateCheckbox("Anti-Fling", false, function(value)
     State.AntiFling = value
 end)
 
@@ -1108,13 +1078,13 @@ local CombatCard = CombatTab:CreateSection("Combat Features")
 CombatCard:CreateButton("Kill All (Needs Knife)", function()
     killAll()
 end)
-CombatCard:CreateCheckbox("Auto Kill All", false, function(value)
+UISettings.AutoKillAll = CombatCard:CreateCheckbox("Auto Kill All", false, function(value)
     State.AutoKillAll = value
 end)
-CombatCard:CreateCheckbox("Auto Grab Gun", false, function(value)
+UISettings.AutoGrabGun = CombatCard:CreateCheckbox("Auto Grab Gun", false, function(value)
     State.AutoGrabGun = value
 end)
-CombatCard:CreateCheckbox("Silent Aim", false, function(value)
+UISettings.SilentAim = CombatCard:CreateCheckbox("Silent Aim", false, function(value)
     State.SilentAim = value
 end)
 
@@ -1141,18 +1111,13 @@ function refreshPlayerSelector()
             PlayerFlingDropdown:UpdateOptions(playerNames())
         end)
     end
+    task.defer(refreshRoleRichText)
 end
 
 -- [MISC]
 local FarmingCard = MiscTab:CreateSection("Farming")
-FarmingCard:CreateCheckbox("Autofarm Coins", false, function(value)
+UISettings.AutofarmCoins = FarmingCard:CreateCheckbox("Autofarm Coins", false, function(value)
     State.AutofarmCoins = value
-end)
-FarmingCard:CreateCheckbox("Auto Remove Toy Cars", false, function(value)
-    State.AutoRemoveToyCars = value
-    if value then
-        removeExistingToyCars()
-    end
 end)
 
 local TeleportCard = MiscTab:CreateSection("Teleports")
@@ -1166,10 +1131,116 @@ TeleportCard:CreateButton("Safe Teleport (Platform)", function()
     safeTeleport()
 end)
 
+-- [CONFIG & UNLOAD]
+local HttpService = game:GetService("HttpService")
+if isfolder and not isfolder("BinHubConfigs") then makefolder("BinHubConfigs") end
+
+local function GetConfigs()
+    if not listfiles then return {"Default"} end
+    local success, files = pcall(function() return listfiles("BinHubConfigs") end)
+    if not success then return {"Default"} end
+    local configs = {}
+    for _, file in pairs(files) do
+        local name = file:match("([^\\/]+)%.json$")
+        if name then table.insert(configs, name) end
+    end
+    if #configs == 0 then table.insert(configs, "Default") end
+    return configs
+end
+
+local ConfigDropdown, ConfigTextbox
+local CurrentConfigName = "Default"
+
+local function SaveConfig(name)
+    if not writefile then return end
+    local export = {}
+    for k, v in pairs(State) do
+        if typeof(v) == "EnumItem" then export[k] = {type = "EnumItem", val = v.Name}
+        else export[k] = {type = "raw", val = v} end
+    end
+    export["ToggleKey"] = {type = "EnumItem", val = Window.ToggleKey.Name}
+    
+    writefile("BinHubConfigs/" .. name .. ".json", HttpService:JSONEncode(export))
+    if ConfigDropdown and ConfigDropdown.UpdateOptions then
+        ConfigDropdown:UpdateOptions(GetConfigs())
+    end
+end
+
+local function LoadConfig(name)
+    if not readfile then return end
+    local path = "BinHubConfigs/" .. name .. ".json"
+    if not isfile(path) then return end
+    local success, decoded = pcall(function() return HttpService:JSONDecode(readfile(path)) end)
+    if success and type(decoded) == "table" then
+        for k, item in pairs(decoded) do
+            local val = item.val
+            if item.type == "EnumItem" then val = Enum.KeyCode[val] or Enum.KeyCode.LeftAlt end
+            
+            if k == "ToggleKey" then
+                Window.ToggleKey = val
+                if UISettings.ToggleKey then UISettings.ToggleKey:SetValue(val) end
+            else
+                State[k] = val
+                if UISettings[k] then 
+                    UISettings[k]:SetValue(val) 
+                end
+            end
+        end
+    end
+end
+
+local function CheckAutoload()
+    if isfile and isfile("BinHubConfigs/autoload.txt") then
+        local name = readfile("BinHubConfigs/autoload.txt")
+        LoadConfig(name)
+    end
+end
+
+local ConfigCard = MiscTab:CreateSection("Configuration", "rbxassetid://7734053495")
+UISettings.ToggleKey = ConfigCard:CreateKeybind("Toggle UI", Enum.KeyCode.LeftAlt, function(key)
+    Window.ToggleKey = key
+end)
+
+ConfigDropdown = ConfigCard:CreateDropdown("Configs", GetConfigs(), "Default", function(v)
+    CurrentConfigName = v
+    if ConfigTextbox then ConfigTextbox:SetValue(v) end
+end)
+
+ConfigTextbox = ConfigCard:CreateTextbox("Config Name", "Enter name...", "Default", function(v)
+    CurrentConfigName = v
+end)
+
+ConfigCard:CreateButton("Save Config", function()
+    SaveConfig(CurrentConfigName)
+end)
+
+ConfigCard:CreateButton("Load Config", function()
+    LoadConfig(CurrentConfigName)
+end)
+
+ConfigCard:CreateButton("Set Autoload", function()
+    if writefile then writefile("BinHubConfigs/autoload.txt", CurrentConfigName) end
+end)
+
+ConfigCard:CreateButton("Unload UI", function()
+    for _, conn in pairs(Connections) do
+        if conn and typeof(conn) == "RBXScriptConnection" then conn:Disconnect() end
+    end
+    table.clear(Connections)
+    
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then pcall(RemoveESP, player) end
+    end
+    
+    local success, core = pcall(function() return game:GetService("CoreGui"):FindFirstChild("BinHubV2") end)
+    if success and core then core:Destroy() end
+end)
+
+CheckAutoload()
+
 -- Post-UI init
 refreshPlayerSelector()
 setWalkSpeed(State.WalkSpeed)
-refreshVisuals()
 installSilentAimHook()
 
 task.spawn(automationLoop)
