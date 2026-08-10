@@ -24,7 +24,7 @@ local Theme = {
 
 local Icons = {
     Sidebar = "rbxassetid://7733799275", -- Reply/Arrow left
-    User = "rbxassetid://2795572803",   -- Solid User Circle (Closest to reference)
+    User = "rbxassetid://2795572800",   -- Solid User Circle (Closest to reference)
     Check = "rbxassetid://10709790644",   
     Dropdown = "rbxassetid://7733765103",
     Settings = "rbxassetid://7734053495"
@@ -162,7 +162,7 @@ function Library:CreateWindow(options)
     NebulaGlow.Image = "rbxassetid://5538771868"
     NebulaGlow.ImageColor3 = Theme.Accent
     NebulaGlow.ImageTransparency = 0.4
-    NebulaGlow.ZIndex = 0
+    NebulaGlow.ZIndex = 2
     NebulaGlow.Parent = TitleArea
     local TitleLabel = Instance.new("TextLabel")
     TitleLabel.Size = UDim2.new(1, -20, 1, 0)
