@@ -27,9 +27,7 @@ local CoreGui = game:GetService("CoreGui")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
-local UI_LIBRARY_URL = "https://pastefy.app/vnSH5mJP/raw"
-local TELEGRAM_URL = "https://t.me/Namedadudes"
-local SCRIPT_TITLE = "selfcode.cc cracked by @Zlopiq"
+-- removed useless variables
 
 local State = {
     Chams = false,
@@ -1062,10 +1060,14 @@ end
 -- UI integration (uilib_v2)
 -- -------------------------------------------------------------------------
 
-local LocalTab = Window:CreateTab("Local Player", "rbxassetid://2795572800")
-local CombatTab = Window:CreateTab("Combat", "rbxassetid://10709790644")
-local VisualsTab = Window:CreateTab("Visuals", "rbxassetid://7733799275")
-local MiscTab = Window:CreateTab("Misc", "rbxassetid://7734053495")
+local PlayersCat = Window:CreateCategory({Name = "Players"})
+local VisualsCat = Window:CreateCategory({Name = "Visuals"})
+local MiscCat = Window:CreateCategory({Name = "Misc"})
+
+local LocalTab = PlayersCat:CreateTab("Self")
+local CombatTab = PlayersCat:CreateTab("Protection")
+local VisualsTab = VisualsCat:CreateTab("Enemies")
+local MiscTab = MiscCat:CreateTab("Settings")
 
 -- [VISUALS]
 local EspCard = VisualsTab:CreateSection("ESP Settings")
