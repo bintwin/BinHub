@@ -156,12 +156,12 @@ function Library:CreateWindow(options)
     TitleArea.Parent = Sidebar
     
     local NebulaGlow = Instance.new("ImageLabel")
-    NebulaGlow.Size = UDim2.new(0, 160, 0, 160)
-    NebulaGlow.Position = UDim2.new(0, -20, 0, -48)
+    NebulaGlow.Size = UDim2.new(0, 110, 0, 110)
+    NebulaGlow.Position = UDim2.new(0, -6, 0, -23)
     NebulaGlow.BackgroundTransparency = 1
     NebulaGlow.Image = "rbxassetid://5538771868"
     NebulaGlow.ImageColor3 = Theme.Accent
-    NebulaGlow.ImageTransparency = 0.4
+    NebulaGlow.ImageTransparency = 0.65
     NebulaGlow.ZIndex = 2
     NebulaGlow.Parent = TitleArea
     local TitleLabel = Instance.new("TextLabel")
@@ -250,7 +250,7 @@ function Library:CreateWindow(options)
             secLabel.BackgroundTransparency = 1
             secLabel.Text = SectionTitle
             secLabel.TextColor3 = Theme.CategoryText -- Darker grey color
-            secLabel.Font = Enum.Font.Gotham
+            secLabel.Font = Enum.Font.GothamBold
             secLabel.TextSize = 14
             secLabel.TextXAlignment = Enum.TextXAlignment.Left
             secLabel.Parent = CategoryContainer
@@ -281,7 +281,7 @@ function Library:CreateWindow(options)
         Label.BackgroundTransparency = 1
         Label.Text = Name
         Label.TextColor3 = Theme.DisabledText
-        Label.Font = Enum.Font.GothamMedium
+        Label.FontFace = Font.new("rbxasset://fonts/families/Roboto.json", Enum.FontWeight.Medium, Enum.FontStyle.Normal)
         Label.TextSize = 13
         Label.TextXAlignment = Enum.TextXAlignment.Left
         Label.Parent = CategoryBtn
@@ -366,7 +366,7 @@ function Library:CreateWindow(options)
             TabBtn.BackgroundTransparency = 1
             TabBtn.Text = tabName
             TabBtn.TextColor3 = Theme.DisabledText
-            TabBtn.Font = Enum.Font.GothamMedium
+            TabBtn.Font = Enum.Font.GothamBold
             TabBtn.TextSize = 13
             TabBtn.Parent = self.SubTabContainer
             
@@ -463,7 +463,7 @@ function Library:CreateWindow(options)
                 IconBg.Size = UDim2.new(0, 24, 0, 24)
                 IconBg.Position = UDim2.new(0, 12, 0.5, -12)
                 IconBg.BackgroundColor3 = Theme.Accent
-                IconBg.BackgroundTransparency = 0.8
+                IconBg.BackgroundTransparency = 0
                 IconBg.Parent = Header
                 
                 local IconCorner = Instance.new("UICorner")
@@ -475,7 +475,7 @@ function Library:CreateWindow(options)
                 HIcon.Position = UDim2.new(0.5, -7, 0.5, -7)
                 HIcon.BackgroundTransparency = 1
                 HIcon.Image = secIcon
-                HIcon.ImageColor3 = Theme.Accent
+                HIcon.ImageColor3 = Color3.fromRGB(0, 0, 0)
                 HIcon.Parent = IconBg
                 
                 local HTitle = Instance.new("TextLabel")
@@ -484,7 +484,7 @@ function Library:CreateWindow(options)
                 HTitle.BackgroundTransparency = 1
                 HTitle.Text = secName
                 HTitle.TextColor3 = Theme.Text
-                HTitle.Font = Enum.Font.GothamBlack
+                HTitle.FontFace = Font.new("rbxasset://fonts/families/Roboto.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
                 HTitle.TextSize = 13
                 HTitle.TextXAlignment = Enum.TextXAlignment.Left
                 HTitle.Parent = Header
@@ -557,7 +557,7 @@ function Library:CreateWindow(options)
                     Label.BackgroundTransparency = 1
                     Label.Text = itemName
                     Label.TextColor3 = Theme.Text
-                    Label.Font = Enum.Font.GothamBold
+                    Label.FontFace = Font.new("rbxasset://fonts/families/Roboto.json", Enum.FontWeight.Medium, Enum.FontStyle.Normal)
                     Label.TextSize = 12
                     Label.TextXAlignment = Enum.TextXAlignment.Left
                     Label.Parent = ItemFrame
@@ -625,7 +625,7 @@ function Library:CreateWindow(options)
                     Label.BackgroundTransparency = 1
                     Label.Text = itemName
                     Label.TextColor3 = Theme.Text
-                    Label.Font = Enum.Font.GothamBold
+                    Label.FontFace = Font.new("rbxasset://fonts/families/Roboto.json", Enum.FontWeight.Medium, Enum.FontStyle.Normal)
                     Label.TextSize = 12
                     Label.TextXAlignment = Enum.TextXAlignment.Left
                     Label.Parent = ItemFrame
@@ -937,7 +937,7 @@ function Library:CreateWindow(options)
                     Label.BackgroundTransparency = 1
                     Label.Text = itemName
                     Label.TextColor3 = Theme.Text
-                    Label.Font = Enum.Font.GothamBold
+                    Label.FontFace = Font.new("rbxasset://fonts/families/Roboto.json", Enum.FontWeight.Medium, Enum.FontStyle.Normal)
                     Label.TextSize = 12
                     Label.TextXAlignment = Enum.TextXAlignment.Left
                     Label.Parent = ItemFrame
@@ -1255,7 +1255,7 @@ function Library:CreateWindow(options)
                     Label.BackgroundTransparency = 1
                     Label.Text = itemName
                     Label.TextColor3 = Theme.Text
-                    Label.Font = Enum.Font.GothamBold
+                    Label.FontFace = Font.new("rbxasset://fonts/families/Roboto.json", Enum.FontWeight.Medium, Enum.FontStyle.Normal)
                     Label.TextSize = 12
                     Label.TextXAlignment = Enum.TextXAlignment.Left
                     Label.Parent = ItemFrame
@@ -1277,7 +1277,7 @@ function Library:CreateWindow(options)
                     SelectedLabel.BackgroundTransparency = 1
                     SelectedLabel.Text = default or options[1] or ""
                     SelectedLabel.TextColor3 = Theme.SubText
-                    SelectedLabel.Font = Enum.Font.Gotham
+                    SelectedLabel.FontFace = Font.new("rbxasset://fonts/families/Roboto.json", Enum.FontWeight.Medium, Enum.FontStyle.Normal)
                     SelectedLabel.TextSize = 11
                     SelectedLabel.TextXAlignment = Enum.TextXAlignment.Left
                     SelectedLabel.TextTruncate = Enum.TextTruncate.AtEnd
@@ -1365,7 +1365,7 @@ function Library:CreateWindow(options)
                     Label.BackgroundTransparency = 1
                     Label.Text = itemName
                     Label.TextColor3 = Theme.Text
-                    Label.Font = Enum.Font.GothamBold
+                    Label.FontFace = Font.new("rbxasset://fonts/families/Roboto.json", Enum.FontWeight.Medium, Enum.FontStyle.Normal)
                     Label.TextSize = 12
                     Label.TextXAlignment = Enum.TextXAlignment.Left
                     Label.Parent = ItemFrame
