@@ -671,6 +671,13 @@ function Library:CreateWindow(options)
                         state = not state
                         UpdateState()
                     end)
+                    
+                    local CheckboxObj = {}
+                    function CheckboxObj:SetValue(v)
+                        state = v
+                        UpdateState()
+                    end
+                    return CheckboxObj
                 end
                 
                 function SecObj:CreateColorCheckbox(itemName, defaultColor, defaultState, colorCallback, checkCallback)
@@ -1013,6 +1020,18 @@ function Library:CreateWindow(options)
                             PopupContainer:ClearAllChildren()
                         end)
                     end)
+                    
+                    local ColorCheckboxObj = {}
+                    function ColorCheckboxObj:SetValue(v)
+                        state = v
+                        UpdateCheckState()
+                    end
+                    function ColorCheckboxObj:SetColor(c)
+                        currentColor = c
+                        ColorBox.BackgroundColor3 = currentColor
+                        if colorCallback then colorCallback(c) end
+                    end
+                    return ColorCheckboxObj
                 end
                 
                 function SecObj:CreateSettingsRow(itemName, defaultColor, defaultState, colorCallback, settingsCallback, checkCallback)
@@ -1481,6 +1500,15 @@ function Library:CreateWindow(options)
                         end)
                         PopupFrame.ZIndex = 101
                     end)
+                    local DropdownObj = {}
+                    function DropdownObj:SetValue(v)
+                        SelectedLabel.Text = tostring(v)
+                        if callback then callback(v) end
+                    end
+                    function DropdownObj:UpdateOptions(newOpts)
+                        options = newOpts
+                    end
+                    return DropdownObj
                 end
                 
                 function SecObj:CreateSlider(itemName, min, max, default, callback)
@@ -1575,6 +1603,15 @@ function Library:CreateWindow(options)
                             if callback then callback(val) end
                         end
                     end)
+                    local SliderObj = {}
+                    function SliderObj:SetValue(v)
+                        local val = math.clamp(v, min, max)
+                        local percent = (val - min) / (max - min)
+                        SliderFill.Size = UDim2.new(percent, 0, 1, 0)
+                        ValueLabel.Text = tostring(val)
+                        if callback then callback(val) end
+                    end
+                    return SliderObj
                 end
                 
                 function SecObj:CreateButton(itemName, callback)
@@ -1666,6 +1703,69 @@ function Library:CreateWindow(options)
                             if callback then callback(currentKey) end
                         end
                     end)
+                    
+                    local KeybindObj = {}
+                    function KeybindObj:SetValue(key)
+                        currentKey = key
+                        BindBtn.Text = currentKey.Name
+                        if callback then callback(currentKey) end
+                    end
+                    return KeybindObj
+                end
+                
+                function SecObj:CreateTextbox(itemName, placeholder, default, callback)
+                    local ItemFrame = Instance.new("Frame")
+                    ItemFrame.Size = UDim2.new(1, 0, 0, 42)
+                    ItemFrame.BackgroundTransparency = 1
+                    ItemFrame.Parent = self.Container
+                    
+                    local ItemDivider = Instance.new("Frame")
+                    ItemDivider.Size = UDim2.new(1, -24, 0, 1)
+                    ItemDivider.Position = UDim2.new(0, 12, 1, -1)
+                    ItemDivider.BackgroundColor3 = Theme.Border
+                    ItemDivider.BackgroundTransparency = 0
+                    ItemDivider.BorderSizePixel = 0
+                    ItemDivider.Parent = ItemFrame
+                    
+                    local Label = Instance.new("TextLabel")
+                    Label.Size = UDim2.new(1, -140, 1, 0)
+                    Label.Position = UDim2.new(0, 12, 0, 0)
+                    Label.BackgroundTransparency = 1
+                    Label.Text = itemName
+                    Label.TextColor3 = Theme.Text
+                    Label.FontFace = Font.new("rbxasset://fonts/families/Roboto.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+                    Label.TextSize = 16
+                    Label.TextXAlignment = Enum.TextXAlignment.Left
+                    Label.Parent = ItemFrame
+                    
+                    local TxtBox = Instance.new("TextBox")
+                    TxtBox.Size = UDim2.new(0, 110, 0, 24)
+                    TxtBox.Position = UDim2.new(1, -122, 0.5, -12)
+                    TxtBox.BackgroundColor3 = Theme.InputBg
+                    TxtBox.Text = default or ""
+                    TxtBox.PlaceholderText = placeholder or ""
+                    TxtBox.TextColor3 = Theme.Text
+                    TxtBox.Font = Enum.Font.Gotham
+                    TxtBox.TextSize = 12
+                    TxtBox.ClearTextOnFocus = false
+                    TxtBox.Parent = ItemFrame
+                    
+                    local Corner = Instance.new("UICorner")
+                    Corner.CornerRadius = UDim.new(0, 4)
+                    Corner.Parent = TxtBox
+                    
+                    TxtBox.FocusLost:Connect(function()
+                        if callback then callback(TxtBox.Text) end
+                    end)
+                    
+                    local TextboxObj = {}
+                    function TextboxObj:SetValue(txt)
+                        TxtBox.Text = txt
+                    end
+                    function TextboxObj:GetValue()
+                        return TxtBox.Text
+                    end
+                    return TextboxObj
                 end
                 
                 return SecObj

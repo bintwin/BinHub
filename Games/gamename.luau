@@ -37,6 +37,9 @@ local Settings = {
     ESPNameColor = Color3.fromRGB(255, 255, 255)
 }
 
+local ESPDrawings = {}
+local UISettings = {}
+
 -- [CATEGORIES & TABS]
 local PlayersCat = Window:CreateCategory({Name = "Players"})
 local VisualsCat = Window:CreateCategory({Name = "Visuals"})
@@ -51,20 +54,20 @@ local SettingsTab = MiscCat:CreateTab("Settings")
 
 -- [LOCAL TAB - CARDS]
 local MovementCard = LocalTab:CreateSection("Movement")
-MovementCard:CreateCheckbox("Enable WalkSpeed", false, function(v) Settings.WalkSpeedEnabled = v end)
-MovementCard:CreateSlider("WalkSpeed", 16, 200, 16, function(v) Settings.WalkSpeed = v end)
+UISettings.WalkSpeedEnabled = MovementCard:CreateCheckbox("Enable WalkSpeed", false, function(v) Settings.WalkSpeedEnabled = v end)
+UISettings.WalkSpeed = MovementCard:CreateSlider("WalkSpeed", 16, 200, 16, function(v) Settings.WalkSpeed = v end)
 
 local JumpCard = LocalTab:CreateSection("Jumping")
-JumpCard:CreateCheckbox("Enable JumpPower", false, function(v) Settings.JumpPowerEnabled = v end)
-JumpCard:CreateSlider("JumpPower", 50, 200, 50, function(v) Settings.JumpPower = v end)
-JumpCard:CreateCheckbox("Infinite Jump", false, function(v) Settings.InfJump = v end)
+UISettings.JumpPowerEnabled = JumpCard:CreateCheckbox("Enable JumpPower", false, function(v) Settings.JumpPowerEnabled = v end)
+UISettings.JumpPower = JumpCard:CreateSlider("JumpPower", 50, 200, 50, function(v) Settings.JumpPower = v end)
+UISettings.InfJump = JumpCard:CreateCheckbox("Infinite Jump", false, function(v) Settings.InfJump = v end)
 
 local AdvancedCard = LocalTab:CreateSection("Advanced")
-AdvancedCard:CreateCheckbox("Noclip", false, function(v) Settings.Noclip = v end)
+UISettings.Noclip = AdvancedCard:CreateCheckbox("Noclip", false, function(v) Settings.Noclip = v end)
 
 local flyBV, flyBG
 local FlyCard = LocalTab:CreateSection("Flight")
-FlyCard:CreateCheckbox("Enable Fly", false, function(state)
+UISettings.Fly = FlyCard:CreateCheckbox("Enable Fly", false, function(state)
     Settings.Fly = state
     local char = LocalPlayer.Character
     if not char then return end
@@ -91,34 +94,131 @@ FlyCard:CreateCheckbox("Enable Fly", false, function(state)
         hrp.Velocity = Vector3.new(0, 0, 0)
     end
 end)
-FlyCard:CreateSlider("Fly Speed", 10, 300, 50, function(v) Settings.FlySpeed = v end)
+UISettings.FlySpeed = FlyCard:CreateSlider("Fly Speed", 10, 300, 50, function(v) Settings.FlySpeed = v end)
 
 -- [COMBAT TAB - CARDS]
 local ProtectionCard = CombatTab:CreateSection("Anti-Abuse")
-ProtectionCard:CreateCheckbox("Anti-Fling", false, function(v) Settings.AntiFling = v end)
+UISettings.AntiFling = ProtectionCard:CreateCheckbox("Anti-Fling", false, function(v) Settings.AntiFling = v end)
 
 -- [VISUALS TAB - CARDS]
 local EspCard = EspTab:CreateSection("General")
-EspCard:CreateColorCheckbox("Enable Box ESP", Color3.fromRGB(123, 97, 255), false, function(color)
+UISettings.ESP = EspCard:CreateColorCheckbox("Enable Box ESP", Color3.fromRGB(123, 97, 255), false, function(color)
     Settings.ESPColor = color
 end, function(v)
     Settings.ESP = v
 end)
 
-EspCard:CreateColorCheckbox("Enable Name ESP", Color3.fromRGB(255, 255, 255), false, function(color)
+UISettings.ESPName = EspCard:CreateColorCheckbox("Enable Name ESP", Color3.fromRGB(255, 255, 255), false, function(color)
     Settings.ESPNameColor = color
 end, function(v)
     Settings.ESPName = v
 end)
 
-EspCard:CreateCheckbox("Team Check", false, function(v) Settings.ESPTeamCheck = v end)
+UISettings.ESPTeamCheck = EspCard:CreateCheckbox("Team Check", false, function(v) Settings.ESPTeamCheck = v end)
 EspCard:CreateDropdown("Dropdown", {"Scoped", "Flashed", "Knocked", "Touched", "Skid"}, "Scoped", function(v) print("Selected:", v) end)
+
+
+local HttpService = game:GetService("HttpService")
+if isfolder and not isfolder("BinHubConfigs") then makefolder("BinHubConfigs") end
+
+local function SerializeColor(c) return {r = c.R, g = c.G, b = c.B} end
+local function DeserializeColor(t) return Color3.new(t.r, t.g, t.b) end
+
+local function GetConfigs()
+    if not listfiles then return {"Default"} end
+    local success, files = pcall(function() return listfiles("BinHubConfigs") end)
+    if not success then return {"Default"} end
+    local configs = {}
+    for _, file in pairs(files) do
+        local name = file:match("([^\\/]+)%.json$")
+        if name then table.insert(configs, name) end
+    end
+    if #configs == 0 then table.insert(configs, "Default") end
+    return configs
+end
+
+local ConfigDropdown, ConfigTextbox
+local CurrentConfigName = "Default"
+
+local function SaveConfig(name)
+    if not writefile then return end
+    local export = {}
+    for k, v in pairs(Settings) do
+        if typeof(v) == "Color3" then export[k] = {type = "Color3", val = SerializeColor(v)}
+        elseif typeof(v) == "EnumItem" then export[k] = {type = "EnumItem", val = v.Name}
+        else export[k] = {type = "raw", val = v} end
+    end
+    -- Add toggle key manually
+    export["ToggleKey"] = {type = "EnumItem", val = Window.ToggleKey.Name}
+    
+    writefile("BinHubConfigs/" .. name .. ".json", HttpService:JSONEncode(export))
+    if ConfigDropdown and ConfigDropdown.UpdateOptions then
+        ConfigDropdown:UpdateOptions(GetConfigs())
+    end
+end
+
+local function LoadConfig(name)
+    if not readfile then return end
+    local path = "BinHubConfigs/" .. name .. ".json"
+    if not isfile(path) then return end
+    local success, decoded = pcall(function() return HttpService:JSONDecode(readfile(path)) end)
+    if success and type(decoded) == "table" then
+        for k, item in pairs(decoded) do
+            local val = item.val
+            if item.type == "Color3" then val = DeserializeColor(val)
+            elseif item.type == "EnumItem" then val = Enum.KeyCode[val] or Enum.KeyCode.LeftAlt end
+            
+            if k == "ToggleKey" then
+                Window.ToggleKey = val
+                if UISettings.ToggleKey then UISettings.ToggleKey:SetValue(val) end
+            else
+                Settings[k] = val
+                if UISettings[k] then 
+                    if typeof(val) == "Color3" then
+                        UISettings[k]:SetColor(val)
+                    else
+                        UISettings[k]:SetValue(val) 
+                    end
+                end
+            end
+        end
+    end
+end
+
+local function CheckAutoload()
+    if isfile and isfile("BinHubConfigs/autoload.txt") then
+        local name = readfile("BinHubConfigs/autoload.txt")
+        LoadConfig(name)
+    end
+end
 
 -- [MISC TAB - CARDS]
 local ConfigCard = SettingsTab:CreateSection("Configuration", "rbxassetid://7734053495")
-ConfigCard:CreateKeybind("Toggle UI", Enum.KeyCode.LeftAlt, function(key)
+UISettings.ToggleKey = ConfigCard:CreateKeybind("Toggle UI", Enum.KeyCode.LeftAlt, function(key)
     Window.ToggleKey = key
 end)
+
+ConfigDropdown = ConfigCard:CreateDropdown("Configs", GetConfigs(), "Default", function(v)
+    CurrentConfigName = v
+    if ConfigTextbox then ConfigTextbox:SetValue(v) end
+end)
+
+ConfigTextbox = ConfigCard:CreateTextbox("Config Name", "Enter name...", "Default", function(v)
+    CurrentConfigName = v
+end)
+
+ConfigCard:CreateButton("Save Config", function()
+    SaveConfig(CurrentConfigName)
+end)
+
+ConfigCard:CreateButton("Load Config", function()
+    LoadConfig(CurrentConfigName)
+end)
+
+ConfigCard:CreateButton("Set Autoload", function()
+    if writefile then writefile("BinHubConfigs/autoload.txt", CurrentConfigName) end
+end)
+
 ConfigCard:CreateButton("Unload UI", function()
     if getgenv().UniRenderLoop then getgenv().UniRenderLoop:Disconnect() end
     if getgenv().UniSteppedLoop then getgenv().UniSteppedLoop:Disconnect() end
@@ -136,7 +236,6 @@ end)
 
 
 -- ESP LOGIC
-local ESPDrawings = {}
 local function createESP(player)
     if ESPDrawings[player] then return end
     local box = Drawing.new("Square")
@@ -273,3 +372,5 @@ getgenv().UniInfJump = UserInputService.JumpRequest:Connect(function()
         if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
     end
 end)
+
+CheckAutoload()
