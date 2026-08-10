@@ -60,7 +60,7 @@ function Library:CreateWindow(options)
     MainCorner.Parent = MainFrame
     
     local Shadow = Instance.new("UIShadow")
-    Shadow.BlurRadius = 12
+    Shadow.BlurRadius = UDim.new(0, 12)
     Shadow.Color = Color3.fromRGB(0, 0, 0)
     Shadow.Offset = Vector2.new(0, 4)
     Shadow.Transparency = 0.5
@@ -668,7 +668,7 @@ function Library:CreateWindow(options)
                         PickCorner.Parent = PickerFrame
                         
                         local PickShadow = Instance.new("UIShadow")
-                        PickShadow.BlurRadius = 8
+                        PickShadow.BlurRadius = UDim.new(0, 8)
                         PickShadow.Color = Color3.fromRGB(0, 0, 0)
                         PickShadow.Offset = Vector2.new(0, 2)
                         PickShadow.Transparency = 0.4
@@ -992,7 +992,7 @@ function Library:CreateWindow(options)
                         PickCorner.Parent = PickerFrame
                         
                         local PickShadow = Instance.new("UIShadow")
-                        PickShadow.BlurRadius = 8
+                        PickShadow.BlurRadius = UDim.new(0, 8)
                         PickShadow.Color = Color3.fromRGB(0, 0, 0)
                         PickShadow.Offset = Vector2.new(0, 2)
                         PickShadow.Transparency = 0.4
