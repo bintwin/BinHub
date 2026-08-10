@@ -1133,11 +1133,14 @@ end)
 
 -- [CONFIG & UNLOAD]
 local HttpService = game:GetService("HttpService")
-if isfolder and not isfolder("BinHubConfigs") then makefolder("BinHubConfigs") end
+if isfolder and not isfolder("BinHubConfigs/MurderMystery2") then 
+    if not isfolder("BinHubConfigs") then makefolder("BinHubConfigs") end
+    makefolder("BinHubConfigs/MurderMystery2") 
+end
 
 local function GetConfigs()
     if not listfiles then return {"Default"} end
-    local success, files = pcall(function() return listfiles("BinHubConfigs") end)
+    local success, files = pcall(function() return listfiles("BinHubConfigs/MurderMystery2") end)
     if not success then return {"Default"} end
     local configs = {}
     for _, file in pairs(files) do
@@ -1160,7 +1163,7 @@ local function SaveConfig(name)
     end
     export["ToggleKey"] = {type = "EnumItem", val = Window.ToggleKey.Name}
     
-    writefile("BinHubConfigs/" .. name .. ".json", HttpService:JSONEncode(export))
+    writefile("BinHubConfigs/MurderMystery2/" .. name .. ".json", HttpService:JSONEncode(export))
     if ConfigDropdown and ConfigDropdown.UpdateOptions then
         ConfigDropdown:UpdateOptions(GetConfigs())
     end
@@ -1168,7 +1171,7 @@ end
 
 local function LoadConfig(name)
     if not readfile then return end
-    local path = "BinHubConfigs/" .. name .. ".json"
+    local path = "BinHubConfigs/MurderMystery2/" .. name .. ".json"
     if not isfile(path) then return end
     local success, decoded = pcall(function() return HttpService:JSONDecode(readfile(path)) end)
     if success and type(decoded) == "table" then
@@ -1190,9 +1193,9 @@ local function LoadConfig(name)
 end
 
 local function CheckAutoload()
-    if isfile and isfile("BinHubConfigs/autoload.txt") then
-        local name = readfile("BinHubConfigs/autoload.txt")
-        LoadConfig(name)
+    if isfile and isfile("BinHubConfigs/MurderMystery2/autoload.txt") then
+        local name = readfile("BinHubConfigs/MurderMystery2/autoload.txt")
+        if name and name ~= "" then LoadConfig(name) end
     end
 end
 
@@ -1219,7 +1222,7 @@ ConfigCard:CreateButton("Load Config", function()
 end)
 
 ConfigCard:CreateButton("Set Autoload", function()
-    if writefile then writefile("BinHubConfigs/autoload.txt", CurrentConfigName) end
+    if writefile then writefile("BinHubConfigs/MurderMystery2/autoload.txt", CurrentConfigName) end
 end)
 
 ConfigCard:CreateButton("Unload UI", function()

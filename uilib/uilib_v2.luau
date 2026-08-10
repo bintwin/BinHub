@@ -748,44 +748,32 @@ function Library:CreateWindow(options)
                     ColorCorner.Parent = ColorBox
                     
                     local CheckBtn = Instance.new("TextButton")
-                    CheckBtn.Size = UDim2.new(0, 18, 0, 18)
-                    CheckBtn.Position = UDim2.new(1, -30, 0.5, -9)
-                    CheckBtn.BackgroundColor3 = Theme.InputOutline
+                    CheckBtn.Size = UDim2.new(0, 36, 0, 20)
+                    CheckBtn.Position = UDim2.new(1, -48, 0.5, -10)
+                    CheckBtn.BackgroundColor3 = Theme.InputBg
                     CheckBtn.Text = ""
                     CheckBtn.Parent = ItemFrame
                     
                     local CheckCorner = Instance.new("UICorner")
-                    CheckCorner.CornerRadius = UDim.new(0, 4)
+                    CheckCorner.CornerRadius = UDim.new(1, 0)
                     CheckCorner.Parent = CheckBtn
                     
                     local InnerCheck = Instance.new("Frame")
-                    InnerCheck.Size = UDim2.new(1, -2, 1, -2)
-                    InnerCheck.Position = UDim2.new(0, 1, 0, 1)
-                    InnerCheck.BackgroundColor3 = Theme.InputBg
+                    InnerCheck.Size = UDim2.new(0, 16, 0, 16)
+                    InnerCheck.Position = UDim2.new(0, 2, 0.5, -8)
+                    InnerCheck.BackgroundColor3 = Theme.Text
                     InnerCheck.Parent = CheckBtn
                     
                     local InnerCorner = Instance.new("UICorner")
-                    InnerCorner.CornerRadius = UDim.new(0, 4)
+                    InnerCorner.CornerRadius = UDim.new(1, 0)
                     InnerCorner.Parent = InnerCheck
                     
-                    local CheckIcon = Instance.new("ImageLabel")
-                    CheckIcon.Size = UDim2.new(0, 12, 0, 12)
-                    CheckIcon.Position = UDim2.new(0.5, -6, 0.5, -6)
-                    CheckIcon.BackgroundTransparency = 1
-                    CheckIcon.Image = Icons.Check
-                    CheckIcon.ImageColor3 = Theme.Text
-                    CheckIcon.Visible = state
-                    CheckIcon.Parent = InnerCheck
-                    
+                    local TweenService = game:GetService("TweenService")
                     local function UpdateCheckState()
-                        if state then
-                            CheckBtn.BackgroundColor3 = Theme.Accent
-                            InnerCheck.BackgroundColor3 = Theme.Accent
-                        else
-                            CheckBtn.BackgroundColor3 = Theme.InputOutline
-                            InnerCheck.BackgroundColor3 = Theme.InputBg
-                        end
-                        CheckIcon.Visible = state
+                        local goalPos = state and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
+                        local goalColor = state and Theme.Accent or Theme.InputBg
+                        TweenService:Create(InnerCheck, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = goalPos}):Play()
+                        TweenService:Create(CheckBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = goalColor}):Play()
                         if checkCallback then checkCallback(state) end
                     end
                     UpdateCheckState()
@@ -1114,44 +1102,32 @@ function Library:CreateWindow(options)
                     end)
                     
                     local CheckBtn = Instance.new("TextButton")
-                    CheckBtn.Size = UDim2.new(0, 18, 0, 18)
-                    CheckBtn.Position = UDim2.new(1, -30, 0.5, -9)
-                    CheckBtn.BackgroundColor3 = Theme.InputOutline
+                    CheckBtn.Size = UDim2.new(0, 36, 0, 20)
+                    CheckBtn.Position = UDim2.new(1, -48, 0.5, -10)
+                    CheckBtn.BackgroundColor3 = Theme.InputBg
                     CheckBtn.Text = ""
                     CheckBtn.Parent = ItemFrame
                     
                     local CheckCorner = Instance.new("UICorner")
-                    CheckCorner.CornerRadius = UDim.new(0, 4)
+                    CheckCorner.CornerRadius = UDim.new(1, 0)
                     CheckCorner.Parent = CheckBtn
                     
                     local InnerCheck = Instance.new("Frame")
-                    InnerCheck.Size = UDim2.new(1, -2, 1, -2)
-                    InnerCheck.Position = UDim2.new(0, 1, 0, 1)
-                    InnerCheck.BackgroundColor3 = Theme.InputBg
+                    InnerCheck.Size = UDim2.new(0, 16, 0, 16)
+                    InnerCheck.Position = UDim2.new(0, 2, 0.5, -8)
+                    InnerCheck.BackgroundColor3 = Theme.Text
                     InnerCheck.Parent = CheckBtn
                     
                     local InnerCorner = Instance.new("UICorner")
-                    InnerCorner.CornerRadius = UDim.new(0, 4)
+                    InnerCorner.CornerRadius = UDim.new(1, 0)
                     InnerCorner.Parent = InnerCheck
                     
-                    local CheckIcon = Instance.new("ImageLabel")
-                    CheckIcon.Size = UDim2.new(0, 12, 0, 12)
-                    CheckIcon.Position = UDim2.new(0.5, -6, 0.5, -6)
-                    CheckIcon.BackgroundTransparency = 1
-                    CheckIcon.Image = Icons.Check
-                    CheckIcon.ImageColor3 = Theme.Text
-                    CheckIcon.Visible = state
-                    CheckIcon.Parent = InnerCheck
-                    
+                    local TweenService = game:GetService("TweenService")
                     local function UpdateCheckState()
-                        if state then
-                            CheckBtn.BackgroundColor3 = Theme.Accent
-                            InnerCheck.BackgroundColor3 = Theme.Accent
-                        else
-                            CheckBtn.BackgroundColor3 = Theme.InputOutline
-                            InnerCheck.BackgroundColor3 = Theme.InputBg
-                        end
-                        CheckIcon.Visible = state
+                        local goalPos = state and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
+                        local goalColor = state and Theme.Accent or Theme.InputBg
+                        TweenService:Create(InnerCheck, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = goalPos}):Play()
+                        TweenService:Create(CheckBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = goalColor}):Play()
                         if checkCallback then checkCallback(state) end
                     end
                     UpdateCheckState()
