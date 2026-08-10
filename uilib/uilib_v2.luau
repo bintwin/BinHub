@@ -8,8 +8,8 @@ Library.__index = Library
 
 -- Exactly matched color palette from Image 5 reference
 local Theme = {
-    MainBg = Color3.fromRGB(16, 16, 16),      -- Darkest background (Sidebar & Main content)
-    CardBg = Color3.fromRGB(24, 24, 24),      -- Slightly lighter for Cards
+    MainBg = Color3.fromRGB(12, 12, 12),      -- Darkest background (Sidebar & Main content)
+    CardBg = Color3.fromRGB(18, 18, 18),      -- Slightly lighter for Cards
     BottomBarBg = Color3.fromRGB(12, 12, 12), -- Footer background
     ActiveBg = Color3.fromRGB(24, 24, 28),    -- Active tabs and sidebar buttons
     Accent = Color3.fromRGB(139, 122, 227),   -- Accurate Nebula purple
@@ -156,12 +156,12 @@ function Library:CreateWindow(options)
     TitleArea.Parent = Sidebar
     
     local NebulaGlow = Instance.new("ImageLabel")
-    NebulaGlow.Size = UDim2.new(0, 100, 0, 100)
-    NebulaGlow.Position = UDim2.new(0, 0, 0, -18)
+    NebulaGlow.Size = UDim2.new(0, 180, 0, 180)
+    NebulaGlow.Position = UDim2.new(0, -40, 0, -58)
     NebulaGlow.BackgroundTransparency = 1
     NebulaGlow.Image = "rbxassetid://5028857472"
-    NebulaGlow.ImageColor3 = Theme.Accent
-    NebulaGlow.ImageTransparency = 0.4
+    NebulaGlow.ImageColor3 = Color3.fromRGB(158, 136, 255)
+    NebulaGlow.ImageTransparency = 0.2
     NebulaGlow.ZIndex = 0
     NebulaGlow.Parent = TitleArea
 
@@ -548,7 +548,7 @@ function Library:CreateWindow(options)
                 function SecObj:CreateCheckbox(itemName, default, callback)
                     local state = default or false
                     local ItemFrame = Instance.new("Frame")
-                    ItemFrame.Size = UDim2.new(1, 0, 0, 32)
+                    ItemFrame.Size = UDim2.new(1, 0, 0, 36)
                     ItemFrame.BackgroundTransparency = 1
                     ItemFrame.Parent = self.Container
                     
@@ -564,8 +564,8 @@ function Library:CreateWindow(options)
                     Label.Parent = ItemFrame
                     
                     local CheckBtn = Instance.new("TextButton")
-                    CheckBtn.Size = UDim2.new(0, 16, 0, 16)
-                    CheckBtn.Position = UDim2.new(1, -28, 0.5, -8)
+                    CheckBtn.Size = UDim2.new(0, 18, 0, 18)
+                    CheckBtn.Position = UDim2.new(1, -30, 0.5, -9)
                     CheckBtn.BackgroundColor3 = Theme.InputOutline
                     CheckBtn.Text = ""
                     CheckBtn.Parent = ItemFrame
@@ -592,12 +592,6 @@ function Library:CreateWindow(options)
                     CheckIcon.ImageColor3 = Theme.Text
                     CheckIcon.Visible = state
                     CheckIcon.Parent = InnerCheck
-                    local ItemDiv = Instance.new("Frame")
-                    ItemDiv.Size = UDim2.new(1, -24, 0, 1)
-                    ItemDiv.Position = UDim2.new(0, 12, 1, -1)
-                    ItemDiv.BackgroundColor3 = Theme.Border
-                    ItemDiv.BorderSizePixel = 0
-                    ItemDiv.Parent = ItemFrame
                     
                     local function UpdateState()
                         if state then
@@ -622,7 +616,7 @@ function Library:CreateWindow(options)
                     local state = defaultState or false
                     local currentColor = defaultColor or Theme.Accent
                     local ItemFrame = Instance.new("Frame")
-                    ItemFrame.Size = UDim2.new(1, 0, 0, 32)
+                    ItemFrame.Size = UDim2.new(1, 0, 0, 36)
                     ItemFrame.BackgroundTransparency = 1
                     ItemFrame.Parent = self.Container
                     
@@ -649,8 +643,8 @@ function Library:CreateWindow(options)
                     ColorCorner.Parent = ColorBox
                     
                     local CheckBtn = Instance.new("TextButton")
-                    CheckBtn.Size = UDim2.new(0, 16, 0, 16)
-                    CheckBtn.Position = UDim2.new(1, -28, 0.5, -8)
+                    CheckBtn.Size = UDim2.new(0, 18, 0, 18)
+                    CheckBtn.Position = UDim2.new(1, -30, 0.5, -9)
                     CheckBtn.BackgroundColor3 = Theme.InputOutline
                     CheckBtn.Text = ""
                     CheckBtn.Parent = ItemFrame
@@ -677,12 +671,6 @@ function Library:CreateWindow(options)
                     CheckIcon.ImageColor3 = Theme.Text
                     CheckIcon.Visible = state
                     CheckIcon.Parent = InnerCheck
-                    local ItemDiv = Instance.new("Frame")
-                    ItemDiv.Size = UDim2.new(1, -24, 0, 1)
-                    ItemDiv.Position = UDim2.new(0, 12, 1, -1)
-                    ItemDiv.BackgroundColor3 = Theme.Border
-                    ItemDiv.BorderSizePixel = 0
-                    ItemDiv.Parent = ItemFrame
                     
                     local function UpdateCheckState()
                         if state then
@@ -940,7 +928,7 @@ function Library:CreateWindow(options)
                     local state = defaultState or false
                     local currentColor = defaultColor or Theme.Accent
                     local ItemFrame = Instance.new("Frame")
-                    ItemFrame.Size = UDim2.new(1, 0, 0, 32)
+                    ItemFrame.Size = UDim2.new(1, 0, 0, 36)
                     ItemFrame.BackgroundTransparency = 1
                     ItemFrame.Parent = self.Container
                     
@@ -979,8 +967,8 @@ function Library:CreateWindow(options)
                     end)
                     
                     local CheckBtn = Instance.new("TextButton")
-                    CheckBtn.Size = UDim2.new(0, 16, 0, 16)
-                    CheckBtn.Position = UDim2.new(1, -28, 0.5, -8)
+                    CheckBtn.Size = UDim2.new(0, 18, 0, 18)
+                    CheckBtn.Position = UDim2.new(1, -30, 0.5, -9)
                     CheckBtn.BackgroundColor3 = Theme.InputOutline
                     CheckBtn.Text = ""
                     CheckBtn.Parent = ItemFrame
@@ -1007,12 +995,6 @@ function Library:CreateWindow(options)
                     CheckIcon.ImageColor3 = Theme.Text
                     CheckIcon.Visible = state
                     CheckIcon.Parent = InnerCheck
-                    local ItemDiv = Instance.new("Frame")
-                    ItemDiv.Size = UDim2.new(1, -24, 0, 1)
-                    ItemDiv.Position = UDim2.new(0, 12, 1, -1)
-                    ItemDiv.BackgroundColor3 = Theme.Border
-                    ItemDiv.BorderSizePixel = 0
-                    ItemDiv.Parent = ItemFrame
                     
                     local function UpdateCheckState()
                         if state then
@@ -1264,7 +1246,7 @@ function Library:CreateWindow(options)
                 
                 function SecObj:CreateDropdown(itemName, options, default, callback)
                     local ItemFrame = Instance.new("Frame")
-                    ItemFrame.Size = UDim2.new(1, 0, 0, 32)
+                    ItemFrame.Size = UDim2.new(1, 0, 0, 36)
                     ItemFrame.BackgroundTransparency = 1
                     ItemFrame.Parent = self.Container
                     
@@ -1309,12 +1291,6 @@ function Library:CreateWindow(options)
                     DropIcon.Image = Icons.Dropdown
                     DropIcon.ImageColor3 = Theme.SubText
                     DropIcon.Parent = DropBtn
-                    local ItemDiv = Instance.new("Frame")
-                    ItemDiv.Size = UDim2.new(1, -24, 0, 1)
-                    ItemDiv.Position = UDim2.new(0, 12, 1, -1)
-                    ItemDiv.BackgroundColor3 = Theme.Border
-                    ItemDiv.BorderSizePixel = 0
-                    ItemDiv.Parent = ItemFrame
                     
                     DropBtn.MouseButton1Click:Connect(function()
                         PopupContainer.Visible = true
