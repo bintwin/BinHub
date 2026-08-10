@@ -115,6 +115,8 @@ end, function(v)
 end)
 
 UISettings.ESPTeamCheck = EspCard:CreateCheckbox("Team Check", false, function(v) Settings.ESPTeamCheck = v end)
+UISettings.ESPColor = UISettings.ESP
+UISettings.ESPNameColor = UISettings.ESPName
 EspCard:CreateDropdown("Dropdown", {"Scoped", "Flashed", "Knocked", "Touched", "Skid"}, "Scoped", function(v) print("Selected:", v) end)
 
 

@@ -6,6 +6,11 @@ local SupportedGames = {
         Places = {2537430692},
         GameId = 905198065,
         Script = "https://raw.githubusercontent.com/bintwin/BinHub/refs/heads/main/Games/Blocksnprops.luau"
+    },
+    {
+        Places = {},
+        GameId = 70670854739587,
+        Script = "https://raw.githubusercontent.com/bintwin/BinHub/refs/heads/main/Games/mm2kids.luau"
     }
 }
 
