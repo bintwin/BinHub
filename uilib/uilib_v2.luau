@@ -518,7 +518,7 @@ function Library:CreateWindow(options)
                 local Header = Instance.new("Frame")
                 Header.Size = UDim2.new(1, 0, 0, 40)
                 Header.BackgroundColor3 = Theme.MainBg
-                Header.BackgroundTransparency = 0
+                Header.BackgroundTransparency = 1
                 Header.Parent = SectionCard
                 
                 local IconBg = Instance.new("Frame")
@@ -554,7 +554,7 @@ function Library:CreateWindow(options)
                 local SecToggleBtn = Instance.new("TextButton")
                 SecToggleBtn.Size = UDim2.new(0, 40, 0, 20)
                 SecToggleBtn.Position = UDim2.new(1, -52, 0.5, -10)
-                SecToggleBtn.BackgroundColor3 = Theme.InputBg
+                SecToggleBtn.BackgroundColor3 = Theme.Accent
                 SecToggleBtn.Text = ""
                 SecToggleBtn.AutoButtonColor = false
                 SecToggleBtn.Parent = Header
@@ -565,15 +565,15 @@ function Library:CreateWindow(options)
                 
                 local SecToggleCircle = Instance.new("Frame")
                 SecToggleCircle.Size = UDim2.new(0, 16, 0, 16)
-                SecToggleCircle.Position = UDim2.new(0, 2, 0.5, -8)
-                SecToggleCircle.BackgroundColor3 = Theme.SubText
+                SecToggleCircle.Position = UDim2.new(1, -18, 0.5, -8)
+                SecToggleCircle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
                 SecToggleCircle.Parent = SecToggleBtn
                 
                 local SecCircleCorner = Instance.new("UICorner")
                 SecCircleCorner.CornerRadius = UDim.new(1, 0)
                 SecCircleCorner.Parent = SecToggleCircle
                 
-                local secState = false
+                local secState = true
                 SecToggleBtn.MouseButton1Click:Connect(function()
                     secState = not secState
                     if secState then
