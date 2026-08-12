@@ -12,7 +12,7 @@ local Theme = {
     CardBg = Color3.fromRGB(18, 18, 18),      -- Slightly lighter for Cards
     BottomBarBg = Color3.fromRGB(12, 12, 12), -- Footer background
     ActiveBg = Color3.fromRGB(24, 24, 28),    -- Active tabs and sidebar buttons
-    Accent = Color3.fromRGB(139, 122, 227),   -- Accurate Nebula purple
+    Accent = Color3.fromRGB(144, 184, 112),   -- Accurate Nebula purple
     Text = Color3.fromRGB(235, 235, 239),     -- Main text
     SubText = Color3.fromRGB(143, 143, 153),  -- Secondary text
     DisabledText = Color3.fromRGB(96, 96, 107),-- Inactive tabs
@@ -158,7 +158,7 @@ function Library:CreateWindow(options)
     RightFooterText.Position = UDim2.new(0.5, 0, 0, 0)
     RightFooterText.BackgroundTransparency = 1
     RightFooterText.RichText = true
-    RightFooterText.Text = "32 days left, <font color=\"rgb(139,122,227)\"><b>nebula</b></font><b>tech</b>"
+    RightFooterText.Text = "<font color=\"rgb(144,184,112)\"><b>bin</b></font><b>hub</b>"
     RightFooterText.TextColor3 = Theme.DisabledText
     RightFooterText.Font = Enum.Font.GothamBold
     RightFooterText.TextSize = 11

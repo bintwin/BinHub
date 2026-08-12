@@ -7,10 +7,10 @@ if not UILibrary then
 end
 
 local Window = UILibrary:CreateWindow({
-    TitleFirst = "nebula",
-    TitleSecond = "tech",
+    TitleFirst = "bin",
+    TitleSecond = "hub",
     FooterLeft = "MM2: Kids/Bad Guy Mystery",
-    FooterRight = "nebulatech"
+    FooterRight = "binhub"
 })
 
 local ENV = (getfenv and getfenv()) or _ENV
@@ -939,6 +939,8 @@ local function applyNoclip()
     end
 end
 
+local HeavyProperties = PhysicalProperties.new(100, 0.3, 0.5)
+
 local function applyAntiFling()
     if not State.AntiFling then return end
     local lp = game.Players.LocalPlayer
@@ -947,13 +949,13 @@ local function applyAntiFling()
     
     local hrp = character:FindFirstChild("HumanoidRootPart")
     if hrp then
-        hrp.CustomPhysicalProperties = PhysicalProperties.new(100, 0.3, 0.5)
+        hrp.CustomPhysicalProperties = HeavyProperties
     end
     
     for _, player in ipairs(game.Players:GetPlayers()) do
         if player ~= lp and player.Character then
             for _, part in ipairs(player.Character:GetChildren()) do
-                if part:IsA("BasePart") then 
+                if part:IsA("BasePart") and part.CanCollide then 
                     part.CanCollide = false 
                 end
             end

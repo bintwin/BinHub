@@ -7,10 +7,10 @@ if not UILibrary then
 end
 
 local Window = UILibrary:CreateWindow({
-    TitleFirst = "nebula",
-    TitleSecond = "tech",
+    TitleFirst = "bin",
+    TitleSecond = "hub",
     FooterLeft = "Universal Script for Roblox",
-    FooterRight = "nebulatech"
+    FooterRight = "binhub"
 })
 
 -- SERVICES & GLOBALS
