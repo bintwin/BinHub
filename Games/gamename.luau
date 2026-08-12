@@ -120,15 +120,17 @@ UISettings.ESPNameColor = UISettings.ESPName
 EspCard:CreateDropdown("Dropdown", {"Scoped", "Flashed", "Knocked", "Touched", "Skid"}, "Scoped", function(v) print("Selected:", v) end)
 
 
-local HttpService = game:GetService("HttpService")
-if isfolder and not isfolder("BinHubConfigs") then makefolder("BinHubConfigs") end
+if isfolder and not isfolder("BinHubConfigs/Universal") then
+    if not isfolder("BinHubConfigs") then makefolder("BinHubConfigs") end
+    makefolder("BinHubConfigs/Universal")
+end
 
 local function SerializeColor(c) return {r = c.R, g = c.G, b = c.B} end
 local function DeserializeColor(t) return Color3.new(t.r, t.g, t.b) end
 
 local function GetConfigs()
     if not listfiles then return {"Default"} end
-    local success, files = pcall(function() return listfiles("BinHubConfigs") end)
+    local success, files = pcall(function() return listfiles("BinHubConfigs/Universal") end)
     if not success then return {"Default"} end
     local configs = {}
     for _, file in pairs(files) do
@@ -153,7 +155,7 @@ local function SaveConfig(name)
     -- Add toggle key manually
     export["ToggleKey"] = {type = "EnumItem", val = Window.ToggleKey.Name}
     
-    writefile("BinHubConfigs/" .. name .. ".json", HttpService:JSONEncode(export))
+    writefile("BinHubConfigs/Universal/" .. name .. ".json", HttpService:JSONEncode(export))
     if ConfigDropdown and ConfigDropdown.UpdateOptions then
         ConfigDropdown:UpdateOptions(GetConfigs())
     end
@@ -161,7 +163,7 @@ end
 
 local function LoadConfig(name)
     if not readfile then return end
-    local path = "BinHubConfigs/" .. name .. ".json"
+    local path = "BinHubConfigs/Universal/" .. name .. ".json"
     if not isfile(path) then return end
     local success, decoded = pcall(function() return HttpService:JSONDecode(readfile(path)) end)
     if success and type(decoded) == "table" then
@@ -328,7 +330,7 @@ getgenv().UniRenderLoop = RunService.RenderStepped:Connect(function()
                 if Settings.ESP then
                     draws.Box.Size = Vector2.new(size, size * 1.5)
                     draws.Box.Position = Vector2.new(pos.X - size / 2, pos.Y - (size * 1.5) / 2)
-                    draws.Box.Color = Settings.ESPColor
+                    draws.Box.Color = typeof(Settings.ESPColor) == "Color3" and Settings.ESPColor or Color3.fromRGB(123, 97, 255)
                     draws.Box.Visible = true
                 else
                     draws.Box.Visible = false
@@ -336,7 +338,7 @@ getgenv().UniRenderLoop = RunService.RenderStepped:Connect(function()
                 
                 if Settings.ESPName then
                     draws.Name.Position = Vector2.new(pos.X, pos.Y - (size * 1.5) / 2 - 20)
-                    draws.Name.Color = Settings.ESPNameColor
+                    draws.Name.Color = typeof(Settings.ESPNameColor) == "Color3" and Settings.ESPNameColor or Color3.fromRGB(255, 255, 255)
                     draws.Name.Visible = true
                 else
                     draws.Name.Visible = false

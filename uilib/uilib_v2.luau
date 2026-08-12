@@ -738,7 +738,7 @@ function Library:CreateWindow(options)
                     
                     local ColorBox = Instance.new("TextButton")
                     ColorBox.Size = UDim2.new(0, 16, 0, 16)
-                    ColorBox.Position = UDim2.new(1, -50, 0.5, -8)
+                    ColorBox.Position = UDim2.new(1, -74, 0.5, -8)
                     ColorBox.BackgroundColor3 = currentColor
                     ColorBox.Text = ""
                     ColorBox.Parent = ItemFrame
@@ -1080,7 +1080,7 @@ function Library:CreateWindow(options)
                     
                     local ColorBox = Instance.new("TextButton")
                     ColorBox.Size = UDim2.new(0, 16, 0, 16)
-                    ColorBox.Position = UDim2.new(1, -72, 0.5, -8)
+                    ColorBox.Position = UDim2.new(1, -94, 0.5, -8)
                     ColorBox.BackgroundColor3 = currentColor
                     ColorBox.Text = ""
                     ColorBox.Parent = ItemFrame
@@ -1091,7 +1091,7 @@ function Library:CreateWindow(options)
                     
                     local GearBtn = Instance.new("ImageButton")
                     GearBtn.Size = UDim2.new(0, 14, 0, 14)
-                    GearBtn.Position = UDim2.new(1, -50, 0.5, -7)
+                    GearBtn.Position = UDim2.new(1, -70, 0.5, -7)
                     GearBtn.BackgroundTransparency = 1
                     GearBtn.Image = Icons.Settings
                     GearBtn.ImageColor3 = Theme.SubText
