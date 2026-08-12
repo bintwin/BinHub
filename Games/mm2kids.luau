@@ -941,17 +941,21 @@ end
 
 local function applyAntiFling()
     if not State.AntiFling then return end
-    local character = game.Players.LocalPlayer.Character
+    local lp = game.Players.LocalPlayer
+    local character = lp.Character
     if not character then return end
-    for _, part in ipairs(character:GetDescendants()) do
-        if part:IsA("BasePart") then
-            part.CustomPhysicalProperties = PhysicalProperties.new(100, 0.3, 0.5)
-        end
+    
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        hrp.CustomPhysicalProperties = PhysicalProperties.new(100, 0.3, 0.5)
     end
+    
     for _, player in ipairs(game.Players:GetPlayers()) do
-        if player ~= game.Players.LocalPlayer and player.Character then
-            for _, part in ipairs(player.Character:GetDescendants()) do
-                if part:IsA("BasePart") then part.CanCollide = false end
+        if player ~= lp and player.Character then
+            for _, part in ipairs(player.Character:GetChildren()) do
+                if part:IsA("BasePart") then 
+                    part.CanCollide = false 
+                end
             end
         end
     end
