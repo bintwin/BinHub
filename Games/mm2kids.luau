@@ -1,3 +1,24 @@
+local allowedPlaces = {70670854739587, 142823291}
+local allowedGameId = 70670854739587
+
+if game.GameId ~= allowedGameId and not table.find(allowedPlaces, game.PlaceId) then
+    local bindable = Instance.new("BindableFunction")
+    bindable.OnInvoke = function(button)
+        if button == "Yes" then
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/bintwin/BinHub/refs/heads/main/Games/gamename.luau"))()
+        end
+    end
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "BinHub",
+        Text = "Wrong game! want to load our universal script?",
+        Duration = 10,
+        Button1 = "Yes",
+        Button2 = "No",
+        Callback = bindable
+    })
+    return
+end
+
 -- MM2 Kids / Bad Guy Mystery
 local UILibrary = getgenv().UILibraryV2 or loadstring(game:HttpGet("https://raw.githubusercontent.com/bintwin/BinHub/refs/heads/main/uilib/uilib_v2.luau?t=" .. tostring(tick())))()
 

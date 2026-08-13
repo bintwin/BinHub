@@ -1,3 +1,24 @@
+local allowedPlaces = {2537430692}
+local allowedGameId = 905198065
+
+if game.GameId ~= allowedGameId and not table.find(allowedPlaces, game.PlaceId) then
+    local bindable = Instance.new("BindableFunction")
+    bindable.OnInvoke = function(button)
+        if button == "Yes" then
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/bintwin/BinHub/refs/heads/main/Games/gamename.luau"))()
+        end
+    end
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "BinHub",
+        Text = "Wrong game! want to load our universal script?",
+        Duration = 10,
+        Button1 = "Yes",
+        Button2 = "No",
+        Callback = bindable
+    })
+    return
+end
+
 -- Try to get UILibrary from the loader, or fetch it directly from GitHub
 local UILibrary = getgenv().UILibrary or loadstring(game:HttpGet("https://raw.githubusercontent.com/bintwin/BinHub/refs/heads/main/uilib/uilib.luau?t=" .. tostring(tick())))()
 
