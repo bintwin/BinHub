@@ -1,4 +1,3 @@
-print("BinHUb Loader Started")
 
 -- Map Game/Place configs to their respective game script URLs
 local SupportedGames = {
@@ -18,8 +17,6 @@ local SupportedGames = {
 
 local PlaceId = game.PlaceId
 local GameId = game.GameId
-print("BinHUb Debug - Current PlaceId: " .. tostring(PlaceId))
-print("BinHUb Debug - Current GameId: " .. tostring(GameId))
 local gameScriptUrl = nil
 local TargetGame = getgenv().TargetGame
 
@@ -85,7 +82,6 @@ if not gameScriptUrl then
 end
 
 if gameScriptUrl then
-    print("BinHUb: Loading UI Library...")
     local uiLibUrl = "https://raw.githubusercontent.com/bintwin/BinHub/refs/heads/main/uilib/uilib_v2.luau?t=" .. tostring(tick())
     
     -- Fetch the UI Library globally so game scripts can use it
@@ -96,7 +92,6 @@ if gameScriptUrl then
     if success and uiLib then
         getgenv().UILibraryV2 = uiLib
         
-        print("BinHUb: Loading Game Script for PlaceId " .. tostring(PlaceId) .. "...")
         local scriptSuccess, err = pcall(function()
             loadstring(game:HttpGet(gameScriptUrl))()
         end)
