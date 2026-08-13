@@ -6,13 +6,13 @@ local SupportedGames = {
         Name = "Blocksnprops",
         Places = {2537430692},
         GameId = 905198065,
-        Script = "https://raw.githubusercontent.com/bintwin/BinHub/refs/heads/main/Games/Blocksnprops.luau"
+        Script = "https://raw.githubusercontent.com/tuffnesofbins/binhubload/refs/heads/main/luraphblocksnpropsloader.luau"
     },
     {
         Name = "mm2kids",
         Places = {70670854739587, 142823291},
         GameId = 70670854739587,
-        Script = "https://raw.githubusercontent.com/bintwin/BinHub/refs/heads/main/Games/mm2kids.luau"
+        Script = "https://raw.githubusercontent.com/tuffnesofbins/binhubload/refs/heads/main/mm2loaderluraph.luau"
     }
 }
 
@@ -40,15 +40,25 @@ if TargetGame then
                     loadstring(game:HttpGet("https://raw.githubusercontent.com/bintwin/BinHub/refs/heads/main/Games/gamename.luau"))()
                 end
             end
-            pcall(function()
-                game:GetService("StarterGui"):SetCore("SendNotification", {
-                    Title = "BinHub",
-                    Text = "Wrong game! want to load our universal script?",
-                    Duration = 10,
-                    Button1 = "Yes",
-                    Button2 = "No",
-                    Callback = bindable
-                })
+            task.spawn(function()
+                local success = false
+                local retries = 0
+                while not success and retries < 10 do
+                    success, _ = pcall(function()
+                        game:GetService("StarterGui"):SetCore("SendNotification", {
+                            Title = "BinHub",
+                            Text = "Wrong game! want to load our universal script?",
+                            Duration = 10,
+                            Button1 = "Yes",
+                            Button2 = "No",
+                            Callback = bindable
+                        })
+                    end)
+                    if not success then
+                        task.wait(1)
+                        retries = retries + 1
+                    end
+                end
             end)
             return -- Halt loading
         end
@@ -74,7 +84,7 @@ end
 
 if gameScriptUrl then
     print("BinHUb: Loading UI Library...")
-    local uiLibUrl = "https://raw.githubusercontent.com/bintwin/BinHub/refs/heads/main/uilib/uilib.luau?t=" .. tostring(tick())
+    local uiLibUrl = "https://raw.githubusercontent.com/bintwin/BinHub/refs/heads/main/uilib/uilib_v2.luau?t=" .. tostring(tick())
     
     -- Fetch the UI Library globally so game scripts can use it
     local success, uiLib = pcall(function()
@@ -82,7 +92,7 @@ if gameScriptUrl then
     end)
     
     if success and uiLib then
-        getgenv().UILibrary = uiLib
+        getgenv().UILibraryV2 = uiLib
         
         print("BinHUb: Loading Game Script for PlaceId " .. tostring(PlaceId) .. "...")
         local scriptSuccess, err = pcall(function()
