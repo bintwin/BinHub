@@ -18,6 +18,8 @@ local SupportedGames = {
 
 local PlaceId = game.PlaceId
 local GameId = game.GameId
+print("BinHUb Debug - Current PlaceId: " .. tostring(PlaceId))
+print("BinHUb Debug - Current GameId: " .. tostring(GameId))
 local gameScriptUrl = nil
 local TargetGame = getgenv().TargetGame
 
