@@ -6,13 +6,13 @@ local SupportedGames = {
         Name = "Blocksnprops",
         Places = {2537430692},
         GameId = 905198065,
-        Script = "https://raw.githubusercontent.com/tuffnesofbins/binhubload/refs/heads/main/luraphblocksnpropsloader.luau"
+        Script = "https://raw.githubusercontent.com/bintwin/BinHub/refs/heads/main/Games/gamename.luau"
     },
     {
         Name = "mm2kids",
         Places = {70670854739587, 142823291},
         GameId = 70670854739587,
-        Script = "https://raw.githubusercontent.com/tuffnesofbins/binhubload/refs/heads/main/mm2loaderluraph.luau"
+        Script = "https://raw.githubusercontent.com/bintwin/BinHub/refs/heads/main/Games/mm2kids.luau"
     }
 }
 
