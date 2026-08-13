@@ -201,8 +201,8 @@ function Library:CreateWindow(options)
     TitleLabel.Text = "<font color=\"rgb(144,184,112)\">" .. TitleFirst .. "</font>" .. TitleSecond
     
     local TitleUnderline = Instance.new("Frame")
-    TitleUnderline.Size = UDim2.new(0, 24, 0, 2)
-    TitleUnderline.Position = UDim2.new(0.5, -38, 0, 42)
+    TitleUnderline.Size = UDim2.new(0, 38, 0, 2)
+    TitleUnderline.Position = UDim2.new(0.5, -45, 0, 42)
     TitleUnderline.BackgroundColor3 = Theme.Accent
     TitleUnderline.BorderSizePixel = 0
     TitleUnderline.Parent = TitleArea
