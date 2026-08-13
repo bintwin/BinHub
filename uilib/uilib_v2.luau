@@ -185,8 +185,8 @@ function Library:CreateWindow(options)
     TitleArea.Parent = Sidebar
     
     local NebulaGlow = Instance.new("ImageLabel")
-    NebulaGlow.Size = UDim2.new(0, 100, 0, 100)
-    NebulaGlow.Position = UDim2.new(0.5, -66, 0, -20)
+    NebulaGlow.Size = UDim2.new(0, 60, 0, 60)
+    NebulaGlow.Position = UDim2.new(0.5, -50, 0, 2)
     NebulaGlow.BackgroundTransparency = 1
     NebulaGlow.Image = "rbxassetid://5538771868"
     NebulaGlow.ImageColor3 = Theme.Accent
@@ -201,8 +201,8 @@ function Library:CreateWindow(options)
     TitleLabel.Text = "<font color=\"rgb(144,184,112)\">" .. TitleFirst .. "</font>" .. TitleSecond
     
     local TitleUnderline = Instance.new("Frame")
-    TitleUnderline.Size = UDim2.new(0, 32, 0, 1)
-    TitleUnderline.Position = UDim2.new(0.5, -34, 0, 46)
+    TitleUnderline.Size = UDim2.new(0, 24, 0, 2)
+    TitleUnderline.Position = UDim2.new(0.5, -38, 0, 42)
     TitleUnderline.BackgroundColor3 = Theme.Accent
     TitleUnderline.BorderSizePixel = 0
     TitleUnderline.Parent = TitleArea
