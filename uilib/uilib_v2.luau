@@ -69,6 +69,7 @@ function Library:CreateWindow(options)
     local dragging, dragInput, dragStart, startPos
     MainFrame.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            if Library.InputCaptured then return end
             dragging = true
             dragStart = input.Position
             startPos = MainFrame.Position
@@ -609,6 +610,9 @@ function Library:CreateWindow(options)
                 ItemsLayout.SortOrder = Enum.SortOrder.LayoutOrder
                 ItemsLayout.Padding = UDim.new(0, 0)
                 ItemsLayout.Parent = ItemsContainer
+                ItemsLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                    ItemsContainer.CanvasSize = UDim2.new(0, 0, 0, ItemsLayout.AbsoluteContentSize.Y)
+                end)
                 
                 local BlockerFrame = Instance.new("Frame")
                 BlockerFrame.Name = "BlockerFrame"
@@ -1392,9 +1396,34 @@ function Library:CreateWindow(options)
                     end)
                 end
                 
-                function SecObj:CreateDropdown(itemName, options, default, callback)
+                function SecObj:CreateDropdown(itemName, options, default, callback, multiSelect)
+                    local selectedValues = {}
+                    if multiSelect then
+                        if type(default) == "table" then
+                            for _, value in ipairs(default) do
+                                table.insert(selectedValues, tostring(value))
+                            end
+                        elseif default ~= nil and tostring(default) ~= "" and tostring(default) ~= "None" then
+                            table.insert(selectedValues, tostring(default))
+                        end
+                    end
+
+                    local function IsSelected(value)
+                        for index, selected in ipairs(selectedValues) do
+                            if selected == value then return true, index end
+                        end
+                        return false, nil
+                    end
+
+                    local function DisplayValue()
+                        if multiSelect then
+                            return #selectedValues > 0 and table.concat(selectedValues, ", ") or "None"
+                        end
+                        return tostring(default or options[1] or "")
+                    end
+
                     local ItemFrame = Instance.new("Frame")
-                    ItemFrame.Size = UDim2.new(1, 0, 0, 42)
+                    ItemFrame.Size = UDim2.new(1, 0, 0, 68)
                     ItemFrame.BackgroundTransparency = 1
                     ItemFrame.Parent = self.Container
                     
@@ -1407,8 +1436,8 @@ function Library:CreateWindow(options)
                     ItemDivider.Parent = ItemFrame
                     
                     local Label = Instance.new("TextLabel")
-                    Label.Size = UDim2.new(0, 80, 1, 0)
-                    Label.Position = UDim2.new(0, 12, 0, 0)
+                    Label.Size = UDim2.new(1, -24, 0, 20)
+                    Label.Position = UDim2.new(0, 12, 0, 5)
                     Label.BackgroundTransparency = 1
                     Label.Text = itemName
                     Label.TextColor3 = Theme.Text
@@ -1418,8 +1447,8 @@ function Library:CreateWindow(options)
                     Label.Parent = ItemFrame
                     
                     local DropBtn = Instance.new("TextButton")
-                    DropBtn.Size = UDim2.new(1, -110, 0, 28)
-                    DropBtn.Position = UDim2.new(0, 95, 0.5, -14)
+                    DropBtn.Size = UDim2.new(1, -24, 0, 28)
+                    DropBtn.Position = UDim2.new(0, 12, 0, 31)
                     DropBtn.BackgroundColor3 = Theme.InputBg
                     DropBtn.Text = ""
                     DropBtn.Parent = ItemFrame
@@ -1434,7 +1463,7 @@ function Library:CreateWindow(options)
                     SelectedLabel.BackgroundTransparency = 1
                     SelectedLabel.RichText = true
                     SelectedLabel.ClipsDescendants = true
-                    SelectedLabel.Text = default or options[1] or ""
+                    SelectedLabel.Text = DisplayValue()
                     SelectedLabel.TextColor3 = Theme.SubText
                     SelectedLabel.FontFace = Font.new("rbxasset://fonts/families/Roboto.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
                     SelectedLabel.TextSize = 14
@@ -1491,7 +1520,7 @@ function Library:CreateWindow(options)
                             OptBtn.TextWrapped = true
                             OptBtn.ClipsDescendants = true
                             OptBtn.Text = "  " .. opt
-                            OptBtn.TextColor3 = (opt == SelectedLabel.Text) and Theme.Accent or Theme.DisabledText
+                            OptBtn.TextColor3 = ((multiSelect and IsSelected(opt)) or (not multiSelect and opt == SelectedLabel.Text)) and Theme.Accent or Theme.DisabledText
                             OptBtn.Font = Enum.Font.GothamMedium
                             OptBtn.TextSize = 14
                             OptBtn.TextXAlignment = Enum.TextXAlignment.Left
@@ -1499,6 +1528,21 @@ function Library:CreateWindow(options)
                             OptBtn.Parent = PopScroll
                             
                             OptBtn.MouseButton1Click:Connect(function()
+                                if multiSelect then
+                                    local selected, selectedIndex = IsSelected(opt)
+                                    if selected then
+                                        table.remove(selectedValues, selectedIndex)
+                                        OptBtn.TextColor3 = Theme.DisabledText
+                                    else
+                                        table.insert(selectedValues, opt)
+                                        OptBtn.TextColor3 = Theme.Accent
+                                    end
+                                    SelectedLabel.Text = DisplayValue()
+                                    if callback then callback(table.clone(selectedValues)) end
+                                    return
+                                end
+
+                                default = opt
                                 SelectedLabel.Text = opt
                                 if callback then callback(opt) end
                                 local closeTween = game:GetService("TweenService"):Create(PopupFrame, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, absoluteSize.X, 0, 0)})
@@ -1529,16 +1573,456 @@ function Library:CreateWindow(options)
                     end)
                     local DropdownObj = {}
                     function DropdownObj:SetValue(v)
-                        SelectedLabel.Text = tostring(v)
-                        if callback then callback(v) end
+                        if multiSelect then
+                            table.clear(selectedValues)
+                            if type(v) == "table" then
+                                for _, value in ipairs(v) do
+                                    table.insert(selectedValues, tostring(value))
+                                end
+                            end
+                            SelectedLabel.Text = DisplayValue()
+                            if callback then callback(table.clone(selectedValues)) end
+                        else
+                            default = v
+                            SelectedLabel.Text = tostring(v)
+                            if callback then callback(v) end
+                        end
+                    end
+                    function DropdownObj:GetValue()
+                        return multiSelect and table.clone(selectedValues) or SelectedLabel.Text
                     end
                     function DropdownObj:UpdateOptions(newOpts)
                         options = newOpts
                     end
                     return DropdownObj
                 end
-                
-                function SecObj:CreateSlider(itemName, min, max, default, callback)
+
+                function SecObj:CreateModelViewer(itemName, defaultModel, callback)
+                    local ItemFrame = Instance.new("Frame")
+                    ItemFrame.Size = UDim2.new(1, 0, 0, 238)
+                    ItemFrame.BackgroundTransparency = 1
+                    ItemFrame.Parent = self.Container
+
+                    local Divider = Instance.new("Frame")
+                    Divider.Size = UDim2.new(1, -24, 0, 1)
+                    Divider.Position = UDim2.new(0, 12, 1, -1)
+                    Divider.BackgroundColor3 = Theme.Border
+                    Divider.BorderSizePixel = 0
+                    Divider.Parent = ItemFrame
+
+                    local Label = Instance.new("TextLabel")
+                    Label.Size = UDim2.new(1, -24, 0, 20)
+                    Label.Position = UDim2.new(0, 12, 0, 5)
+                    Label.BackgroundTransparency = 1
+                    Label.Text = tostring(itemName or "Model Viewer")
+                    Label.TextColor3 = Theme.Text
+                    Label.FontFace = Font.new("rbxasset://fonts/families/Roboto.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+                    Label.TextSize = 16
+                    Label.TextXAlignment = Enum.TextXAlignment.Left
+                    Label.Parent = ItemFrame
+
+                    local Viewport = Instance.new("ViewportFrame")
+                    Viewport.Size = UDim2.new(1, -24, 0, 158)
+                    Viewport.Position = UDim2.new(0, 12, 0, 29)
+                    Viewport.BackgroundColor3 = Theme.InputBg
+                    Viewport.BorderSizePixel = 0
+                    Viewport.Ambient = Color3.fromRGB(180, 180, 180)
+                    Viewport.LightColor = Color3.fromRGB(255, 255, 255)
+                    Viewport.LightDirection = Vector3.new(-1, -1, -1)
+                    Viewport.Active = true
+                    Viewport.Parent = ItemFrame
+
+                    local ViewCorner = Instance.new("UICorner")
+                    ViewCorner.CornerRadius = UDim.new(0, 5)
+                    ViewCorner.Parent = Viewport
+
+                    local Hint = Instance.new("TextLabel")
+                    Hint.Size = UDim2.new(1, -8, 0, 16)
+                    Hint.Position = UDim2.new(0, 4, 1, -18)
+                    Hint.BackgroundTransparency = 1
+                    Hint.Text = "Click part  •  Drag rotate  •  Wheel zoom"
+                    Hint.TextColor3 = Theme.SubText
+                    Hint.TextSize = 11
+                    Hint.Font = Enum.Font.GothamMedium
+                    Hint.TextXAlignment = Enum.TextXAlignment.Center
+                    Hint.ZIndex = 4
+                    Hint.Parent = Viewport
+
+                    local World = Instance.new("WorldModel")
+                    World.Parent = Viewport
+
+                    local ViewCamera = Instance.new("Camera")
+                    ViewCamera.FieldOfView = 45
+                    ViewCamera.Parent = Viewport
+                    Viewport.CurrentCamera = ViewCamera
+
+                    local Previous = Instance.new("TextButton")
+                    Previous.Size = UDim2.new(0, 30, 0, 30)
+                    Previous.Position = UDim2.new(0, 12, 0, 194)
+                    Previous.BackgroundColor3 = Theme.InputBg
+                    Previous.Text = "<"
+                    Previous.TextColor3 = Theme.Text
+                    Previous.TextSize = 16
+                    Previous.Font = Enum.Font.GothamBold
+                    Previous.Visible = false
+                    Previous.Parent = ItemFrame
+
+                    local UsePart = Instance.new("TextButton")
+                    UsePart.Size = UDim2.new(1, -24, 0, 30)
+                    UsePart.Position = UDim2.new(0, 12, 0, 194)
+                    UsePart.BackgroundColor3 = Theme.InputBg
+                    UsePart.Text = "No body parts"
+                    UsePart.TextColor3 = Theme.SubText
+                    UsePart.TextSize = 13
+                    UsePart.Font = Enum.Font.GothamMedium
+                    UsePart.TextTruncate = Enum.TextTruncate.AtEnd
+                    UsePart.Parent = ItemFrame
+
+                    local Next = Instance.new("TextButton")
+                    Next.Size = UDim2.new(0, 30, 0, 30)
+                    Next.Position = UDim2.new(1, -42, 0, 194)
+                    Next.BackgroundColor3 = Theme.InputBg
+                    Next.Text = ">"
+                    Next.TextColor3 = Theme.Text
+                    Next.TextSize = 16
+                    Next.Font = Enum.Font.GothamBold
+                    Next.Visible = false
+                    Next.Parent = ItemFrame
+
+                    for _, button in ipairs({Previous, UsePart, Next}) do
+                        local corner = Instance.new("UICorner")
+                        corner.CornerRadius = UDim.new(0, 4)
+                        corner.Parent = button
+                    end
+
+                    -- Keep selection entirely inside the preview WorldModel. Native
+                    -- SelectionBox adornments can leak into the live 3D world.
+                    local SelectionOutline = Instance.new("Folder")
+                    SelectionOutline.Name = "SelectionOutline"
+                    SelectionOutline.Parent = World
+
+                    local currentClone
+                    local parts = {}
+                    local partByName = {}
+                    local partFilter
+                    local selectedIndex = 0
+                    local selectedPartInstance
+                    local focus = Vector3.zero
+                    local baseDistance = 8
+                    local zoom = 1
+                    local yaw = math.rad(25)
+                    local pitch = math.rad(-8)
+                    local dragging = false
+                    local hovering = false
+                    local lastMouse
+                    local dragDistance = 0
+                    local disabledScrollers = {}
+
+                    local function UpdateCamera()
+                        local rotation = CFrame.fromEulerAnglesYXZ(pitch, yaw, 0)
+                        local offset = rotation:VectorToWorldSpace(Vector3.new(0, 0, baseDistance * zoom))
+                        ViewCamera.CFrame = CFrame.lookAt(focus + offset, focus)
+                    end
+
+                    local function DrawSelectionOutline(selectedPart)
+                        SelectionOutline:ClearAllChildren()
+                        if not selectedPart then return end
+
+                        local size = selectedPart.Size + Vector3.new(0.08, 0.08, 0.08)
+                        local halfX, halfY, halfZ = size.X * 0.5, size.Y * 0.5, size.Z * 0.5
+                        local thickness = math.clamp(math.max(size.X, size.Y, size.Z) * 0.018, 0.035, 0.11)
+
+                        local function Edge(edgeSize, localPosition)
+                            local edge = Instance.new("Part")
+                            edge.Name = "SelectionEdge"
+                            edge.Size = edgeSize
+                            edge.CFrame = selectedPart.CFrame * CFrame.new(localPosition)
+                            edge.Color = Theme.Accent
+                            edge.Material = Enum.Material.Neon
+                            edge.Transparency = 0
+                            edge.Anchored = true
+                            edge.CanCollide = false
+                            edge.CanTouch = false
+                            edge.CanQuery = false
+                            edge.CastShadow = false
+                            edge.Parent = SelectionOutline
+                        end
+
+                        for _, y in ipairs({-halfY, halfY}) do
+                            for _, z in ipairs({-halfZ, halfZ}) do
+                                Edge(Vector3.new(size.X, thickness, thickness), Vector3.new(0, y, z))
+                            end
+                        end
+                        for _, x in ipairs({-halfX, halfX}) do
+                            for _, z in ipairs({-halfZ, halfZ}) do
+                                Edge(Vector3.new(thickness, size.Y, thickness), Vector3.new(x, 0, z))
+                            end
+                        end
+                        for _, x in ipairs({-halfX, halfX}) do
+                            for _, y in ipairs({-halfY, halfY}) do
+                                Edge(Vector3.new(thickness, thickness, size.Z), Vector3.new(x, y, 0))
+                            end
+                        end
+                    end
+
+                    local function UpdateSelection()
+                        local selectedName = parts[selectedIndex]
+                        local selectedPart = selectedPartInstance or (selectedName and partByName[selectedName]) or nil
+                        DrawSelectionOutline(selectedPart)
+                        UsePart.Text = selectedName and ("Use " .. selectedName) or "Click a body part"
+                        UsePart.TextColor3 = selectedName and Theme.Text or Theme.SubText
+                    end
+
+                    local function CaptureViewerInput()
+                        if Library.InputCaptured == Viewport then return end
+                        Library.InputCaptured = Viewport
+                        table.clear(disabledScrollers)
+                        local ancestor = Viewport.Parent
+                        while ancestor do
+                            if ancestor:IsA("ScrollingFrame") then
+                                disabledScrollers[ancestor] = ancestor.ScrollingEnabled
+                                ancestor.ScrollingEnabled = false
+                            end
+                            ancestor = ancestor.Parent
+                        end
+                    end
+
+                    local function ReleaseViewerInput()
+                        if Library.InputCaptured == Viewport then
+                            Library.InputCaptured = nil
+                        end
+                        for scroller, wasEnabled in pairs(disabledScrollers) do
+                            if scroller.Parent then scroller.ScrollingEnabled = wasEnabled end
+                        end
+                        table.clear(disabledScrollers)
+                    end
+
+                    local function SelectOffset(offset)
+                        if #parts == 0 then return end
+                        selectedIndex = ((selectedIndex - 1 + offset) % #parts) + 1
+                        UpdateSelection()
+                    end
+
+                    Previous.MouseButton1Click:Connect(function() SelectOffset(-1) end)
+                    Next.MouseButton1Click:Connect(function() SelectOffset(1) end)
+                    UsePart.MouseButton1Click:Connect(function()
+                        local selectedName = parts[selectedIndex]
+                        if selectedName and callback then callback(selectedName) end
+                    end)
+
+                    local function IsInsideViewport(point)
+                        point = Vector2.new(point.X, point.Y)
+                        local position = Viewport.AbsolutePosition
+                        local size = Viewport.AbsoluteSize
+                        return point.X >= position.X and point.Y >= position.Y
+                            and point.X <= position.X + size.X and point.Y <= position.Y + size.Y
+                    end
+
+                    local function PickPart(point)
+                        if not currentClone or Viewport.AbsoluteSize.X <= 0 or Viewport.AbsoluteSize.Y <= 0 then return end
+                        point = Vector2.new(point.X, point.Y)
+                        local localPoint = point - Viewport.AbsolutePosition
+                        local normalizedX = (localPoint.X / Viewport.AbsoluteSize.X) * 2 - 1
+                        local normalizedY = 1 - (localPoint.Y / Viewport.AbsoluteSize.Y) * 2
+                        local tangent = math.tan(math.rad(ViewCamera.FieldOfView * 0.5))
+                        local aspect = Viewport.AbsoluteSize.X / Viewport.AbsoluteSize.Y
+                        local direction = (
+                            ViewCamera.CFrame.LookVector
+                            + ViewCamera.CFrame.RightVector * normalizedX * aspect * tangent
+                            + ViewCamera.CFrame.UpVector * normalizedY * tangent
+                        ).Unit
+                        local params = RaycastParams.new()
+                        params.FilterType = Enum.RaycastFilterType.Include
+                        params.FilterDescendantsInstances = {currentClone}
+                        local result = World:Raycast(ViewCamera.CFrame.Position, direction * baseDistance * zoom * 8, params)
+                        local hit = result and result.Instance
+                        if not hit then return end
+
+                        for index, name in ipairs(parts) do
+                            if name == hit.Name then
+                                selectedIndex = index
+                                selectedPartInstance = hit
+                                UpdateSelection()
+                                return
+                            end
+                        end
+                    end
+
+                    Viewport.InputBegan:Connect(function(input)
+                        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                            CaptureViewerInput()
+                            dragging = true
+                            lastMouse = input.Position
+                            dragDistance = 0
+                        end
+                    end)
+                    Viewport.MouseEnter:Connect(function()
+                        hovering = true
+                        CaptureViewerInput()
+                    end)
+                    Viewport.MouseLeave:Connect(function()
+                        hovering = false
+                        if not dragging then ReleaseViewerInput() end
+                    end)
+                    local inputChangedConnection
+                    local inputEndedConnection
+                    ItemFrame.AncestryChanged:Connect(function()
+                        if not ItemFrame.Parent then
+                            ReleaseViewerInput()
+                            if inputChangedConnection then inputChangedConnection:Disconnect() end
+                            if inputEndedConnection then inputEndedConnection:Disconnect() end
+                        end
+                    end)
+                    inputChangedConnection = UserInputService.InputChanged:Connect(function(input)
+                        if not ItemFrame.Parent then
+                            ReleaseViewerInput()
+                            return
+                        end
+                        if input.UserInputType == Enum.UserInputType.MouseWheel and IsInsideViewport(UserInputService:GetMouseLocation()) then
+                            zoom = math.clamp(zoom - input.Position.Z * 0.1, 0.45, 2.5)
+                            UpdateCamera()
+                            return
+                        end
+                        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                            local delta = input.Position - lastMouse
+                            lastMouse = input.Position
+                            dragDistance = dragDistance + Vector2.new(delta.X, delta.Y).Magnitude
+                            yaw = yaw - delta.X * 0.01
+                            pitch = math.clamp(pitch - delta.Y * 0.01, math.rad(-80), math.rad(80))
+                            UpdateCamera()
+                        end
+                    end)
+                    inputEndedConnection = UserInputService.InputEnded:Connect(function(input)
+                        if not ItemFrame.Parent then return end
+                        if dragging and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+                            dragging = false
+                            if dragDistance <= 5 and IsInsideViewport(input.Position) then
+                                PickPart(input.Position)
+                            end
+                            if not hovering then ReleaseViewerInput() end
+                        end
+                    end)
+
+                    local ViewerObj = {}
+                    function ViewerObj:SetModel(model)
+                        for _, child in ipairs(World:GetChildren()) do
+                            if child ~= SelectionOutline then child:Destroy() end
+                        end
+                        SelectionOutline:ClearAllChildren()
+                        currentClone = nil
+                        table.clear(parts)
+                        table.clear(partByName)
+                        selectedIndex = 0
+                        selectedPartInstance = nil
+
+                        if typeof(model) ~= "Instance" or not model:IsA("Model") then
+                            UpdateSelection()
+                            return false
+                        end
+
+                        local archivableStates = {[model] = model.Archivable}
+                        model.Archivable = true
+                        for _, descendant in ipairs(model:GetDescendants()) do
+                            archivableStates[descendant] = descendant.Archivable
+                            descendant.Archivable = true
+                        end
+                        local success, clone = pcall(function() return model:Clone() end)
+                        for instance, oldArchivable in pairs(archivableStates) do
+                            if instance.Parent or instance == model then
+                                instance.Archivable = oldArchivable
+                            end
+                        end
+                        if not success or not clone then
+                            UpdateSelection()
+                            return false
+                        end
+
+                        clone.Name = "PreviewModel"
+                        for _, descendant in ipairs(clone:GetDescendants()) do
+                            if descendant:IsA("LuaSourceContainer") then
+                                descendant:Destroy()
+                            elseif descendant:IsA("BasePart") then
+                                local includePart = not partFilter or partFilter(descendant, model) ~= false
+                                if not includePart then
+                                    descendant:Destroy()
+                                else
+                                    descendant.Anchored = true
+                                    descendant.CanCollide = false
+                                    descendant.CanTouch = false
+                                    descendant.CanQuery = true
+                                    if not partByName[descendant.Name] then
+                                        partByName[descendant.Name] = descendant
+                                        table.insert(parts, descendant.Name)
+                                    end
+                                end
+                            end
+                        end
+                        table.sort(parts)
+                        clone.Parent = World
+                        currentClone = clone
+
+                        local boundsCFrame, boundsSize = clone:GetBoundingBox()
+                        focus = boundsCFrame.Position
+                        baseDistance = math.max(boundsSize.X, boundsSize.Y, boundsSize.Z, 1) * 1.65
+                        zoom = 1
+                        selectedIndex = 0
+                        selectedPartInstance = nil
+                        UpdateSelection()
+                        UpdateCamera()
+                        return true
+                    end
+                    function ViewerObj:GetParts()
+                        return table.clone(parts)
+                    end
+                    function ViewerObj:GetSelectedPart()
+                        return parts[selectedIndex]
+                    end
+                    function ViewerObj:SetSelectedPart(partName)
+                        for index, name in ipairs(parts) do
+                            if name == partName then
+                                selectedIndex = index
+                                selectedPartInstance = partByName[name]
+                                UpdateSelection()
+                                return true
+                            end
+                        end
+                        return false
+                    end
+                    function ViewerObj:GetModel()
+                        return currentClone
+                    end
+                    function ViewerObj:SetPartFilter(filterCallback)
+                        partFilter = type(filterCallback) == "function" and filterCallback or nil
+                    end
+
+                    if defaultModel then ViewerObj:SetModel(defaultModel) end
+                    return ViewerObj
+                end
+                 
+                function SecObj:CreateSlider(itemName, min, max, default, callback, step)
+                    step = tonumber(step) or 1
+                    if step <= 0 then step = 1 end
+
+                    local stepText = tostring(step)
+                    local decimalText = stepText:match("%.(%d+)")
+                    local decimals = decimalText and #decimalText or 0
+                    local decimalScale = 10 ^ decimals
+
+                    local function SnapValue(value)
+                        value = math.clamp(tonumber(value) or default, min, max)
+                        value = min + math.floor(((value - min) / step) + 0.5) * step
+                        value = math.floor(value * decimalScale + 0.5) / decimalScale
+                        return math.clamp(value, min, max)
+                    end
+
+                    local function FormatValue(value)
+                        if decimals > 0 then
+                            return string.format("%." .. tostring(decimals) .. "f", value)
+                        end
+                        return tostring(math.floor(value + 0.5))
+                    end
+
+                    default = SnapValue(default)
                     local ItemFrame = Instance.new("Frame")
                     ItemFrame.Size = UDim2.new( 1, 0, 0, 48 )
                     ItemFrame.BackgroundTransparency = 1
@@ -1567,7 +2051,7 @@ function Library:CreateWindow(options)
                     ValueLabel.Size = UDim2.new(0, 40, 0, 16)
                     ValueLabel.Position = UDim2.new(1, -52, 0, 8 )
                     ValueLabel.BackgroundTransparency = 1
-                    ValueLabel.Text = tostring(default)
+                    ValueLabel.Text = FormatValue(default)
                     ValueLabel.TextColor3 = Theme.SubText
                     ValueLabel.Font = Enum.Font.Gotham
                     ValueLabel.TextSize = 16
@@ -1625,17 +2109,19 @@ function Library:CreateWindow(options)
                             local sliderW = SliderBg.AbsoluteSize.X
                             local percent = math.clamp((mouseX - sliderX) / sliderW, 0, 1)
                             SliderFill.Size = UDim2.new(percent, 0, 1, 0)
-                            local val = math.floor(min + (max - min) * percent)
-                            ValueLabel.Text = tostring(val)
+                            local val = SnapValue(min + (max - min) * percent)
+                            percent = (val - min) / (max - min)
+                            SliderFill.Size = UDim2.new(percent, 0, 1, 0)
+                            ValueLabel.Text = FormatValue(val)
                             if callback then callback(val) end
                         end
                     end)
                     local SliderObj = {}
                     function SliderObj:SetValue(v)
-                        local val = math.clamp(v, min, max)
+                        local val = SnapValue(v)
                         local percent = (val - min) / (max - min)
                         SliderFill.Size = UDim2.new(percent, 0, 1, 0)
-                        ValueLabel.Text = tostring(val)
+                        ValueLabel.Text = FormatValue(val)
                         if callback then callback(val) end
                     end
                     return SliderObj
@@ -1831,4 +2317,5 @@ function Library:CreateWindow(options)
     return WindowObj
 end
 
+getgenv().UILibraryV2 = Library
 return Library

@@ -2,6 +2,12 @@
 -- Map Game/Place configs to their respective game script URLs
 local SupportedGames = {
     {
+        Name = "AQuietPlaceDeadzone",
+        Places = {106920577206536},
+        GameId = 106920577206536,
+        Script = "https://raw.githubusercontent.com/bintwin/BinHub/refs/heads/main/Games/aquietplacedeadzone.luau"
+    },
+    {
         Name = "Blocksnprops",
         Places = {2537430692},
         GameId = 905198065,
