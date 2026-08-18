@@ -82,7 +82,7 @@ local SafePlatform = nil
 local function notify(text, kind, duration)
     pcall(function()
         game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "Nebula UI",
+            Title = "mm2 kids :3",
             Text = tostring(text),
             Duration = duration or 3,
         })
