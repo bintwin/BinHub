@@ -23,6 +23,7 @@ if getgenv().AQuietPlaceDeadzoneCleanup then
 end
 
 local CharacterConfiguration = require(ReplicatedStorage.Character.Configuration)
+local CharacterUtilities = require(ReplicatedStorage.Character.Utilities)
 local GameUtilities = require(ReplicatedStorage.Game.Utilities)
 local ItemConfiguration = require(ReplicatedStorage.Item.Configuration)
 local MonsterConfiguration = require(ReplicatedStorage.Monster.Configuration)
@@ -32,6 +33,7 @@ local RequestCharacterAction = Remotes:WaitForChild("RequestCharacterAction")
 local VoicePing = Remotes:WaitForChild("VoicePing")
 local OriginalStaminaDeductionRate = CharacterConfiguration.StaminaDeductionRate
 local OriginalStaminaRegenRate = CharacterConfiguration.StaminaRegenRate
+local OriginalCanUseItem = CharacterUtilities.CanUseItem
 local OriginalNoiseConfiguration = {
     -- Fall back to the game's current module defaults when a prior injected
     -- copy was reloaded while its zeroed values were still applied.
@@ -44,6 +46,39 @@ local OriginalNoiseConfiguration = {
 local DefaultPingWeights = {Splash = 1.8, Land = 1.568, Jump = 0.8}
 for name, value in pairs(CharacterConfiguration.PingWeights or {}) do
     OriginalNoiseConfiguration.PingWeights[name] = value ~= 0 and value or DefaultPingWeights[name] or value
+end
+
+-- These are the clean values from the game's Item.Configuration module.
+-- Keeping them separately prevents a re-execution while a mod is enabled
+-- from treating the previously modified values as the new originals.
+local KnownWeaponDefaults = {
+    RPG7 = {UseCooldown = 0.5, UseDuration = 0.2, ReloadDuration = 1.75, ReloadVisualDelay = 0.5, ReloadVisualDuration = 1.25},
+    FlareGun = {UseCooldown = 0.5, UseDuration = 0.2, ReloadDuration = 0.4},
+    RPK74 = {UseCooldown = 0.1, UseDuration = 0.1, ReloadDuration = 4, Automatic = true},
+    LSAT = {UseCooldown = 0.05, UseDuration = 0.05, ReloadDuration = 4, Automatic = true},
+    AA12 = {UseCooldown = 0.5, UseDuration = 0.2, ReloadDuration = 2, Automatic = true},
+    M16A4 = {UseCooldown = 0.1, UseDuration = 0.1, ReloadDuration = 3, Automatic = false, BurstDelta = 0.1, BurstCooldown = 0.6},
+    CZ75 = {UseCooldown = 0.2, UseDuration = 0.2, ReloadDuration = 3},
+    ColtPython = {UseCooldown = 0.4, UseDuration = 0.2, ReloadDuration = 2.65},
+    PSG1 = {UseCooldown = 1, UseDuration = 0.2, ReloadDuration = 3},
+    KSVK = {UseCooldown = 2.5, UseDuration = 0.2, ReloadDuration = 5},
+    XM1014 = {UseCooldown = 0.2, UseDuration = 0.2, ReloadDuration = 0.6}
+}
+
+local OriginalWeaponConfigs = {}
+for name, item in pairs(ItemConfiguration.Items or {}) do
+    if type(item) == "table" and item.Class == "Gun" then
+        OriginalWeaponConfigs[name] = KnownWeaponDefaults[name] or {
+            UseCooldown = item.UseCooldown,
+            UseDuration = item.UseDuration,
+            Automatic = item.Automatic,
+            BurstDelta = item.BurstDelta,
+            BurstCooldown = item.BurstCooldown,
+            ReloadDuration = item.ReloadDuration,
+            ReloadVisualDelay = item.ReloadVisualDelay,
+            ReloadVisualDuration = item.ReloadVisualDuration
+        }
+    end
 end
 
 local State = {
@@ -60,6 +95,10 @@ local State = {
     SilentAimMonsterTargetPart = "Head",
     TargetViewerType = "Monster",
     MonsterAngerAlert = false,
+    MonsterEscapeKey = Enum.KeyCode.X,
+    KeybindPanelPinned = false,
+    KeybindPanelX = 18,
+    KeybindPanelY = 220,
     SilentMode = false,
     Aimlock = false,
     AimlockUseFOV = false,
@@ -74,6 +113,8 @@ local State = {
     MonsterNametagColor = Color3.fromRGB(255, 90, 90),
     MonsterBox = false,
     MonsterBoxColor = Color3.fromRGB(255, 70, 70),
+    MonsterHealthbar = false,
+    MonsterHealthbarColor = Color3.fromRGB(90, 220, 110),
     MonsterSkeleton = false,
     MonsterSkeletonColor = Color3.fromRGB(255, 150, 70),
     PlayerESP = false,
@@ -81,13 +122,21 @@ local State = {
     PlayerNametagColor = Color3.fromRGB(100, 180, 255),
     PlayerBox = false,
     PlayerBoxColor = Color3.fromRGB(80, 150, 255),
+    PlayerHealthbar = false,
+    PlayerHealthbarColor = Color3.fromRGB(90, 220, 110),
     PlayerSkeleton = false,
     PlayerSkeletonColor = Color3.fromRGB(140, 210, 255),
     ItemESP = false,
     ItemNametag = false,
     ItemNametagColor = Color3.fromRGB(255, 230, 100),
     ItemBox = false,
-    ItemBoxColor = Color3.fromRGB(255, 200, 70)
+    ItemBoxColor = Color3.fromRGB(255, 200, 70),
+    AutoWeapons = false,
+    InstantReload = false,
+    AutoReload = false,
+    FastFireRate = false,
+    FireRateRPM = "600",
+    InstantProximityPrompts = false
 }
 local UISettings = {}
 local Unloaded = false
@@ -100,6 +149,112 @@ local OriginalMouseLockKeys = "LeftShift,RightShift"
 local SilentRuntime = getgenv().AQuietPlaceDeadzoneSilentRuntime or {}
 getgenv().AQuietPlaceDeadzoneSilentRuntime = SilentRuntime
 SilentRuntime.Enabled = false
+SilentRuntime.DesyncActive = false
+local SilentDesyncConnection
+local SilentGhost
+
+local function DestroySilentGhost()
+    if SilentGhost then
+        SilentGhost:Destroy()
+        SilentGhost = nil
+    end
+    SilentRuntime.Ghost = nil
+end
+
+local function CreateSilentGhost(character, root)
+    DestroySilentGhost()
+    local torso = character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso") or root
+    local ghost = Instance.new("Part")
+    ghost.Name = "BinHubSilentGhost"
+    ghost.Size = torso.Size
+    ghost.CFrame = torso.CFrame
+    ghost.Anchored = true
+    ghost.CanCollide = false
+    ghost.CanTouch = false
+    ghost.CanQuery = false
+    ghost.CastShadow = false
+    ghost.Material = Enum.Material.ForceField
+    ghost.Color = Color3.fromRGB(40, 170, 255)
+    ghost.Transparency = 0.16
+    ghost.Parent = workspace
+
+    local glow = Instance.new("PointLight")
+    glow.Name = "Glow"
+    glow.Color = ghost.Color
+    glow.Brightness = 2.4
+    glow.Range = 14
+    glow.Shadows = false
+    glow.Parent = ghost
+
+    local outline = Instance.new("Highlight")
+    outline.Name = "Outline"
+    outline.Adornee = ghost
+    outline.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    outline.FillColor = ghost.Color
+    outline.FillTransparency = 0.42
+    outline.OutlineColor = Color3.fromRGB(205, 240, 255)
+    outline.OutlineTransparency = 0
+    outline.Parent = ghost
+
+    SilentGhost = ghost
+    SilentRuntime.Ghost = ghost
+end
+
+local function SetCharacterNetworkSleeping(value)
+    if not sethiddenproperty then return false end
+    local character = LocalPlayer.Character
+    local root = character and character:FindFirstChild("HumanoidRootPart")
+    if not root then return false end
+
+    local success = pcall(sethiddenproperty, root, "NetworkIsSleeping", value)
+    -- Sleeping the whole character assembly causes this game to replace the
+    -- character. Only hold the locally owned root asleep.
+    return success
+end
+
+local function StopSilentDesync()
+    if SilentDesyncConnection then
+        SilentDesyncConnection:Disconnect()
+        SilentDesyncConnection = nil
+    end
+    SetCharacterNetworkSleeping(false)
+    SilentRuntime.DesyncActive = false
+    SilentRuntime.ServerAnchor = nil
+    SilentRuntime.DesyncRoot = nil
+    DestroySilentGhost()
+end
+
+local function StartSilentDesync()
+    StopSilentDesync()
+    if not sethiddenproperty then
+        return false
+    end
+
+    local function AttachCurrentCharacter()
+        local character = LocalPlayer.Character
+        local root = character and character:FindFirstChild("HumanoidRootPart")
+        if not root then return false end
+        if root ~= SilentRuntime.DesyncRoot then
+            if not SetCharacterNetworkSleeping(true) then return false end
+            -- The server keeps the character at the position where Silent Mode
+            -- attached while the locally owned character keeps moving locally.
+            SilentRuntime.ServerAnchor = root.Position
+            SilentRuntime.DesyncRoot = root
+            SilentRuntime.DesyncActive = true
+            CreateSilentGhost(character, root)
+        else
+            pcall(sethiddenproperty, root, "NetworkIsSleeping", true)
+        end
+        return true
+    end
+
+    AttachCurrentCharacter()
+    SilentDesyncConnection = RunService.Heartbeat:Connect(function()
+        if not SilentRuntime.Enabled then return end
+        AttachCurrentCharacter()
+    end)
+    return true
+end
 
 local function IsLocalCharacterSource(source)
     local character = LocalPlayer.Character
@@ -107,9 +262,47 @@ local function IsLocalCharacterSource(source)
         and (source == character or source:IsDescendantOf(character))
 end
 
--- Keep local weighted audio audible, but remove the weight that feeds the
--- game's sound-ping system. Voice pings are handled in the namecall hook.
-if SilentRuntime.PatchVersion ~= 1 then
+local MutedCharacterSounds = {}
+local CharacterSoundDescendantConnection
+local CharacterSoundCharacterConnection
+
+local function MuteCharacterSound(sound)
+    if not SilentRuntime.Enabled or not sound:IsA("Sound") or MutedCharacterSounds[sound] then return end
+    local record = {Volume = sound.Volume}
+    record.Connection = sound:GetPropertyChangedSignal("Volume"):Connect(function()
+        if SilentRuntime.Enabled and sound.Parent and sound.Volume ~= 0 then
+            sound.Volume = 0
+        end
+    end)
+    MutedCharacterSounds[sound] = record
+    sound.Volume = 0
+end
+
+local function RestoreCharacterSounds()
+    for sound, record in pairs(MutedCharacterSounds) do
+        if record.Connection then record.Connection:Disconnect() end
+        if sound.Parent then sound.Volume = record.Volume end
+        MutedCharacterSounds[sound] = nil
+    end
+end
+
+local function AttachCharacterSoundMute(character)
+    if CharacterSoundDescendantConnection then CharacterSoundDescendantConnection:Disconnect() end
+    CharacterSoundDescendantConnection = character.DescendantAdded:Connect(function(descendant)
+        if descendant:IsA("Sound") then MuteCharacterSound(descendant) end
+    end)
+    if SilentRuntime.Enabled then
+        for _, descendant in ipairs(character:GetDescendants()) do
+            if descendant:IsA("Sound") then MuteCharacterSound(descendant) end
+        end
+    end
+end
+
+CharacterSoundCharacterConnection = LocalPlayer.CharacterAdded:Connect(AttachCharacterSoundMute)
+if LocalPlayer.Character then AttachCharacterSoundMute(LocalPlayer.Character) end
+
+-- Remove the local sound and its weight while preserving the action itself
+if SilentRuntime.PatchVersion ~= 2 then
     SilentRuntime.OriginalPing = SilentRuntime.OriginalPing or GameUtilities.Ping
     SilentRuntime.OriginalPlayAudio = SilentRuntime.OriginalPlayAudio or GameUtilities.PlayAudio
 
@@ -123,17 +316,19 @@ if SilentRuntime.PatchVersion ~= 1 then
 
     GameUtilities.PlayAudio = function(self, audioFolder, audioName, parent, properties)
         local runtime = getgenv().AQuietPlaceDeadzoneSilentRuntime
-        if runtime and runtime.Enabled and type(properties) == "table" and properties.Weight ~= nil
-            and (typeof(parent) == "CFrame" or IsLocalCharacterSource(parent)) then
+        if runtime and runtime.Enabled and (typeof(parent) == "CFrame" or IsLocalCharacterSource(parent)) then
             local silentProperties = {}
-            for key, value in pairs(properties) do
-                if key ~= "Weight" then silentProperties[key] = value end
+            if type(properties) == "table" then
+                for key, propertyValue in pairs(properties) do
+                    if key ~= "Weight" then silentProperties[key] = propertyValue end
+                end
             end
+            silentProperties.Volume = 0
             properties = silentProperties
         end
         return SilentRuntime.OriginalPlayAudio(self, audioFolder, audioName, parent, properties)
     end
-    SilentRuntime.PatchVersion = 1
+    SilentRuntime.PatchVersion = 2
 end
 
 local function ApplySilentMode(value)
@@ -148,15 +343,29 @@ local function ApplySilentMode(value)
     for name, originalValue in pairs(OriginalNoiseConfiguration.PingWeights) do
         CharacterConfiguration.PingWeights[name] = value and 0 or originalValue
     end
+    if value then
+        local character = LocalPlayer.Character
+        if character then AttachCharacterSoundMute(character) end
+    else
+        RestoreCharacterSounds()
+    end
+    -- Monster sight and targeting run on the server so client position hooks
+    -- cannot safely make the character invisible to the AI
+    StopSilentDesync()
+    return false
 end
+
+SilentRuntime.SetEnabled = ApplySilentMode
 
 ApplySilentMode(false)
 
 local function Notify(text)
+    text = tostring(text or ""):lower():gsub("[%.%,;]", "")
+    text = text:gsub("^%l", string.upper)
     task.spawn(function()
         pcall(function()
             StarterGui:SetCore("SendNotification", {
-                Title = "BinHub",
+                Title = "Binhub",
                 Text = text,
                 Duration = 6
             })
@@ -199,16 +408,19 @@ local Window = UILibrary:CreateWindow({
     FooterRight = "binhub"
 })
 
-local AimCategory = Window:CreateCategory({Name = "Aim"})
-local VisualsCategory = Window:CreateCategory({Name = "Visuals"})
-local PlayerCategory = Window:CreateCategory({Name = "Player"})
-local MiscCategory = Window:CreateCategory({Name = "Misc"})
+local AimCategory = Window:CreateCategory({Name = "Aim", Icon = "rbxassetid://83752373575368", Section = "Guns"})
+local GunsModCategory = Window:CreateCategory({Name = "Gun Mods", Icon = "rbxassetid://121091323240554", Section = "Guns"})
+local VisualsCategory = Window:CreateCategory({Name = "Visuals", Icon = "rbxassetid://127234874352422", Section = "Player"})
+local PlayerCategory = Window:CreateCategory({Name = "Player", Icon = "rbxassetid://114567720540659", Section = "Player"})
+local MiscCategory = Window:CreateCategory({Name = "Misc", Icon = "rbxassetid://106205298246017", Section = "Other"})
 local AimTab = AimCategory:CreateTab("Aim")
+local GunsModTab = GunsModCategory:CreateTab("Gun Mods")
 local VisualsTab = VisualsCategory:CreateTab("Visuals")
 local PlayerTab = PlayerCategory:CreateTab("Player")
 local SettingsTab = MiscCategory:CreateTab("Settings")
 local OPAimSection = AimTab:CreateSection("OP Aim")
 local SilentAimSection = AimTab:CreateSection("Silent Aim")
+local GunsModSection = GunsModTab:CreateSection("Gun Mods")
 local MonsterESPSection = VisualsTab:CreateSection("Monster")
 local PlayerESPSection = VisualsTab:CreateSection("Player")
 local ItemESPSection = VisualsTab:CreateSection("Item")
@@ -218,6 +430,54 @@ local CameraSection = PlayerTab:CreateSection("Camera")
 local StaminaSection = PlayerTab:CreateSection("Stamina")
 local ConfigSection = SettingsTab:CreateSection("Configuration", "rbxassetid://7734053495")
 local MiscSettingsSection = SettingsTab:CreateSection("Misc")
+-- Fix for icons.rest asset padding (scales icons up slightly and recenters them)
+local targetIcons = {
+    "rbxassetid://83752373575368",
+    "rbxassetid://121091323240554",
+    "rbxassetid://127234874352422",
+    "rbxassetid://114567720540659",
+    "rbxassetid://106205298246017"
+}
+local binhubGui = CoreGui:FindFirstChild("BinHubV2")
+if binhubGui then
+    for _, obj in pairs(binhubGui:GetDescendants()) do
+        if obj:IsA("ImageLabel") and table.find(targetIcons, obj.Image) then
+            obj.Size = UDim2.new(0, 22, 0, 22)
+            obj.Position = UDim2.new(0, 9, 0.5, -11)
+        end
+    end
+end
+
+MiscSettingsSection:CreateButton("Load Whole Map", function()
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if not hrp then 
+        Notify("Character not found!")
+        return 
+    end
+
+    Notify("Loading map... Please wait 3 seconds.")
+    local originalCFrame = hrp.CFrame
+    local originalAnchored = hrp.Anchored
+    
+    hrp.Anchored = true
+    
+    task.spawn(function()
+        local range = 2000
+        local step = 1000
+        
+        for x = -range, range, step do
+            for z = -range, range, step do
+                hrp.CFrame = CFrame.new(x, 150, z)
+                task.wait(0.1)
+            end
+        end
+        
+        hrp.CFrame = originalCFrame
+        hrp.Anchored = originalAnchored
+        Notify("Map load complete!")
+    end)
+end)
 
 local PlayerTargetPartOptions = {"Head", "HumanoidRootPart", "Torso", "UpperTorso"}
 local MonsterTargetPartOptions = {"Head", "UpperTorso", "HumanoidRootPart", "Mesh"}
@@ -297,6 +557,572 @@ if alertSoundTemplate and alertSoundTemplate:IsA("Sound") then
     MonsterAlertSound.Parent = SoundService
 end
 
+local oldKeybindOverlay = CoreGui:FindFirstChild("BinHubKeybindOverlay")
+if oldKeybindOverlay then oldKeybindOverlay:Destroy() end
+
+local KeybindOverlayGui = Instance.new("ScreenGui")
+KeybindOverlayGui.Name = "BinHubKeybindOverlay"
+KeybindOverlayGui.IgnoreGuiInset = true
+KeybindOverlayGui.ResetOnSpawn = false
+KeybindOverlayGui.DisplayOrder = 999998
+KeybindOverlayGui.Parent = CoreGui
+
+local KeybindPanel = Instance.new("Frame")
+KeybindPanel.Name = "KeybindPanel"
+KeybindPanel.Size = UDim2.fromOffset(224, 150)
+KeybindPanel.Position = UDim2.fromOffset(State.KeybindPanelX, State.KeybindPanelY)
+KeybindPanel.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+KeybindPanel.BorderSizePixel = 0
+KeybindPanel.Parent = KeybindOverlayGui
+
+local KeybindPanelCorner = Instance.new("UICorner")
+KeybindPanelCorner.CornerRadius = UDim.new(0, 8)
+KeybindPanelCorner.Parent = KeybindPanel
+
+local KeybindPanelStroke = Instance.new("UIStroke")
+KeybindPanelStroke.Color = Color3.fromRGB(28, 28, 34)
+KeybindPanelStroke.Thickness = 1
+KeybindPanelStroke.Parent = KeybindPanel
+
+local KeybindPanelTitle = Instance.new("TextLabel")
+KeybindPanelTitle.Size = UDim2.new(1, -48, 0, 40)
+KeybindPanelTitle.Position = UDim2.fromOffset(14, 0)
+KeybindPanelTitle.BackgroundTransparency = 1
+KeybindPanelTitle.Text = "Keybinds"
+KeybindPanelTitle.TextColor3 = Color3.fromRGB(235, 235, 239)
+KeybindPanelTitle.FontFace = Font.new("rbxasset://fonts/families/Roboto.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+KeybindPanelTitle.TextSize = 16
+KeybindPanelTitle.TextXAlignment = Enum.TextXAlignment.Left
+KeybindPanelTitle.Parent = KeybindPanel
+
+local KeybindHeaderDivider = Instance.new("Frame")
+KeybindHeaderDivider.Size = UDim2.new(1, -24, 0, 1)
+KeybindHeaderDivider.Position = UDim2.fromOffset(12, 40)
+KeybindHeaderDivider.BackgroundColor3 = Color3.fromRGB(28, 28, 34)
+KeybindHeaderDivider.BorderSizePixel = 0
+KeybindHeaderDivider.Parent = KeybindPanel
+
+local KeybindDragArea = Instance.new("TextButton")
+KeybindDragArea.Name = "DragArea"
+KeybindDragArea.Size = UDim2.new(1, -46, 0, 40)
+KeybindDragArea.BackgroundTransparency = 1
+KeybindDragArea.Text = ""
+KeybindDragArea.AutoButtonColor = false
+KeybindDragArea.Parent = KeybindPanel
+
+local KeybindPinButton = Instance.new("ImageButton")
+KeybindPinButton.Name = "Pin"
+KeybindPinButton.Size = UDim2.fromOffset(20, 20)
+KeybindPinButton.Position = UDim2.new(1, -32, 0, 10)
+KeybindPinButton.BackgroundTransparency = 1
+KeybindPinButton.Image = "rbxassetid://10734922324"
+KeybindPinButton.ImageColor3 = Color3.fromRGB(96, 96, 107)
+KeybindPinButton.AutoButtonColor = false
+KeybindPinButton.ZIndex = 4
+KeybindPinButton.Parent = KeybindPanel
+
+local function CreateKeybindPanelRow(order, labelText)
+    local y = 46 + (order - 1) * 33
+    local row = Instance.new("Frame")
+    row.Name = labelText:gsub("%s+", "") .. "Row"
+    row.Size = UDim2.new(1, 0, 0, 33)
+    row.Position = UDim2.fromOffset(0, y)
+    row.BackgroundTransparency = 1
+    row.Parent = KeybindPanel
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -82, 0, 32)
+    label.Position = UDim2.fromOffset(14, 0)
+    label.BackgroundTransparency = 1
+    label.Text = labelText
+    label.TextColor3 = Color3.fromRGB(143, 143, 153)
+    label.FontFace = Font.new("rbxasset://fonts/families/Roboto.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+    label.TextSize = 13
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = row
+
+    local key = Instance.new("TextLabel")
+    key.Name = labelText:gsub("%s+", "") .. "Key"
+    key.Size = UDim2.fromOffset(58, 23)
+    key.Position = UDim2.new(1, -72, 0, 4)
+    key.BackgroundColor3 = Color3.fromRGB(32, 32, 38)
+    key.TextColor3 = Color3.fromRGB(235, 235, 239)
+    key.Font = Enum.Font.GothamBold
+    key.TextSize = 11
+    key.Parent = row
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 4)
+    corner.Parent = key
+
+    local divider = Instance.new("Frame")
+    divider.Name = "Divider"
+    divider.Size = UDim2.new(1, -28, 0, 1)
+    divider.Position = UDim2.new(0, 14, 1, -1)
+    divider.BackgroundColor3 = Color3.fromRGB(29, 29, 35)
+    divider.BackgroundTransparency = 0.25
+    divider.BorderSizePixel = 0
+    divider.Parent = row
+    return key, row
+end
+
+local ToggleUIKeyLabel = CreateKeybindPanelRow(1, "Toggle UI")
+local AimlockKeyLabel = CreateKeybindPanelRow(2, "Aimlock")
+local MonsterEscapeKeyLabel = CreateKeybindPanelRow(3, "Monster escape")
+local KeybindPinHovered = false
+local KeybindDragging = false
+local KeybindDragStart
+local KeybindStartPosition
+local KeybindInputChangedConnection
+local KeybindInputEndedConnection
+local KeybindMenuVisibilityConnection
+local MonsterEscapeInputConnection
+local MonsterEscapeBusy = false
+local MonsterEscapeCharacter
+local MonsterEscapeOriginalCFrame
+local MonsterEscapeReturnCFrame
+local MonsterEscapeBaseplate
+local MonsterEscapeSkyCFrame
+local MonsterEscapeKeyChangedAt = 0
+local MonsterEscapeSettings = {
+    ReturnDistance = 60,
+    ReturnTweenTime = 1.25,
+    SnapDistance = 18,
+    StableTime = 1,
+    PlatformHeight = 1500,
+    RetryHeightStep = 2,
+    MaxRetryHeight = 14,
+    RetryTimeStep = 0.75,
+    MaxTweenTime = 5,
+}
+
+local function MoveWholeCharacter(character, targetCFrame)
+    if not character or not character.Parent then return false end
+    character:PivotTo(targetCFrame)
+    for _, descendant in ipairs(character:GetDescendants()) do
+        if descendant:IsA("BasePart") then
+            descendant.AssemblyLinearVelocity = Vector3.zero
+            descendant.AssemblyAngularVelocity = Vector3.zero
+        end
+    end
+    return true
+end
+
+local function GetSaferReturnCFrame(character, originalCFrame)
+    local root = character:FindFirstChild("HumanoidRootPart")
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not root or not humanoid then return originalCFrame end
+
+    local nearestRoot
+    local nearestDistance = math.huge
+    for _, monster in ipairs(CollectionService:GetTagged("Monster")) do
+        if monster:IsA("Model") and monster:IsDescendantOf(workspace) then
+            local monsterRoot = monster:FindFirstChild("HumanoidRootPart") or monster.PrimaryPart
+            local monsterHumanoid = monster:FindFirstChildOfClass("Humanoid")
+            if monsterRoot and monsterHumanoid and monsterHumanoid.Health > 0 then
+                local distance = (root.Position - monsterRoot.Position).Magnitude
+                if distance < nearestDistance then
+                    nearestDistance = distance
+                    nearestRoot = monsterRoot
+                end
+            end
+        end
+    end
+
+    local away = Vector3.new(-1, 0, 0)
+    if nearestRoot then
+        local difference = root.Position - nearestRoot.Position
+        local flatDifference = Vector3.new(difference.X, 0, difference.Z)
+        if flatDifference.Magnitude > 0 then
+            away = flatDifference.Unit
+        end
+    end
+
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+    local filter = {character}
+    local monsterFolder = workspace:FindFirstChild("_Monsters")
+    if monsterFolder then table.insert(filter, monsterFolder) end
+    raycastParams.FilterDescendantsInstances = filter
+    raycastParams.IgnoreWater = false
+    raycastParams.RespectCanCollide = true
+
+    local pivotOffset = originalCFrame.Position - root.Position
+    local angleOptions = {0, 25, -25, 50, -50, 75, -75}
+    for _, angle in ipairs(angleOptions) do
+        local direction = CFrame.Angles(0, math.rad(angle), 0):VectorToWorldSpace(away)
+        local candidate = root.Position + direction * MonsterEscapeSettings.ReturnDistance
+        local castOrigin = Vector3.new(candidate.X, root.Position.Y + 350, candidate.Z)
+        local ground = workspace:Raycast(castOrigin, Vector3.new(0, -1200, 0), raycastParams)
+        if ground and ground.Material ~= Enum.Material.Water and ground.Normal.Y >= 0.6 then
+            local targetRootPosition = Vector3.new(
+                candidate.X,
+                ground.Position.Y + humanoid.HipHeight + root.Size.Y * 0.5 + 0.35,
+                candidate.Z
+            )
+            local targetPivotPosition = targetRootPosition + pivotOffset
+            return CFrame.new(targetPivotPosition) * originalCFrame.Rotation
+        end
+    end
+
+    -- If streamed terrain is unavailable still return the requested distance
+    -- instead of falling back to the original position
+    return originalCFrame + away * MonsterEscapeSettings.ReturnDistance
+end
+
+local function UpdateKeybindPanel()
+    ToggleUIKeyLabel.Text = Window.ToggleKey.Name
+    AimlockKeyLabel.Text = State.AimlockKey.Name
+    MonsterEscapeKeyLabel.Text = State.MonsterEscapeKey.Name
+    KeybindPinButton.ImageColor3 = KeybindPinHovered and Color3.fromRGB(255, 255, 255)
+        or (State.KeybindPanelPinned and Color3.fromRGB(144, 184, 112) or Color3.fromRGB(96, 96, 107))
+    local menuVisible = Window.Gui and Window.Gui.Enabled
+    local rows = {
+        {ToggleUIKeyLabel.Parent, true},
+        {AimlockKeyLabel.Parent, State.Aimlock == true},
+        {MonsterEscapeKeyLabel.Parent, true},
+    }
+    local visibleRowCount = 0
+    for _, rowInfo in ipairs(rows) do
+        local row = rowInfo[1]
+        local visible = rowInfo[2]
+        row.Visible = visible
+        if visible then
+            row.Position = UDim2.fromOffset(0, 46 + visibleRowCount * 33)
+            visibleRowCount += 1
+        end
+    end
+    KeybindPanel.Size = UDim2.fromOffset(224, 51 + visibleRowCount * 33)
+    KeybindPanel.Visible = State.KeybindPanelPinned or menuVisible
+    KeybindPinButton.Visible = menuVisible
+end
+
+KeybindPinButton.MouseEnter:Connect(function()
+    KeybindPinHovered = true
+    UpdateKeybindPanel()
+end)
+KeybindPinButton.MouseLeave:Connect(function()
+    KeybindPinHovered = false
+    UpdateKeybindPanel()
+end)
+KeybindPinButton.MouseButton1Click:Connect(function()
+    State.KeybindPanelPinned = not State.KeybindPanelPinned
+    UpdateKeybindPanel()
+end)
+
+KeybindDragArea.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 and Window.Gui.Enabled then
+        KeybindDragging = true
+        KeybindDragStart = input.Position
+        KeybindStartPosition = KeybindPanel.Position
+    end
+end)
+KeybindInputEndedConnection = UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then KeybindDragging = false end
+end)
+KeybindInputChangedConnection = UserInputService.InputChanged:Connect(function(input)
+    if KeybindDragging and input.UserInputType == Enum.UserInputType.MouseMovement and Window.Gui.Enabled then
+        local delta = input.Position - KeybindDragStart
+        local viewport = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1920, 1080)
+        local x = math.clamp(KeybindStartPosition.X.Offset + delta.X, 0, math.max(0, viewport.X - KeybindPanel.AbsoluteSize.X))
+        local y = math.clamp(KeybindStartPosition.Y.Offset + delta.Y, 0, math.max(0, viewport.Y - KeybindPanel.AbsoluteSize.Y))
+        State.KeybindPanelX = math.floor(x + 0.5)
+        State.KeybindPanelY = math.floor(y + 0.5)
+        KeybindPanel.Position = UDim2.fromOffset(State.KeybindPanelX, State.KeybindPanelY)
+    end
+end)
+KeybindMenuVisibilityConnection = Window.Gui:GetPropertyChangedSignal("Enabled"):Connect(UpdateKeybindPanel)
+
+local function FinishMonsterEscape()
+    local character = MonsterEscapeCharacter
+    local originalCFrame = MonsterEscapeOriginalCFrame
+    local returnCFrame = MonsterEscapeReturnCFrame
+    local baseplate = MonsterEscapeBaseplate
+    local root = character and character:FindFirstChild("HumanoidRootPart")
+    if character and character == LocalPlayer.Character and root and originalCFrame and returnCFrame then
+        local stable = false
+        local retryCount = 0
+        while not stable and character == LocalPlayer.Character and root.Parent do
+            local retryHeight = math.min(retryCount * MonsterEscapeSettings.RetryHeightStep, MonsterEscapeSettings.MaxRetryHeight)
+            local retryCFrame = returnCFrame + Vector3.new(0, retryHeight, 0)
+            local tweenTime = math.min(
+                MonsterEscapeSettings.ReturnTweenTime + retryCount * MonsterEscapeSettings.RetryTimeStep,
+                MonsterEscapeSettings.MaxTweenTime
+            )
+            local tweenStart = character:GetPivot()
+            local tweenStartedAt = os.clock()
+            repeat
+                local alpha = math.clamp((os.clock() - tweenStartedAt) / tweenTime, 0, 1)
+                local easedAlpha = 1 - (1 - alpha) * (1 - alpha)
+                MoveWholeCharacter(character, tweenStart:Lerp(retryCFrame, easedAlpha))
+                RunService.Heartbeat:Wait()
+            until os.clock() - tweenStartedAt >= tweenTime
+                or character ~= LocalPlayer.Character
+                or not root.Parent
+
+            if character ~= LocalPlayer.Character or not root.Parent then break end
+            MoveWholeCharacter(character, retryCFrame)
+
+            if baseplate then
+                baseplate:Destroy()
+                baseplate = nil
+                MonsterEscapeBaseplate = nil
+            end
+
+            local stableStartedAt = os.clock()
+            stable = true
+            repeat
+                RunService.Heartbeat:Wait()
+                local offset = character:GetPivot().Position - retryCFrame.Position
+                local horizontalDistance = Vector3.new(offset.X, 0, offset.Z).Magnitude
+                if horizontalDistance >= MonsterEscapeSettings.SnapDistance or math.abs(offset.Y) >= MonsterEscapeSettings.SnapDistance then
+                    stable = false
+                    retryCount += 1
+                    break
+                end
+            until os.clock() - stableStartedAt >= MonsterEscapeSettings.StableTime
+                or character ~= LocalPlayer.Character
+                or not root.Parent
+        end
+    end
+    if baseplate then baseplate:Destroy() end
+    MonsterEscapeCharacter = nil
+    MonsterEscapeOriginalCFrame = nil
+    MonsterEscapeReturnCFrame = nil
+    MonsterEscapeBaseplate = nil
+    MonsterEscapeSkyCFrame = nil
+    MonsterEscapeBusy = false
+end
+
+local function StartMonsterEscape()
+    if MonsterEscapeBusy then return end
+    local character = LocalPlayer.Character
+    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+    local root = character and character:FindFirstChild("HumanoidRootPart")
+    if not character or not humanoid or humanoid.Health <= 0 or not root then return end
+
+    MonsterEscapeBusy = true
+    MonsterEscapeCharacter = character
+    local originalCFrame = character:GetPivot()
+    MonsterEscapeOriginalCFrame = originalCFrame
+    MonsterEscapeReturnCFrame = GetSaferReturnCFrame(character, originalCFrame)
+    humanoid.Sit = false
+
+    local oldBaseplate = workspace:FindFirstChild("BinHubMonsterEscapeBaseplate")
+    if oldBaseplate then oldBaseplate:Destroy() end
+    -- Stay below common sky kill boundaries while moving far enough sideways
+    -- for the server monster AI to lose its current target
+    local skyCFrame = originalCFrame + Vector3.new(-12000, MonsterEscapeSettings.PlatformHeight, 0)
+    MonsterEscapeSkyCFrame = skyCFrame
+    MonsterEscapeBaseplate = Instance.new("Part")
+    MonsterEscapeBaseplate.Name = "BinHubMonsterEscapeBaseplate"
+    MonsterEscapeBaseplate.Size = Vector3.new(72, 1, 72)
+    MonsterEscapeBaseplate.CFrame = CFrame.new(skyCFrame.Position - Vector3.new(0, 3.5, 0))
+    MonsterEscapeBaseplate.Anchored = true
+    MonsterEscapeBaseplate.CanCollide = true
+    MonsterEscapeBaseplate.Color = Color3.fromRGB(32, 32, 38)
+    MonsterEscapeBaseplate.Material = Enum.Material.Slate
+    MonsterEscapeBaseplate.Parent = workspace
+
+    MoveWholeCharacter(character, skyCFrame)
+    task.spawn(function()
+        local started = os.clock()
+        while MonsterEscapeBusy and MonsterEscapeCharacter == character and os.clock() - started < 2 do
+            if character ~= LocalPlayer.Character or not root.Parent then break end
+            MoveWholeCharacter(character, skyCFrame)
+            RunService.Heartbeat:Wait()
+        end
+        if MonsterEscapeBusy and MonsterEscapeCharacter == character then FinishMonsterEscape() end
+    end)
+end
+
+MonsterEscapeInputConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == State.MonsterEscapeKey and os.clock() - MonsterEscapeKeyChangedAt > 0.35 then
+        StartMonsterEscape()
+    end
+end)
+UpdateKeybindPanel()
+
+local function ApplyGunMods()
+    local rpm = math.clamp(tonumber(State.FireRateRPM) or 600, 100, 1200)
+    local cooldown = 60 / math.max(1, rpm)
+    for name, item in pairs(ItemConfiguration.Items or {}) do
+        if type(item) == "table" and item.Class == "Gun" then
+            local orig = OriginalWeaponConfigs[name]
+            if not orig then continue end
+            
+            item.UseCooldown = orig.UseCooldown
+            item.UseDuration = orig.UseDuration
+            item.Automatic = orig.Automatic
+            item.BurstDelta = orig.BurstDelta
+            item.BurstCooldown = orig.BurstCooldown
+            item.ReloadDuration = orig.ReloadDuration
+            item.ReloadVisualDelay = orig.ReloadVisualDelay
+            item.ReloadVisualDuration = orig.ReloadVisualDuration
+            
+            if State.InstantReload then
+                item.ReloadDuration = 0
+                item.ReloadVisualDelay = 0
+                item.ReloadVisualDuration = 0
+            end
+            
+            if State.AutoWeapons then
+                item.Automatic = true
+            end
+            
+            if State.FastFireRate then
+                item.UseCooldown = math.min(tonumber(orig.UseCooldown) or cooldown, cooldown)
+                item.UseDuration = math.min(tonumber(orig.UseDuration) or cooldown, cooldown)
+                if orig.BurstDelta ~= nil then
+                    item.BurstDelta = math.min(tonumber(orig.BurstDelta) or cooldown, cooldown)
+                end
+                if orig.BurstCooldown ~= nil then
+                    item.BurstCooldown = math.min(tonumber(orig.BurstCooldown) or cooldown, cooldown)
+                end
+            end
+        end
+    end
+end
+
+local function GetEquippedGun()
+    local character = LocalPlayer.Character
+    local values = character and character:FindFirstChild("Values")
+    local itemValue = values and values:FindFirstChild("Item")
+    local item = itemValue and itemValue.Value
+    if not item then return nil end
+
+    local itemData = ItemConfiguration.Items and ItemConfiguration.Items[item.Name]
+    if not itemData or itemData.Class ~= "Gun" then return nil end
+    return item, item:FindFirstChild("Values")
+end
+
+CharacterUtilities.CanUseItem = function(self, character, itemName)
+    if State.FastFireRate or State.InstantReload then
+        local itemData = ItemConfiguration.Items and ItemConfiguration.Items[itemName]
+        local values = character and character:FindFirstChild("Values")
+        local equippedValue = values and values:FindFirstChild("Item")
+        local equipped = equippedValue and equippedValue.Value
+        if itemData and itemData.Class == "Gun" and equipped and equipped.Parent and equipped.Name == itemName then
+            return true
+        end
+    end
+    return OriginalCanUseItem(self, character, itemName)
+end
+
+UISettings.AutoWeapons = GunsModSection:CreateCheckbox("Automatic Weapons", false, function(value)
+    State.AutoWeapons = value
+    ApplyGunMods()
+end)
+
+UISettings.InstantReload = GunsModSection:CreateCheckbox("Instant Reload", false, function(value)
+    State.InstantReload = value
+    ApplyGunMods()
+end)
+
+UISettings.AutoReload = GunsModSection:CreateCheckbox("Auto Reload", false, function(value)
+    State.AutoReload = value
+end)
+
+task.spawn(function()
+    local lastReloadRequest = 0
+    while not Unloaded do
+        task.wait()
+        local itemInst, gunValues = GetEquippedGun()
+        if gunValues then
+            if State.FastFireRate then
+                local cooldownValue = gunValues:FindFirstChild("Cooldown")
+                local usingValue = gunValues:FindFirstChild("Using")
+                if cooldownValue and cooldownValue:IsA("BoolValue") and cooldownValue.Value then cooldownValue.Value = false end
+                if usingValue and usingValue:IsA("BoolValue") and usingValue.Value then usingValue.Value = false end
+            end
+            if State.InstantReload then
+                local reloadingValue = gunValues:FindFirstChild("Reloading")
+                if reloadingValue and reloadingValue:IsA("BoolValue") and reloadingValue.Value then reloadingValue.Value = false end
+            end
+        end
+
+        if State.AutoReload then
+            local magazine = gunValues and gunValues:FindFirstChild("Magazine")
+            if itemInst and magazine and tonumber(magazine.Value) and magazine.Value <= 0 and os.clock() - lastReloadRequest >= 0.25 then
+                lastReloadRequest = os.clock()
+                RequestCharacterAction:FireServer("Reload")
+                if State.InstantReload then
+                    local reloadingValue = gunValues:FindFirstChild("Reloading")
+                    if reloadingValue and reloadingValue:IsA("BoolValue") then reloadingValue.Value = false end
+                end
+            end
+        end
+    end
+end)
+
+UISettings.FastFireRate = GunsModSection:CreateCheckbox("Fast Fire Rate", false, function(value)
+    State.FastFireRate = value
+    ApplyGunMods()
+end)
+
+UISettings.FireRateRPM = GunsModSection:CreateSlider("Fire Rate (RPM)", 100, 1200, 600, function(value)
+    State.FireRateRPM = tostring(value)
+    if State.FastFireRate then ApplyGunMods() end
+end, 10)
+
+local PROMPT_DURATION_ATTRIBUTE = "BinHubOriginalHoldDuration"
+local PromptAddedConnection
+
+local function ApplyInstantPrompt(prompt)
+    if not prompt:IsA("ProximityPrompt") then return end
+    if prompt:GetAttribute(PROMPT_DURATION_ATTRIBUTE) == nil then
+        prompt:SetAttribute(PROMPT_DURATION_ATTRIBUTE, prompt.HoldDuration)
+    end
+    prompt.HoldDuration = 0
+end
+
+local function SetInstantProximityPrompts(enabled)
+    State.InstantProximityPrompts = enabled
+    if enabled then
+        for _, descendant in ipairs(workspace:GetDescendants()) do
+            if descendant:IsA("ProximityPrompt") then ApplyInstantPrompt(descendant) end
+        end
+    else
+        for _, prompt in ipairs(workspace:GetDescendants()) do
+            if prompt:IsA("ProximityPrompt") then
+                local duration = prompt:GetAttribute(PROMPT_DURATION_ATTRIBUTE)
+                if typeof(duration) == "number" then
+                    prompt.HoldDuration = duration
+                    prompt:SetAttribute(PROMPT_DURATION_ATTRIBUTE, nil)
+                end
+            end
+        end
+    end
+end
+
+PromptAddedConnection = workspace.DescendantAdded:Connect(function(descendant)
+    if State.InstantProximityPrompts and descendant:IsA("ProximityPrompt") then
+        ApplyInstantPrompt(descendant)
+    end
+end)
+
+UISettings.InstantProximityPrompts = MiscSettingsSection:CreateCheckbox("Instant Proximity Prompts", false, function(value)
+    SetInstantProximityPrompts(value)
+end)
+
+UISettings.MonsterEscapeKey = MiscSettingsSection:CreateKeybind("Monster Escape Key", State.MonsterEscapeKey, function(key)
+    State.MonsterEscapeKey = key
+    MonsterEscapeKeyChangedAt = os.clock()
+    UpdateKeybindPanel()
+end)
+for _, descendant in ipairs(Window.Gui:GetDescendants()) do
+    if descendant:IsA("TextLabel") and descendant.Text == "Monster Escape Key" then
+        descendant.FontFace = Font.new("rbxasset://fonts/families/Roboto.json", Enum.FontWeight.ExtraBold, Enum.FontStyle.Normal)
+        descendant.TextSize = 15
+        descendant.Size = UDim2.new(1, -88, 1, 0)
+        descendant.ClipsDescendants = true
+        local bindButton = descendant.Parent and descendant.Parent:FindFirstChildOfClass("TextButton")
+        if bindButton then
+            bindButton.Size = UDim2.fromOffset(56, 24)
+            bindButton.Position = UDim2.new(1, -68, 0.5, -12)
+        end
+    end
+end
+
 UISettings.MonsterAngerAlert = MiscSettingsSection:CreateCheckbox("Monster Anger Alert", false, function(value)
     State.MonsterAngerAlert = value
     if not value then MonsterAlertGui.Enabled = false end
@@ -304,8 +1130,13 @@ end)
 
 UISettings.SilentMode = MiscSettingsSection:CreateCheckbox("Silent Mode", false, function(value)
     ApplySilentMode(value)
-    Notify(value and "Silent Mode enabled. Player noise pings are suppressed." or "Silent Mode disabled.")
+    if not SilentRuntime.SuppressNotification then
+        Notify(value
+            and "Silent mode mutes your character sounds monsters can still see you"
+            or "Silent mode is off")
+    end
 end)
+SilentRuntime.Control = UISettings.SilentMode
 
 UISettings.MonsterESP = MonsterESPSection:CreateCheckbox("Enable ESP", false, function(value)
     State.MonsterESP = value
@@ -319,6 +1150,11 @@ UISettings.MonsterBox = MonsterESPSection:CreateColorCheckbox("Box", State.Monst
     State.MonsterBoxColor = color
 end, function(value)
     State.MonsterBox = value
+end)
+UISettings.MonsterHealthbar = MonsterESPSection:CreateColorCheckbox("Health Bar", State.MonsterHealthbarColor, false, function(color)
+    State.MonsterHealthbarColor = color
+end, function(value)
+    State.MonsterHealthbar = value
 end)
 UISettings.MonsterSkeleton = MonsterESPSection:CreateColorCheckbox("Skeleton", State.MonsterSkeletonColor, false, function(color)
     State.MonsterSkeletonColor = color
@@ -338,6 +1174,11 @@ UISettings.PlayerBox = PlayerESPSection:CreateColorCheckbox("Box", State.PlayerB
     State.PlayerBoxColor = color
 end, function(value)
     State.PlayerBox = value
+end)
+UISettings.PlayerHealthbar = PlayerESPSection:CreateColorCheckbox("Health Bar", State.PlayerHealthbarColor, false, function(color)
+    State.PlayerHealthbarColor = color
+end, function(value)
+    State.PlayerHealthbar = value
 end)
 UISettings.PlayerSkeleton = PlayerESPSection:CreateColorCheckbox("Skeleton", State.PlayerSkeletonColor, false, function(color)
     State.PlayerSkeletonColor = color
@@ -497,6 +1338,7 @@ if AimRuntime.HookVersion ~= 8 and hookmetamethod and newcclosure and getnamecal
         local isUseItem = self == RequestCharacterAction
             and method == "FireServer"
             and arguments[1] == "UseItem"
+            
         local actionData = isUseItem and arguments[2] or nil
         local target = runtime and runtime.SilentAimTarget or nil
         local redirected = false
@@ -568,10 +1410,12 @@ end
 UISettings.Aimlock = OPAimSection:CreateCheckbox("Aimlock", false, function(value)
     State.Aimlock = value
     if value then RefreshAimCandidates() end
+    UpdateKeybindPanel()
 end)
 
 UISettings.AimlockKey = OPAimSection:CreateKeybind("Aimlock Key", Enum.KeyCode.Q, function(key)
     State.AimlockKey = key
+    UpdateKeybindPanel()
 end)
 
 UISettings.AimlockUseFOV = OPAimSection:CreateColorCheckbox("Enable FOV", State.AimlockFOVColor, false, function(color)
@@ -759,6 +1603,8 @@ end
 local function HideESPRecord(record)
     if record.Box then record.Box.Visible = false end
     if record.Nametag then record.Nametag.Visible = false end
+    if record.HealthbarBackground then record.HealthbarBackground.Visible = false end
+    if record.Healthbar then record.Healthbar.Visible = false end
     for _, line in ipairs(record.Lines) do
         line.Visible = false
     end
@@ -767,6 +1613,8 @@ end
 local function RemoveESPRecord(record)
     if record.Box then record.Box:Remove() end
     if record.Nametag then record.Nametag:Remove() end
+    if record.HealthbarBackground then record.HealthbarBackground:Remove() end
+    if record.Healthbar then record.Healthbar:Remove() end
     for _, line in ipairs(record.Lines) do
         line:Remove()
     end
@@ -788,6 +1636,22 @@ local function CreateESPRecord(object, displayName, skeletonAllowed)
         nametag.Transparency = 1
     end
 
+    local healthbarBackground
+    local healthbar
+    if object:IsA("Model") then
+        healthbarBackground = NewDrawing("Square")
+        if healthbarBackground then
+            healthbarBackground.Filled = true
+            healthbarBackground.Color = Color3.fromRGB(12, 12, 14)
+            healthbarBackground.Transparency = 0.8
+        end
+        healthbar = NewDrawing("Square")
+        if healthbar then
+            healthbar.Filled = true
+            healthbar.Transparency = 1
+        end
+    end
+
     local lines = {}
     if skeletonAllowed then
         for _ = 1, #SkeletonLinks do
@@ -805,6 +1669,8 @@ local function CreateESPRecord(object, displayName, skeletonAllowed)
         DisplayName = displayName,
         Box = box,
         Nametag = nametag,
+        HealthbarBackground = healthbarBackground,
+        Healthbar = healthbar,
         Lines = lines,
         SkeletonAllowed = skeletonAllowed,
         Humanoid = object:IsA("Model") and object:FindFirstChildOfClass("Humanoid") or nil
@@ -968,16 +1834,16 @@ end
 
 local function GetESPSettings(group)
     if group == "Monster" then
-        return State.MonsterESP, State.MonsterNametag, State.MonsterNametagColor, State.MonsterBox, State.MonsterBoxColor, State.MonsterSkeleton, State.MonsterSkeletonColor
+        return State.MonsterESP, State.MonsterNametag, State.MonsterNametagColor, State.MonsterBox, State.MonsterBoxColor, State.MonsterSkeleton, State.MonsterSkeletonColor, State.MonsterHealthbar, State.MonsterHealthbarColor
     elseif group == "Player" then
-        return State.PlayerESP, State.PlayerNametag, State.PlayerNametagColor, State.PlayerBox, State.PlayerBoxColor, State.PlayerSkeleton, State.PlayerSkeletonColor
+        return State.PlayerESP, State.PlayerNametag, State.PlayerNametagColor, State.PlayerBox, State.PlayerBoxColor, State.PlayerSkeleton, State.PlayerSkeletonColor, State.PlayerHealthbar, State.PlayerHealthbarColor
     end
-    return State.ItemESP, State.ItemNametag, State.ItemNametagColor, State.ItemBox, State.ItemBoxColor, false, Color3.new(1, 1, 1)
+    return State.ItemESP, State.ItemNametag, State.ItemNametagColor, State.ItemBox, State.ItemBoxColor, false, Color3.new(1, 1, 1), false, Color3.new(1, 1, 1)
 end
 
 local ESPGroupActive = {Monster = false, Player = false, Item = false}
 local function UpdateESPGroup(group)
-    local enabled, nametagEnabled, nametagColor, boxEnabled, boxColor, skeletonEnabled, skeletonColor = GetESPSettings(group)
+    local enabled, nametagEnabled, nametagColor, boxEnabled, boxColor, skeletonEnabled, skeletonColor, healthbarEnabled, healthbarColor = GetESPSettings(group)
     if not enabled then
         if ESPGroupActive[group] then
             for _, record in pairs(ESPRecords[group]) do HideESPRecord(record) end
@@ -1006,6 +1872,18 @@ local function UpdateESPGroup(group)
                     record.Nametag.Text = record.DisplayName
                     record.Nametag.Position = Vector2.new((topLeft.X + bottomRight.X) / 2, topLeft.Y - 16)
                     record.Nametag.Color = nametagColor
+                end
+                if record.HealthbarBackground and record.Healthbar then
+                    local maxHealth = humanoid and humanoid.MaxHealth or 0
+                    local healthRatio = maxHealth > 0 and math.clamp(humanoid.Health / maxHealth, 0, 1) or 0
+                    local height = math.max(1, bottomRight.Y - topLeft.Y)
+                    record.HealthbarBackground.Visible = healthbarEnabled
+                    record.HealthbarBackground.Position = Vector2.new(topLeft.X - 7, topLeft.Y)
+                    record.HealthbarBackground.Size = Vector2.new(4, height)
+                    record.Healthbar.Visible = healthbarEnabled
+                    record.Healthbar.Position = Vector2.new(topLeft.X - 6, bottomRight.Y - height * healthRatio + 1)
+                    record.Healthbar.Size = Vector2.new(2, math.max(1, height * healthRatio - 2))
+                    record.Healthbar.Color = healthbarColor
                 end
                 UpdateSkeleton(record, skeletonEnabled, skeletonColor)
             end
@@ -1074,15 +1952,44 @@ local ESPConnection = RunService.RenderStepped:Connect(function()
     UpdateESPGroup("Item")
 end)
 
-local function IsLocalPlayerLikelyTarget(monsterPosition, localDistance)
+local function IsLocalPlayerLikelyTarget(monsterRoot, localRoot)
+    local monsterPosition = monsterRoot.Position
+    local localOffset = Vector3.new(localRoot.Position.X - monsterPosition.X, 0, localRoot.Position.Z - monsterPosition.Z)
+    local localDistance = localOffset.Magnitude
+    if localDistance <= 0 then return true end
+
+    local velocity = monsterRoot.AssemblyLinearVelocity
+    local movement = Vector3.new(velocity.X, 0, velocity.Z)
+    if movement.Magnitude <= 1 then
+        local look = monsterRoot.CFrame.LookVector
+        movement = Vector3.new(look.X, 0, look.Z)
+    end
+    if movement.Magnitude <= 0 then return false end
+
+    local movementDirection = movement.Unit
+    local localDot = movementDirection:Dot(localOffset.Unit)
+    if localDot < 0.65 then return false end
+    local localCrossTrack = localDistance * math.sqrt(math.max(0, 1 - localDot * localDot))
+    local localScore = localCrossTrack + localDistance * 0.025 - localDot * 8
+
     for _, player in ipairs(Players:GetPlayers()) do
         if player ~= LocalPlayer then
             local character = player.Character
             local humanoid = character and character:FindFirstChildOfClass("Humanoid")
             local root = character and character:FindFirstChild("HumanoidRootPart")
             if humanoid and humanoid.Health > 0 and root then
-                if (root.Position - monsterPosition).Magnitude + 8 < localDistance then
+                local otherOffset = Vector3.new(root.Position.X - monsterPosition.X, 0, root.Position.Z - monsterPosition.Z)
+                local otherDistance = otherOffset.Magnitude
+                if otherDistance + 3 < localDistance then
                     return false
+                end
+                if otherDistance > 0 then
+                    local otherDot = movementDirection:Dot(otherOffset.Unit)
+                    if otherDot >= 0.55 then
+                        local otherCrossTrack = otherDistance * math.sqrt(math.max(0, 1 - otherDot * otherDot))
+                        local otherScore = otherCrossTrack + otherDistance * 0.025 - otherDot * 8
+                        if otherScore <= localScore + 4 then return false end
+                    end
                 end
             end
         end
@@ -1124,11 +2031,13 @@ local function GetNearestAngryMonster()
                     elseif humanoid.MoveDirection.Magnitude > 0 and flatOffset.Magnitude > 0 then
                         towardLocal = humanoid.MoveDirection.Unit:Dot(flatOffset.Unit) > 0.25
                     end
-                    local likelyTarget = IsLocalPlayerLikelyTarget(root.Position, distance)
+                    local likelyTarget = IsLocalPlayerLikelyTarget(root, localRoot)
                     local chaseSpeed = humanoid.WalkSpeed >= chaseThreshold
-                    local angry = (chaseSpeed and (towardLocal or likelyTarget))
+                    local angry = likelyTarget and (
+                        (chaseSpeed and towardLocal)
                         or (attacking and distance <= 55)
-                        or (acting and chaseSpeed and distance <= 140 and likelyTarget)
+                        or (acting and chaseSpeed and distance <= 140)
+                    )
                     if angry then
                         closestMonster = monster
                         closestDistance = distance
@@ -1409,7 +2318,32 @@ local function Cleanup()
     State.InfiniteStamina = false
     State.CtrlLock = false
     State.MonsterAngerAlert = false
+    State.AutoWeapons = false
+    State.InstantReload = false
+    State.AutoReload = false
+    State.FastFireRate = false
+    ApplyGunMods()
+    CharacterUtilities.CanUseItem = OriginalCanUseItem
+    if MonsterEscapeBusy then FinishMonsterEscape() end
+    if MonsterEscapeInputConnection then MonsterEscapeInputConnection:Disconnect() end
+    if KeybindInputChangedConnection then KeybindInputChangedConnection:Disconnect() end
+    if KeybindInputEndedConnection then KeybindInputEndedConnection:Disconnect() end
+    if KeybindMenuVisibilityConnection then KeybindMenuVisibilityConnection:Disconnect() end
+    if KeybindOverlayGui then KeybindOverlayGui:Destroy() end
+    SetInstantProximityPrompts(false)
+    if PromptAddedConnection then
+        PromptAddedConnection:Disconnect()
+        PromptAddedConnection = nil
+    end
     ApplySilentMode(false)
+    if CharacterSoundDescendantConnection then
+        CharacterSoundDescendantConnection:Disconnect()
+        CharacterSoundDescendantConnection = nil
+    end
+    if CharacterSoundCharacterConnection then
+        CharacterSoundCharacterConnection:Disconnect()
+        CharacterSoundCharacterConnection = nil
+    end
     State.SilentAim = false
     AimRuntime.SilentAimEnabled = false
     State.Aimlock = false
@@ -1519,7 +2453,17 @@ local function SaveConfig(name)
         InfiniteStamina = State.InfiniteStamina,
         CtrlLock = State.CtrlLock,
         MonsterAngerAlert = State.MonsterAngerAlert,
+        MonsterEscapeKey = State.MonsterEscapeKey.Name,
+        KeybindPanelPinned = State.KeybindPanelPinned,
+        KeybindPanelX = State.KeybindPanelX,
+        KeybindPanelY = State.KeybindPanelY,
         SilentMode = State.SilentMode,
+        InstantProximityPrompts = State.InstantProximityPrompts,
+        AutoWeapons = State.AutoWeapons,
+        InstantReload = State.InstantReload,
+        AutoReload = State.AutoReload,
+        FastFireRate = State.FastFireRate,
+        FireRateRPM = tonumber(State.FireRateRPM) or 600,
         SilentAim = AimRuntime.SilentAimEnabled,
         SilentAimUseFOV = State.SilentAimUseFOV,
         SilentAimFOV = State.SilentAimFOV,
@@ -1540,6 +2484,8 @@ local function SaveConfig(name)
         MonsterNametagColor = {State.MonsterNametagColor.R, State.MonsterNametagColor.G, State.MonsterNametagColor.B},
         MonsterBox = State.MonsterBox,
         MonsterBoxColor = {State.MonsterBoxColor.R, State.MonsterBoxColor.G, State.MonsterBoxColor.B},
+        MonsterHealthbar = State.MonsterHealthbar,
+        MonsterHealthbarColor = {State.MonsterHealthbarColor.R, State.MonsterHealthbarColor.G, State.MonsterHealthbarColor.B},
         MonsterSkeleton = State.MonsterSkeleton,
         MonsterSkeletonColor = {State.MonsterSkeletonColor.R, State.MonsterSkeletonColor.G, State.MonsterSkeletonColor.B},
         PlayerESP = State.PlayerESP,
@@ -1547,6 +2493,8 @@ local function SaveConfig(name)
         PlayerNametagColor = {State.PlayerNametagColor.R, State.PlayerNametagColor.G, State.PlayerNametagColor.B},
         PlayerBox = State.PlayerBox,
         PlayerBoxColor = {State.PlayerBoxColor.R, State.PlayerBoxColor.G, State.PlayerBoxColor.B},
+        PlayerHealthbar = State.PlayerHealthbar,
+        PlayerHealthbarColor = {State.PlayerHealthbarColor.R, State.PlayerHealthbarColor.G, State.PlayerHealthbarColor.B},
         PlayerSkeleton = State.PlayerSkeleton,
         PlayerSkeletonColor = {State.PlayerSkeletonColor.R, State.PlayerSkeletonColor.G, State.PlayerSkeletonColor.B},
         ItemESP = State.ItemESP,
@@ -1615,8 +2563,31 @@ local function LoadConfig(name, silent)
     if type(data.MonsterAngerAlert) == "boolean" then
         UISettings.MonsterAngerAlert:SetValue(data.MonsterAngerAlert)
     end
+    if type(data.MonsterEscapeKey) == "string" and Enum.KeyCode[data.MonsterEscapeKey] then
+        UISettings.MonsterEscapeKey:SetValue(Enum.KeyCode[data.MonsterEscapeKey])
+    end
+    if type(data.KeybindPanelPinned) == "boolean" then
+        State.KeybindPanelPinned = data.KeybindPanelPinned
+    end
+    if type(data.KeybindPanelX) == "number" then State.KeybindPanelX = math.floor(data.KeybindPanelX + 0.5) end
+    if type(data.KeybindPanelY) == "number" then State.KeybindPanelY = math.floor(data.KeybindPanelY + 0.5) end
+    KeybindPanel.Position = UDim2.fromOffset(State.KeybindPanelX, State.KeybindPanelY)
+    UpdateKeybindPanel()
     if type(data.SilentMode) == "boolean" then
+        SilentRuntime.SuppressNotification = true
         UISettings.SilentMode:SetValue(data.SilentMode)
+        SilentRuntime.SuppressNotification = false
+    end
+    if type(data.InstantProximityPrompts) == "boolean" then
+        UISettings.InstantProximityPrompts:SetValue(data.InstantProximityPrompts)
+    end
+    if type(data.FireRateRPM) == "number" then
+        UISettings.FireRateRPM:SetValue(math.clamp(data.FireRateRPM, 100, 1200))
+    end
+    for _, key in ipairs({"AutoWeapons", "InstantReload", "AutoReload", "FastFireRate"}) do
+        if type(data[key]) == "boolean" and UISettings[key] then
+            UISettings[key]:SetValue(data[key])
+        end
     end
     if type(data.SilentAim) == "boolean" then
         UISettings.SilentAim:SetValue(data.SilentAim)
@@ -1675,8 +2646,8 @@ local function LoadConfig(name, silent)
     end
 
     local espBooleanKeys = {
-        "MonsterESP", "MonsterNametag", "MonsterBox", "MonsterSkeleton",
-        "PlayerESP", "PlayerNametag", "PlayerBox", "PlayerSkeleton",
+        "MonsterESP", "MonsterNametag", "MonsterBox", "MonsterHealthbar", "MonsterSkeleton",
+        "PlayerESP", "PlayerNametag", "PlayerBox", "PlayerHealthbar", "PlayerSkeleton",
         "ItemESP", "ItemNametag", "ItemBox"
     }
     for _, key in ipairs(espBooleanKeys) do
@@ -1686,8 +2657,8 @@ local function LoadConfig(name, silent)
     end
 
     local espColorKeys = {
-        "MonsterNametagColor", "MonsterBoxColor", "MonsterSkeletonColor",
-        "PlayerNametagColor", "PlayerBoxColor", "PlayerSkeletonColor",
+        "MonsterNametagColor", "MonsterBoxColor", "MonsterHealthbarColor", "MonsterSkeletonColor",
+        "PlayerNametagColor", "PlayerBoxColor", "PlayerHealthbarColor", "PlayerSkeletonColor",
         "ItemNametagColor", "ItemBoxColor"
     }
     for _, key in ipairs(espColorKeys) do
@@ -1710,6 +2681,7 @@ end
 
 ToggleKeyControl = ConfigSection:CreateKeybind("Toggle UI", Enum.KeyCode.LeftAlt, function(key)
     Window.ToggleKey = key
+    UpdateKeybindPanel()
 end)
 
 ConfigDropdown = ConfigSection:CreateDropdown("Configs", GetConfigs(), "Default", function(value)
@@ -1753,7 +2725,5 @@ end)
 EnsureConfigFolder()
 if isfile and readfile and isfile(AUTOLOAD_PATH) then
     local success, name = pcall(readfile, AUTOLOAD_PATH)
-    if success and LoadConfig(name, true) then
-        Notify("Autoloaded config " .. CleanConfigName(name) .. ".")
-    end
+    if success then LoadConfig(name, true) end
 end
