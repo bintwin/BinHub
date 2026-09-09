@@ -2478,10 +2478,11 @@ PopupContainer.Visible = true
                     end
                     
                     local function update_popup_pos()
-                        local btn_pos = SettingsBtn.AbsolutePosition
+                        local row_pos = HeaderFrame.AbsolutePosition
+                        local row_sz = HeaderFrame.AbsoluteSize
                         local inset = game:GetService("GuiService"):GetGuiInset()
-                        local x_pos = math.max(10, btn_pos.X - 220)
-                        local y_pos = btn_pos.Y + 24 - inset.Y
+                        local x_pos = math.max(10, (row_pos.X + row_sz.X) - 240 - 10)
+                        local y_pos = (row_pos.Y + row_sz.Y + 4) - inset.Y
                         SettingsContainer.Position = UDim2.new(0, x_pos, 0, y_pos)
                     end
                     
@@ -2505,9 +2506,34 @@ PopupContainer.Visible = true
                         UpdateState()
                     end)
                     
+                    local function close_popup()
+                        if not settingsOpen then return end
+                        settingsOpen = false
+                        TweenService:Create(SettingsContainer, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 240, 0, 0)}):Play()
+                        TweenService:Create(SettingsBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = 0}):Play()
+                        task.delay(0.2, function()
+                            if not settingsOpen then
+                                SettingsContainer.Visible = false
+                            end
+                        end)
+                        if WindowObj._current_settings_popup == close_popup then
+                            WindowObj._current_settings_popup = nil
+                            WindowObj._current_settings_box = nil
+                            WindowObj._current_settings_btn = nil
+                        end
+                    end
+                    
                     SettingsBtn.MouseButton1Click:Connect(function()
-                        settingsOpen = not settingsOpen
                         if settingsOpen then
+                            close_popup()
+                        else
+                            if WindowObj._current_settings_popup then
+                                WindowObj._current_settings_popup()
+                            end
+                            settingsOpen = true
+                            WindowObj._current_settings_popup = close_popup
+                            WindowObj._current_settings_box = SettingsContainer
+                            WindowObj._current_settings_btn = SettingsBtn
                             for _, c in pairs(SettingsScroll:GetChildren()) do
                                 bump_z(c)
                             end
@@ -2516,14 +2542,37 @@ PopupContainer.Visible = true
                             local h = calc_popup_h()
                             SettingsScroll.CanvasSize = UDim2.new(0, 0, 0, h)
                             TweenService:Create(SettingsContainer, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 240, 0, h)}):Play()
-                        else
-                            TweenService:Create(SettingsContainer, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 240, 0, 0)}):Play()
-                            task.delay(0.2, function()
-                                if not settingsOpen then SettingsContainer.Visible = false end
-                            end)
+                            TweenService:Create(SettingsBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = 90}):Play()
                         end
-                        TweenService:Create(SettingsBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = settingsOpen and 90 or 0}):Play()
                     end)
+                    
+                    if not WindowObj._settings_outside_click_setup then
+                        WindowObj._settings_outside_click_setup = true
+                        UserInputService.InputBegan:Connect(function(inp)
+                            if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                                if WindowObj._current_settings_popup then
+                                    task.defer(function()
+                                        if WindowObj._current_settings_popup then
+                                            local m_pos = UserInputService:GetMouseLocation()
+                                            local active_box = WindowObj._current_settings_box
+                                            local active_btn = WindowObj._current_settings_btn
+                                            if active_box and active_box.Visible then
+                                                local b_pos = active_box.AbsolutePosition
+                                                local b_sz = active_box.AbsoluteSize
+                                                local btn_p = active_btn and active_btn.AbsolutePosition or Vector2.zero
+                                                local btn_s = active_btn and active_btn.AbsoluteSize or Vector2.zero
+                                                local inside_box = m_pos.X >= b_pos.X and m_pos.X <= (b_pos.X + b_sz.X) and m_pos.Y >= b_pos.Y and m_pos.Y <= (b_pos.Y + b_sz.Y)
+                                                local inside_btn = m_pos.X >= btn_p.X and m_pos.X <= (btn_p.X + btn_s.X) and m_pos.Y >= btn_p.Y and m_pos.Y <= (btn_p.Y + btn_s.Y)
+                                                if not inside_box and not inside_btn then
+                                                    WindowObj._current_settings_popup()
+                                                end
+                                            end
+                                        end
+                                    end)
+                                end
+                            end
+                        end)
+                    end
                     
                     SettingsLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
                         if settingsOpen then
@@ -2535,10 +2584,7 @@ PopupContainer.Visible = true
                     
                     WindowObj.Gui:GetPropertyChangedSignal("Enabled"):Connect(function()
                         if not WindowObj.Gui.Enabled and settingsOpen then
-                            settingsOpen = false
-                            SettingsContainer.Visible = false
-                            SettingsContainer.Size = UDim2.new(0, 240, 0, 0)
-                            SettingsBtn.Rotation = 0
+                            close_popup()
                         end
                     end)
                     
