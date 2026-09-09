@@ -1999,6 +1999,123 @@ function Library:CreateWindow(options)
                     return ViewerObj
                 end
                  
+                function SecObj:CreateCheckboxWithSettings(itemName, default, callback)
+                    local state = default or false
+                    local settingsOpen = false
+                    
+                    local ItemFrame = Instance.new("Frame")
+                    ItemFrame.Size = UDim2.new(1, 0, 0, 42)
+                    ItemFrame.BackgroundTransparency = 1
+                    ItemFrame.ClipsDescendants = true
+                    ItemFrame.Parent = self.Container
+                    
+                    local HeaderFrame = Instance.new("Frame")
+                    HeaderFrame.Size = UDim2.new(1, 0, 0, 42)
+                    HeaderFrame.BackgroundTransparency = 1
+                    HeaderFrame.Parent = ItemFrame
+                    
+                    local ItemDivider = Instance.new("Frame")
+                    ItemDivider.Size = UDim2.new(1, -24, 0, 1)
+                    ItemDivider.Position = UDim2.new(0, 12, 1, -1)
+                    ItemDivider.BackgroundColor3 = Theme.Border
+                    ItemDivider.BackgroundTransparency = 0
+                    ItemDivider.BorderSizePixel = 0
+                    ItemDivider.Parent = HeaderFrame
+                    
+                    local Label = Instance.new("TextLabel")
+                    Label.Size = UDim2.new(1, -85, 1, 0)
+                    Label.Position = UDim2.new(0, 12, 0, 0)
+                    Label.BackgroundTransparency = 1
+                    Label.Text = itemName
+                    Label.TextColor3 = Theme.Text
+                    Label.FontFace = Font.new("rbxasset://fonts/families/Roboto.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+                    Label.TextSize = 16
+                    Label.TextXAlignment = Enum.TextXAlignment.Left
+                    Label.Parent = HeaderFrame
+                    
+                    local SettingsBtn = Instance.new("ImageButton")
+                    SettingsBtn.Size = UDim2.new(0, 20, 0, 20)
+                    SettingsBtn.Position = UDim2.new(1, -74, 0.5, -10)
+                    SettingsBtn.BackgroundTransparency = 1
+                    SettingsBtn.Image = "rbxassetid://7734053495"
+                    SettingsBtn.ImageColor3 = Theme.SubText
+                    SettingsBtn.Parent = HeaderFrame
+                    
+                    local CheckBtn = Instance.new("TextButton")
+                    CheckBtn.Size = UDim2.new(0, 36, 0, 20)
+                    CheckBtn.Position = UDim2.new(1, -48, 0.5, -10)
+                    CheckBtn.BackgroundColor3 = Theme.InputBg
+                    CheckBtn.Text = ""
+                    CheckBtn.Parent = HeaderFrame
+                    
+                    local CheckCorner = Instance.new("UICorner")
+                    CheckCorner.CornerRadius = UDim.new(1, 0)
+                    CheckCorner.Parent = CheckBtn
+                    
+                    local InnerCheck = Instance.new("Frame")
+                    InnerCheck.Size = UDim2.new(0, 16, 0, 16)
+                    InnerCheck.Position = UDim2.new(0, 2, 0.5, -8)
+                    InnerCheck.BackgroundColor3 = Theme.Text
+                    InnerCheck.Parent = CheckBtn
+                    
+                    local InnerCorner = Instance.new("UICorner")
+                    InnerCorner.CornerRadius = UDim.new(1, 0)
+                    InnerCorner.Parent = InnerCheck
+                    
+                    local SettingsContainer = Instance.new("Frame")
+                    SettingsContainer.Size = UDim2.new(1, 0, 0, 0)
+                    SettingsContainer.Position = UDim2.new(0, 0, 0, 42)
+                    SettingsContainer.BackgroundTransparency = 1
+                    SettingsContainer.Parent = ItemFrame
+                    
+                    local SettingsLayout = Instance.new("UIListLayout")
+                    SettingsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+                    SettingsLayout.Parent = SettingsContainer
+                    
+                    local TweenService = game:GetService("TweenService")
+                    local function UpdateState(instant)
+                        local goalPos = state and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
+                        local goalColor = state and Theme.Accent or Theme.InputBg
+                        if instant then
+                            InnerCheck.Position = goalPos
+                            CheckBtn.BackgroundColor3 = goalColor
+                        else
+                            TweenService:Create(InnerCheck, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = goalPos}):Play()
+                            TweenService:Create(CheckBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = goalColor}):Play()
+                        end
+                        if callback then callback(state) end
+                    end
+                    UpdateState(true)
+                    
+                    CheckBtn.MouseButton1Click:Connect(function()
+                        state = not state
+                        UpdateState()
+                    end)
+                    
+                    SettingsBtn.MouseButton1Click:Connect(function()
+                        settingsOpen = not settingsOpen
+                        local goalHeight = settingsOpen and (42 + SettingsLayout.AbsoluteContentSize.Y) or 42
+                        TweenService:Create(ItemFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, goalHeight)}):Play()
+                        TweenService:Create(SettingsBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = settingsOpen and 90 or 0}):Play()
+                    end)
+                    
+                    SettingsLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                        if settingsOpen then
+                            ItemFrame.Size = UDim2.new(1, 0, 0, 42 + SettingsLayout.AbsoluteContentSize.Y)
+                        end
+                        SettingsContainer.Size = UDim2.new(1, 0, 0, SettingsLayout.AbsoluteContentSize.Y)
+                    end)
+                    
+                    local CheckboxObj = { Container = SettingsContainer }
+                    setmetatable(CheckboxObj, { __index = SecObj })
+                    
+                    function CheckboxObj:SetValue(v)
+                        state = v
+                        UpdateState(true)
+                    end
+                    return CheckboxObj
+                end
+                
                 function SecObj:CreateSlider(itemName, min, max, default, callback, step)
                     step = tonumber(step) or 1
                     if step <= 0 then step = 1 end
