@@ -2407,14 +2407,29 @@ PopupContainer.Visible = true
                     InnerCorner.Parent = InnerCheck
                     
                     local SettingsContainer = Instance.new("Frame")
-                    SettingsContainer.Size = UDim2.new(1, 0, 0, 0)
-                    SettingsContainer.Position = UDim2.new(0, 0, 0, 42)
-                    SettingsContainer.BackgroundTransparency = 1
-                    SettingsContainer.Parent = ItemFrame
+                    SettingsContainer.Size = UDim2.new(0, 250, 0, 0)
+                    SettingsContainer.BackgroundColor3 = Theme.CardBg
+                    SettingsContainer.ZIndex = 101
+                    SettingsContainer.ClipsDescendants = true
+                    SettingsContainer.Visible = false
+                    SettingsContainer.Parent = WindowObj.Gui
+                    
+                    local SC_Corner = Instance.new("UICorner")
+                    SC_Corner.CornerRadius = UDim.new(0, 6)
+                    SC_Corner.Parent = SettingsContainer
+                    
+                    local SettingsScroll = Instance.new("ScrollingFrame")
+                    SettingsScroll.Size = UDim2.new(1, 0, 1, -10)
+                    SettingsScroll.Position = UDim2.new(0, 0, 0, 5)
+                    SettingsScroll.BackgroundTransparency = 1
+                    SettingsScroll.ScrollBarThickness = 4
+                    SettingsScroll.ScrollBarImageColor3 = Theme.SubText
+                    SettingsScroll.ZIndex = 102
+                    SettingsScroll.Parent = SettingsContainer
                     
                     local SettingsLayout = Instance.new("UIListLayout")
                     SettingsLayout.SortOrder = Enum.SortOrder.LayoutOrder
-                    SettingsLayout.Parent = SettingsContainer
+                    SettingsLayout.Parent = SettingsScroll
                     
                     local TweenService = game:GetService("TweenService")
                     local function UpdateState(instant)
@@ -2438,19 +2453,29 @@ PopupContainer.Visible = true
                     
                     SettingsBtn.MouseButton1Click:Connect(function()
                         settingsOpen = not settingsOpen
-                        local goalHeight = settingsOpen and (42 + SettingsLayout.AbsoluteContentSize.Y) or 42
-                        TweenService:Create(ItemFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, goalHeight)}):Play()
+                        if settingsOpen then
+                            SettingsContainer.Position = UDim2.new(0, SettingsBtn.AbsolutePosition.X - 230, 0, SettingsBtn.AbsolutePosition.Y + 25)
+                            SettingsContainer.Visible = true
+                            local targetHeight = math.min(SettingsLayout.AbsoluteContentSize.Y + 10, 300)
+                            TweenService:Create(SettingsContainer, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 250, 0, targetHeight)}):Play()
+                        else
+                            TweenService:Create(SettingsContainer, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 250, 0, 0)}):Play()
+                            delay(0.2, function()
+                                if not settingsOpen then SettingsContainer.Visible = false end
+                            end)
+                        end
                         TweenService:Create(SettingsBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = settingsOpen and 90 or 0}):Play()
                     end)
                     
                     SettingsLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
                         if settingsOpen then
-                            ItemFrame.Size = UDim2.new(1, 0, 0, 42 + SettingsLayout.AbsoluteContentSize.Y)
+                            local targetHeight = math.min(SettingsLayout.AbsoluteContentSize.Y + 10, 300)
+                            SettingsContainer.Size = UDim2.new(0, 250, 0, targetHeight)
                         end
-                        SettingsContainer.Size = UDim2.new(1, 0, 0, SettingsLayout.AbsoluteContentSize.Y)
+                        SettingsScroll.CanvasSize = UDim2.new(0, 0, 0, SettingsLayout.AbsoluteContentSize.Y)
                     end)
                     
-                    local CheckboxObj = { Container = SettingsContainer }
+                    local CheckboxObj = { Container = SettingsScroll }
                     setmetatable(CheckboxObj, { __index = SecObj })
                     
                     function CheckboxObj:SetValue(v)
