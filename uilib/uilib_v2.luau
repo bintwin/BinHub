@@ -257,7 +257,7 @@ function Library:CreateWindow(options)
     PopupContainer.Name = "PopupContainer"
     PopupContainer.Size = UDim2.new(1, 0, 1, 0)
     PopupContainer.BackgroundTransparency = 1
-    PopupContainer.ZIndex = 100
+    PopupContainer.ZIndex = 200
     PopupContainer.Visible = false
     PopupContainer.Parent = gui
     
@@ -2407,7 +2407,7 @@ PopupContainer.Visible = true
                     InnerCorner.Parent = InnerCheck
                     
                     local SettingsContainer = Instance.new("Frame")
-                    SettingsContainer.Size = UDim2.new(0, 250, 0, 0)
+                    SettingsContainer.Size = UDim2.new(0, 240, 0, 0)
                     SettingsContainer.BackgroundColor3 = Theme.CardBg
                     SettingsContainer.ZIndex = 101
                     SettingsContainer.ClipsDescendants = true
@@ -2418,18 +2418,72 @@ PopupContainer.Visible = true
                     SC_Corner.CornerRadius = UDim.new(0, 6)
                     SC_Corner.Parent = SettingsContainer
                     
+                    local SC_Stroke = Instance.new("UIStroke")
+                    SC_Stroke.Color = Theme.Border
+                    SC_Stroke.Thickness = 1
+                    SC_Stroke.Parent = SettingsContainer
+                    
                     local SettingsScroll = Instance.new("ScrollingFrame")
                     SettingsScroll.Size = UDim2.new(1, 0, 1, -10)
                     SettingsScroll.Position = UDim2.new(0, 0, 0, 5)
                     SettingsScroll.BackgroundTransparency = 1
-                    SettingsScroll.ScrollBarThickness = 4
+                    SettingsScroll.ScrollBarThickness = 3
                     SettingsScroll.ScrollBarImageColor3 = Theme.SubText
                     SettingsScroll.ZIndex = 102
+                    SettingsScroll.BorderSizePixel = 0
+                    SettingsScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+                    SettingsScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
                     SettingsScroll.Parent = SettingsContainer
                     
                     local SettingsLayout = Instance.new("UIListLayout")
                     SettingsLayout.SortOrder = Enum.SortOrder.LayoutOrder
                     SettingsLayout.Parent = SettingsScroll
+                    
+                    local function bump_z(obj)
+                        if obj:IsA("GuiObject") and obj.ZIndex < 106 then
+                            obj.ZIndex = 106
+                        end
+                        for _, d in pairs(obj:GetDescendants()) do
+                            if d:IsA("GuiObject") and d.ZIndex < 107 then
+                                d.ZIndex = 107
+                            end
+                        end
+                    end
+                    
+                    SettingsScroll.ChildAdded:Connect(function(c)
+                        task.defer(function()
+                            bump_z(c)
+                        end)
+                        c.DescendantAdded:Connect(function(d)
+                            task.defer(function()
+                                if d:IsA("GuiObject") and d.ZIndex < 107 then
+                                    d.ZIndex = 107
+                                end
+                            end)
+                        end)
+                    end)
+                    
+                    local function calc_popup_h()
+                        local cnt = 0
+                        for _, ch in pairs(SettingsScroll:GetChildren()) do
+                            if ch:IsA("GuiObject") then
+                                cnt = cnt + 1
+                            end
+                        end
+                        local h = cnt * 42 + 10
+                        if SettingsLayout.AbsoluteContentSize.Y > h then
+                            h = SettingsLayout.AbsoluteContentSize.Y + 10
+                        end
+                        return math.clamp(h, 45, 290)
+                    end
+                    
+                    local function update_popup_pos()
+                        local btn_pos = SettingsBtn.AbsolutePosition
+                        local inset = game:GetService("GuiService"):GetGuiInset()
+                        local x_pos = math.max(10, btn_pos.X - 220)
+                        local y_pos = btn_pos.Y + 24 - inset.Y
+                        SettingsContainer.Position = UDim2.new(0, x_pos, 0, y_pos)
+                    end
                     
                     local TweenService = game:GetService("TweenService")
                     local function UpdateState(instant)
@@ -2454,13 +2508,17 @@ PopupContainer.Visible = true
                     SettingsBtn.MouseButton1Click:Connect(function()
                         settingsOpen = not settingsOpen
                         if settingsOpen then
-                            SettingsContainer.Position = UDim2.new(0, SettingsBtn.AbsolutePosition.X - 230, 0, SettingsBtn.AbsolutePosition.Y + 25)
+                            for _, c in pairs(SettingsScroll:GetChildren()) do
+                                bump_z(c)
+                            end
+                            update_popup_pos()
                             SettingsContainer.Visible = true
-                            local targetHeight = math.min(SettingsLayout.AbsoluteContentSize.Y + 10, 300)
-                            TweenService:Create(SettingsContainer, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 250, 0, targetHeight)}):Play()
+                            local h = calc_popup_h()
+                            SettingsScroll.CanvasSize = UDim2.new(0, 0, 0, h)
+                            TweenService:Create(SettingsContainer, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 240, 0, h)}):Play()
                         else
-                            TweenService:Create(SettingsContainer, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 250, 0, 0)}):Play()
-                            delay(0.2, function()
+                            TweenService:Create(SettingsContainer, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 240, 0, 0)}):Play()
+                            task.delay(0.2, function()
                                 if not settingsOpen then SettingsContainer.Visible = false end
                             end)
                         end
@@ -2469,10 +2527,19 @@ PopupContainer.Visible = true
                     
                     SettingsLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
                         if settingsOpen then
-                            local targetHeight = math.min(SettingsLayout.AbsoluteContentSize.Y + 10, 300)
-                            SettingsContainer.Size = UDim2.new(0, 250, 0, targetHeight)
+                            local h = calc_popup_h()
+                            SettingsContainer.Size = UDim2.new(0, 240, 0, h)
+                            SettingsScroll.CanvasSize = UDim2.new(0, 0, 0, h)
                         end
-                        SettingsScroll.CanvasSize = UDim2.new(0, 0, 0, SettingsLayout.AbsoluteContentSize.Y)
+                    end)
+                    
+                    WindowObj.Gui:GetPropertyChangedSignal("Enabled"):Connect(function()
+                        if not WindowObj.Gui.Enabled and settingsOpen then
+                            settingsOpen = false
+                            SettingsContainer.Visible = false
+                            SettingsContainer.Size = UDim2.new(0, 240, 0, 0)
+                            SettingsBtn.Rotation = 0
+                        end
                     end)
                     
                     local CheckboxObj = { Container = SettingsScroll }
