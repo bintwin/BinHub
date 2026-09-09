@@ -263,6 +263,7 @@ function Library:CreateWindow(options)
     
     local WindowObj = {
         Gui = gui,
+        MainFrame = MainFrame,
         CategoryContainer = CategoryContainer,
         ContentContainer = ContentContainer,
         PopupContainer = PopupContainer,
@@ -2450,14 +2451,39 @@ PopupContainer.Visible = true
                         end
                     end
                     
+                    local function hook_elem_press(node)
+                        if node:IsA("GuiObject") then
+                            node.InputBegan:Connect(function(ev)
+                                if ev.UserInputType == Enum.UserInputType.MouseButton1 or ev.UserInputType == Enum.UserInputType.Touch then
+                                    WindowObj._last_settings_interact = tick()
+                                end
+                            end)
+                        end
+                        for _, sub in pairs(node:GetDescendants()) do
+                            if sub:IsA("GuiObject") then
+                                sub.InputBegan:Connect(function(ev)
+                                    if ev.UserInputType == Enum.UserInputType.MouseButton1 or ev.UserInputType == Enum.UserInputType.Touch then
+                                        WindowObj._last_settings_interact = tick()
+                                    end
+                                end)
+                            end
+                        end
+                    end
+                    hook_elem_press(SettingsContainer)
+                    hook_elem_press(SettingsScroll)
+                    
                     SettingsScroll.ChildAdded:Connect(function(c)
                         task.defer(function()
                             bump_z(c)
+                            hook_elem_press(c)
                         end)
                         c.DescendantAdded:Connect(function(d)
                             task.defer(function()
                                 if d:IsA("GuiObject") and d.ZIndex < 107 then
                                     d.ZIndex = 107
+                                end
+                                if d:IsA("GuiObject") then
+                                    hook_elem_press(d)
                                 end
                             end)
                         end)
@@ -2482,7 +2508,7 @@ PopupContainer.Visible = true
                         local row_sz = HeaderFrame.AbsoluteSize
                         local inset = game:GetService("GuiService"):GetGuiInset()
                         local x_pos = math.max(10, (row_pos.X + row_sz.X) - 240 - 10)
-                        local y_pos = (row_pos.Y + row_sz.Y + 4) - inset.Y
+                        local y_pos = (row_pos.Y + row_sz.Y + 12) - inset.Y
                         SettingsContainer.Position = UDim2.new(0, x_pos, 0, y_pos)
                     end
                     
@@ -2520,6 +2546,7 @@ PopupContainer.Visible = true
                             WindowObj._current_settings_popup = nil
                             WindowObj._current_settings_box = nil
                             WindowObj._current_settings_btn = nil
+                            WindowObj._current_settings_row = nil
                         end
                     end
                     
@@ -2534,6 +2561,7 @@ PopupContainer.Visible = true
                             WindowObj._current_settings_popup = close_popup
                             WindowObj._current_settings_box = SettingsContainer
                             WindowObj._current_settings_btn = SettingsBtn
+                            WindowObj._current_settings_row = HeaderFrame
                             for _, c in pairs(SettingsScroll:GetChildren()) do
                                 bump_z(c)
                             end
@@ -2553,17 +2581,35 @@ PopupContainer.Visible = true
                                 if WindowObj._current_settings_popup then
                                     task.defer(function()
                                         if WindowObj._current_settings_popup then
-                                            local m_pos = UserInputService:GetMouseLocation()
-                                            local active_box = WindowObj._current_settings_box
-                                            local active_btn = WindowObj._current_settings_btn
-                                            if active_box and active_box.Visible then
-                                                local b_pos = active_box.AbsolutePosition
-                                                local b_sz = active_box.AbsoluteSize
-                                                local btn_p = active_btn and active_btn.AbsolutePosition or Vector2.zero
-                                                local btn_s = active_btn and active_btn.AbsoluteSize or Vector2.zero
-                                                local inside_box = m_pos.X >= b_pos.X and m_pos.X <= (b_pos.X + b_sz.X) and m_pos.Y >= b_pos.Y and m_pos.Y <= (b_pos.Y + b_sz.Y)
-                                                local inside_btn = m_pos.X >= btn_p.X and m_pos.X <= (btn_p.X + btn_s.X) and m_pos.Y >= btn_p.Y and m_pos.Y <= (btn_p.Y + btn_s.Y)
-                                                if not inside_box and not inside_btn then
+                                            if WindowObj.PopupContainer and WindowObj.PopupContainer.Visible then
+                                                return
+                                            end
+                                            local now_t = tick()
+                                            if (now_t - (WindowObj._last_settings_interact or 0)) < 0.4 then
+                                                return
+                                            end
+                                            local curr_clk_box = WindowObj._current_settings_box
+                                            local curr_clk_btn = WindowObj._current_settings_btn
+                                            local curr_clk_row = WindowObj._current_settings_row
+                                            if curr_clk_box and curr_clk_box.Visible then
+                                                local inset = game:GetService("GuiService"):GetGuiInset()
+                                                local m1 = UserInputService:GetMouseLocation()
+                                                local m2 = m1 - inset
+                                                local m3 = Vector2.new(inp.Position.X, inp.Position.Y)
+                                                local m4 = m3 - inset
+                                                local b_pos = curr_clk_box.AbsolutePosition
+                                                local b_sz = curr_clk_box.AbsoluteSize
+                                                local btn_p = curr_clk_btn and curr_clk_btn.AbsolutePosition or Vector2.zero
+                                                local btn_s = curr_clk_btn and curr_clk_btn.AbsoluteSize or Vector2.zero
+                                                local row_p = curr_clk_row and curr_clk_row.AbsolutePosition or Vector2.zero
+                                                local row_s = curr_clk_row and curr_clk_row.AbsoluteSize or Vector2.zero
+                                                local function is_coord_in_rect(pt, p, s)
+                                                    return pt.X >= (p.X - 12) and pt.X <= (p.X + s.X + 12) and pt.Y >= (p.Y - 12) and pt.Y <= (p.Y + s.Y + 12)
+                                                end
+                                                local hit_box = is_coord_in_rect(m1, b_pos, b_sz) or is_coord_in_rect(m2, b_pos, b_sz) or is_coord_in_rect(m3, b_pos, b_sz) or is_coord_in_rect(m4, b_pos, b_sz)
+                                                local hit_btn = is_coord_in_rect(m1, btn_p, btn_s) or is_coord_in_rect(m2, btn_p, btn_s) or is_coord_in_rect(m3, btn_p, btn_s) or is_coord_in_rect(m4, btn_p, btn_s)
+                                                local hit_row = is_coord_in_rect(m1, row_p, row_s) or is_coord_in_rect(m2, row_p, row_s) or is_coord_in_rect(m3, row_p, row_s) or is_coord_in_rect(m4, row_p, row_s)
+                                                if not hit_box and not hit_btn and not hit_row then
                                                     WindowObj._current_settings_popup()
                                                 end
                                             end
