@@ -1018,8 +1018,7 @@ PopupContainer.Visible = true
                         CloseBtn.MouseButton1Click:Connect(function()
                             PopupContainer.Visible = false
                             PopupContainer:ClearAllChildren()
-                        end
-)
+                        end)
                     end
                     
                     ColorBox1.MouseButton1Click:Connect(function()
@@ -1027,16 +1026,16 @@ PopupContainer.Visible = true
                             currentColor1 = c
                             GradVisual.Color = ColorSequence.new(currentColor1, currentColor2)
                             if callback1 then callback1(c) end
-                        end
-)
+                        end)
+                    end)
                     
                     ColorBox2.MouseButton1Click:Connect(function()
                         makePopup(ColorBox2, currentColor2, function(c)
                             currentColor2 = c
                             GradVisual.Color = ColorSequence.new(currentColor1, currentColor2)
                             if callback2 then callback2(c) end
-                        end
-)
+                        end)
+                    end)
                     
                     local GradPickerObj = {}
                     function GradPickerObj:SetColors(c1, c2)
