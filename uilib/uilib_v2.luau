@@ -706,6 +706,351 @@ function Library:CreateWindow(options)
                     return CheckboxObj
                 end
                 
+
+                function SecObj:CreateGradientPicker(itemName, defaultColor1, defaultColor2, callback1, callback2)
+                    local currentColor1 = defaultColor1 or Color3.fromRGB(255, 255, 255)
+                    local currentColor2 = defaultColor2 or Color3.fromRGB(0, 0, 0)
+                    local ItemFrame = Instance.new("Frame")
+                    ItemFrame.Size = UDim2.new(1, 0, 0, 42)
+                    ItemFrame.BackgroundTransparency = 1
+                    ItemFrame.Parent = self.Container
+                    
+                    local ItemDivider = Instance.new("Frame")
+                    ItemDivider.Size = UDim2.new(1, -24, 0, 1)
+                    ItemDivider.Position = UDim2.new(0, 12, 1, -1)
+                    ItemDivider.BackgroundColor3 = Theme.Border
+                    ItemDivider.BackgroundTransparency = 0
+                    ItemDivider.BorderSizePixel = 0
+                    ItemDivider.Parent = ItemFrame
+                    
+                    local Label = Instance.new("TextLabel")
+                    Label.Size = UDim2.new(1, -80, 1, 0)
+                    Label.Position = UDim2.new(0, 12, 0, 0)
+                    Label.BackgroundTransparency = 1
+                    Label.Text = itemName
+                    Label.TextColor3 = Theme.Text
+                    Label.FontFace = Font.new("rbxasset://fonts/families/Roboto.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+                    Label.TextSize = 16
+                    Label.TextXAlignment = Enum.TextXAlignment.Left
+                    Label.Parent = ItemFrame
+                    
+                    local ColorBox1 = Instance.new("TextButton")
+                    ColorBox1.Size = UDim2.new(0, 16, 0, 16)
+                    ColorBox1.Position = UDim2.new(1, -54, 0.5, -8)
+                    ColorBox1.BackgroundColor3 = currentColor1
+                    ColorBox1.Text = ""
+                    ColorBox1.Parent = ItemFrame
+                    
+                    local ColorCorner1 = Instance.new("UICorner")
+                    ColorCorner1.CornerRadius = UDim.new(0, 4)
+                    ColorCorner1.Parent = ColorBox1
+                    
+                    local GradFrame = Instance.new("Frame")
+                    GradFrame.Size = UDim2.new(0, 16, 0, 16)
+                    GradFrame.Position = UDim2.new(1, -36, 0.5, -8)
+                    GradFrame.BackgroundColor3 = Color3.fromRGB(255,255,255)
+                    GradFrame.BorderSizePixel = 0
+                    GradFrame.Parent = ItemFrame
+                    local GradVisual = Instance.new("UIGradient")
+                    GradVisual.Color = ColorSequence.new(currentColor1, currentColor2)
+                    GradVisual.Parent = GradFrame
+                    
+                    local ColorBox2 = Instance.new("TextButton")
+                    ColorBox2.Size = UDim2.new(0, 16, 0, 16)
+                    ColorBox2.Position = UDim2.new(1, -18, 0.5, -8)
+                    ColorBox2.BackgroundColor3 = currentColor2
+                    ColorBox2.Text = ""
+                    ColorBox2.Parent = ItemFrame
+                    
+                    local ColorCorner2 = Instance.new("UICorner")
+                    ColorCorner2.CornerRadius = UDim.new(0, 4)
+                    ColorCorner2.Parent = ColorBox2
+
+                    local function makePopup(targetBox, curColor, updateCallback)
+PopupContainer.Visible = true
+                        for _, child in pairs(PopupContainer:GetChildren()) do child:Destroy() end
+                        
+                        local absPos = targetBox.AbsolutePosition
+                        
+                        local PickerFrame = Instance.new("Frame")
+                        PickerFrame.Size = UDim2.new(0, 180, 0, 220)
+                        PickerFrame.Position = UDim2.new(0, absPos.X - 60, 0, absPos.Y + 22)
+                        PickerFrame.BackgroundColor3 = Theme.CardBg
+                        PickerFrame.ZIndex = 102
+                        PickerFrame.Parent = PopupContainer
+                        
+                        local PickCorner = Instance.new("UICorner")
+                        PickCorner.CornerRadius = UDim.new(0, 8)
+                        PickCorner.Parent = PickerFrame
+                        
+                        local PickShadow = Instance.new("UIShadow")
+                        PickShadow.BlurRadius = UDim.new(0, 8)
+                        PickShadow.Color = Color3.fromRGB(0, 0, 0)
+                        PickShadow.Offset = UDim2.new(0, 0, 0, 2)
+                        PickShadow.Transparency = 0.3
+                        PickShadow.Parent = PickerFrame
+                        
+                        local hue, sat, val = 0.7, 0.8, 0.8
+                        local r, g, b = curColor.R, curColor.G, curColor.B
+                        hue, sat, val = Color3.toHSV(curColor)
+                        
+                        local SVBox = Instance.new("TextButton")
+                        SVBox.Size = UDim2.new(1, -20, 0, 140)
+                        SVBox.Position = UDim2.new(0, 10, 0, 10)
+                        SVBox.BackgroundColor3 = Color3.fromHSV(hue, 1, 1)
+                        SVBox.Text = ""
+                        SVBox.ZIndex = 103
+                        SVBox.Parent = PickerFrame
+                        
+                        local SVCorner = Instance.new("UICorner")
+                        SVCorner.CornerRadius = UDim.new(0, 4)
+                        SVCorner.Parent = SVBox
+                        
+                        local WhiteOverlay = Instance.new("Frame")
+                        WhiteOverlay.Size = UDim2.new(1, 0, 1, 0)
+                        WhiteOverlay.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                        WhiteOverlay.ZIndex = 104
+                        WhiteOverlay.Parent = SVBox
+                        
+                        local WhiteCorner = Instance.new("UICorner")
+                        WhiteCorner.CornerRadius = UDim.new(0, 4)
+                        WhiteCorner.Parent = WhiteOverlay
+                        
+                        local WhiteGrad = Instance.new("UIGradient")
+                        WhiteGrad.Transparency = NumberSequence.new({
+                            NumberSequenceKeypoint.new(0, 0),
+                            NumberSequenceKeypoint.new(1, 1)
+                        })
+                        WhiteGrad.Parent = WhiteOverlay
+                        
+                        local BlackOverlay = Instance.new("Frame")
+                        BlackOverlay.Size = UDim2.new(1, 0, 1, 0)
+                        BlackOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+                        BlackOverlay.ZIndex = 105
+                        BlackOverlay.Parent = SVBox
+                        
+                        local BlackCorner = Instance.new("UICorner")
+                        BlackCorner.CornerRadius = UDim.new(0, 4)
+                        BlackCorner.Parent = BlackOverlay
+                        
+                        local BlackGrad = Instance.new("UIGradient")
+                        BlackGrad.Color = ColorSequence.new(Color3.fromRGB(0, 0, 0), Color3.fromRGB(0, 0, 0))
+                        BlackGrad.Transparency = NumberSequence.new({
+                            NumberSequenceKeypoint.new(0, 1),
+                            NumberSequenceKeypoint.new(1, 0)
+                        })
+                        BlackGrad.Rotation = 90
+                        BlackGrad.Parent = BlackOverlay
+                        
+                        local SVCursor = Instance.new("Frame")
+                        SVCursor.Size = UDim2.new(0, 10, 0, 10)
+                        SVCursor.Position = UDim2.new(sat, -5, 1 - val, -5)
+                        SVCursor.BackgroundTransparency = 1
+                        SVCursor.ZIndex = 106
+                        SVCursor.Parent = SVBox
+                        
+                        local CursorStroke = Instance.new("UICorner")
+                        CursorStroke.CornerRadius = UDim.new(1, 0)
+                        CursorStroke.Parent = SVCursor
+                        
+                        local CursorRing = Instance.new("UIStroke")
+                        CursorRing.Color = Color3.fromRGB(255, 255, 255)
+                        CursorRing.Thickness = 2
+                        CursorRing.Parent = SVCursor
+                        
+                        local HueBar = Instance.new("TextButton")
+                        HueBar.Size = UDim2.new(1, -20, 0, 12)
+                        HueBar.Position = UDim2.new(0, 10, 0, 158)
+                        HueBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                        HueBar.Text = ""
+                        HueBar.ZIndex = 103
+                        HueBar.Parent = PickerFrame
+                        
+                        local HueCorner = Instance.new("UICorner")
+                        HueCorner.CornerRadius = UDim.new(1, 0)
+                        HueCorner.Parent = HueBar
+                        
+                        local HueGrad = Instance.new("UIGradient")
+                        HueGrad.Color = ColorSequence.new({
+                            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+                            ColorSequenceKeypoint.new(0.167, Color3.fromRGB(255, 255, 0)),
+                            ColorSequenceKeypoint.new(0.333, Color3.fromRGB(0, 255, 0)),
+                            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 255)),
+                            ColorSequenceKeypoint.new(0.667, Color3.fromRGB(0, 0, 255)),
+                            ColorSequenceKeypoint.new(0.833, Color3.fromRGB(255, 0, 255)),
+                            ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0))
+                        })
+                        HueGrad.Parent = HueBar
+                        
+                        local HueCursor = Instance.new("Frame")
+                        HueCursor.Size = UDim2.new(0, 10, 0, 10)
+                        HueCursor.Position = UDim2.new(hue, -5, 0.5, -5)
+                        HueCursor.BackgroundTransparency = 1
+                        HueCursor.ZIndex = 106
+                        HueCursor.Parent = HueBar
+                        
+                        local HueCursorCorner = Instance.new("UICorner")
+                        HueCursorCorner.CornerRadius = UDim.new(1, 0)
+                        HueCursorCorner.Parent = HueCursor
+                        
+                        local HueCursorRing = Instance.new("UIStroke")
+                        HueCursorRing.Color = Color3.fromRGB(255, 255, 255)
+                        HueCursorRing.Thickness = 2
+                        HueCursorRing.Parent = HueCursor
+                        
+                        local AlphaBar = Instance.new("TextButton")
+                        AlphaBar.Size = UDim2.new(1, -20, 0, 12)
+                        AlphaBar.Position = UDim2.new(0, 10, 0, 178)
+                        AlphaBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                        AlphaBar.Text = ""
+                        AlphaBar.ZIndex = 103
+                        AlphaBar.Parent = PickerFrame
+                        
+                        local AlphaCorner = Instance.new("UICorner")
+                        AlphaCorner.CornerRadius = UDim.new(1, 0)
+                        AlphaCorner.Parent = AlphaBar
+                        
+                        local AlphaGrad = Instance.new("UIGradient")
+                        AlphaGrad.Color = ColorSequence.new({
+                            ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 0)),
+                            ColorSequenceKeypoint.new(1, Color3.fromHSV(hue, sat, 1))
+                        })
+                        AlphaGrad.Parent = AlphaBar
+                        
+                        local AlphaCursor = Instance.new("Frame")
+                        AlphaCursor.Size = UDim2.new(0, 10, 0, 10)
+                        AlphaCursor.Position = UDim2.new(val, -5, 0.5, -5)
+                        AlphaCursor.BackgroundTransparency = 1
+                        AlphaCursor.ZIndex = 106
+                        AlphaCursor.Parent = AlphaBar
+                        
+                        local AlphaCursorCorner = Instance.new("UICorner")
+                        AlphaCursorCorner.CornerRadius = UDim.new(1, 0)
+                        AlphaCursorCorner.Parent = AlphaCursor
+                        
+                        local AlphaCursorRing = Instance.new("UIStroke")
+                        AlphaCursorRing.Color = Color3.fromRGB(255, 255, 255)
+                        AlphaCursorRing.Thickness = 2
+                        AlphaCursorRing.Parent = AlphaCursor
+                        
+                        local function applyColor()
+                            local c = Color3.fromHSV(hue, sat, val)
+                            curColor = c
+                            targetBox.BackgroundColor3 = c
+                            SVBox.BackgroundColor3 = Color3.fromHSV(hue, 1, 1)
+                            AlphaGrad.Color = ColorSequence.new({
+                                ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 0)),
+                                ColorSequenceKeypoint.new(1, Color3.fromHSV(hue, sat, 1))
+                            })
+                            if updateCallback then updateCallback(c) end
+                        end
+                        
+                        local svDrag = false
+                        SVBox.InputBegan:Connect(function(inp)
+                            if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+                                svDrag = true
+                                sat = math.clamp((inp.Position.X - SVBox.AbsolutePosition.X) / SVBox.AbsoluteSize.X, 0, 1)
+                                val = 1 - math.clamp((inp.Position.Y - SVBox.AbsolutePosition.Y) / SVBox.AbsoluteSize.Y, 0, 1)
+                                SVCursor.Position = UDim2.new(sat, -5, 1 - val, -5)
+                                applyColor()
+                            end
+                        end)
+                        UserInputService.InputEnded:Connect(function(inp)
+                            if inp.UserInputType == Enum.UserInputType.MouseButton1 then svDrag = false end
+                        end)
+                        UserInputService.InputChanged:Connect(function(inp)
+                            if svDrag and inp.UserInputType == Enum.UserInputType.MouseMovement then
+                                local mx = math.clamp((inp.Position.X - SVBox.AbsolutePosition.X) / SVBox.AbsoluteSize.X, 0, 1)
+                                local my = math.clamp((inp.Position.Y - SVBox.AbsolutePosition.Y) / SVBox.AbsoluteSize.Y, 0, 1)
+                                sat = mx
+                                val = 1 - my
+                                SVCursor.Position = UDim2.new(sat, -5, 1 - val, -5)
+                                applyColor()
+                            end
+                        end)
+                        
+                        local hueDrag = false
+                        HueBar.InputBegan:Connect(function(inp)
+                            if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+                                hueDrag = true
+                                hue = math.clamp((inp.Position.X - HueBar.AbsolutePosition.X) / HueBar.AbsoluteSize.X, 0, 1)
+                                HueCursor.Position = UDim2.new(hue, -5, 0.5, -5)
+                                applyColor()
+                            end
+                        end)
+                        UserInputService.InputEnded:Connect(function(inp)
+                            if inp.UserInputType == Enum.UserInputType.MouseButton1 then hueDrag = false end
+                        end)
+                        UserInputService.InputChanged:Connect(function(inp)
+                            if hueDrag and inp.UserInputType == Enum.UserInputType.MouseMovement then
+                                hue = math.clamp((inp.Position.X - HueBar.AbsolutePosition.X) / HueBar.AbsoluteSize.X, 0, 1)
+                                HueCursor.Position = UDim2.new(hue, -5, 0.5, -5)
+                                applyColor()
+                            end
+                        end)
+                        
+                        local alphaDrag = false
+                        AlphaBar.InputBegan:Connect(function(inp)
+                            if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+                                alphaDrag = true
+                                val = math.clamp((inp.Position.X - AlphaBar.AbsolutePosition.X) / AlphaBar.AbsoluteSize.X, 0, 1)
+                                AlphaCursor.Position = UDim2.new(val, -5, 0.5, -5)
+                                applyColor()
+                            end
+                        end)
+                        UserInputService.InputEnded:Connect(function(inp)
+                            if inp.UserInputType == Enum.UserInputType.MouseButton1 then alphaDrag = false end
+                        end)
+                        UserInputService.InputChanged:Connect(function(inp)
+                            if alphaDrag and inp.UserInputType == Enum.UserInputType.MouseMovement then
+                                val = math.clamp((inp.Position.X - AlphaBar.AbsolutePosition.X) / AlphaBar.AbsoluteSize.X, 0, 1)
+                                AlphaCursor.Position = UDim2.new(val, -5, 0.5, -5)
+                                applyColor()
+                            end
+                        end)
+                        
+                        local CloseBtn = Instance.new("TextButton")
+                        CloseBtn.Size = UDim2.new(1, 0, 1, 0)
+                        CloseBtn.BackgroundTransparency = 1
+                        CloseBtn.Text = ""
+                        CloseBtn.ZIndex = 99
+                        CloseBtn.Parent = PopupContainer
+                        CloseBtn.MouseButton1Click:Connect(function()
+                            PopupContainer.Visible = false
+                            PopupContainer:ClearAllChildren()
+                        end
+)
+                    end
+                    
+                    ColorBox1.MouseButton1Click:Connect(function()
+                        makePopup(ColorBox1, currentColor1, function(c)
+                            currentColor1 = c
+                            GradVisual.Color = ColorSequence.new(currentColor1, currentColor2)
+                            if callback1 then callback1(c) end
+                        end
+)
+                    
+                    ColorBox2.MouseButton1Click:Connect(function()
+                        makePopup(ColorBox2, currentColor2, function(c)
+                            currentColor2 = c
+                            GradVisual.Color = ColorSequence.new(currentColor1, currentColor2)
+                            if callback2 then callback2(c) end
+                        end
+)
+                    
+                    local GradPickerObj = {}
+                    function GradPickerObj:SetColors(c1, c2)
+                        currentColor1 = c1
+                        currentColor2 = c2
+                        ColorBox1.BackgroundColor3 = c1
+                        ColorBox2.BackgroundColor3 = c2
+                        GradVisual.Color = ColorSequence.new(c1, c2)
+                        if callback1 then callback1(c1) end
+                        if callback2 then callback2(c2) end
+                    end
+                    return GradPickerObj
+                end
+
                 function SecObj:CreateColorCheckbox(itemName, defaultColor, defaultState, colorCallback, checkCallback)
                     local state = defaultState or false
                     local currentColor = defaultColor or Theme.Accent
