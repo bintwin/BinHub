@@ -42,9 +42,22 @@ function Library:CreateWindow(options)
     gui.ResetOnSpawn = false
     gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
     
-    local success, _ = pcall(function() gui.Parent = CoreGui end)
-    if not success then
-        gui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+    local dest_gui_folder
+    local loc_plyr = game:GetService("Players").LocalPlayer
+    if loc_plyr then
+        dest_gui_folder = loc_plyr:FindFirstChildOfClass("PlayerGui") or loc_plyr:WaitForChild("PlayerGui", 3)
+    end
+    if not dest_gui_folder then
+        local success, _ = pcall(function() gui.Parent = CoreGui end)
+        if not success then
+            dest_gui_folder = loc_plyr:WaitForChild("PlayerGui")
+            gui.Parent = dest_gui_folder
+        end
+    else
+        if getgenv and getgenv().protectgui then
+            pcall(getgenv().protectgui, gui)
+        end
+        gui.Parent = dest_gui_folder
     end
     
     local MainFrame = Instance.new("Frame")
@@ -684,11 +697,15 @@ function Library:CreateWindow(options)
                         local goalPos = state and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
                         local goalColor = state and Theme.Accent or Theme.InputBg
                         if instant then
-                            InnerCheck.Position = goalPos
-                            CheckBtn.BackgroundColor3 = goalColor
+                            pcall(function()
+                                InnerCheck.Position = goalPos
+                                CheckBtn.BackgroundColor3 = goalColor
+                            end)
                         else
-                            TweenService:Create(InnerCheck, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = goalPos}):Play()
-                            TweenService:Create(CheckBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = goalColor}):Play()
+                            pcall(function()
+                                TweenService:Create(InnerCheck, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = goalPos}):Play()
+                                TweenService:Create(CheckBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = goalColor}):Play()
+                            end)
                         end
                         if callback then callback(state) end
                     end
@@ -1115,11 +1132,15 @@ PopupContainer.Visible = true
                         local goalPos = state and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
                         local goalColor = state and Theme.Accent or Theme.InputBg
                         if instant then
-                            InnerCheck.Position = goalPos
-                            CheckBtn.BackgroundColor3 = goalColor
+                            pcall(function()
+                                InnerCheck.Position = goalPos
+                                CheckBtn.BackgroundColor3 = goalColor
+                            end)
                         else
-                            TweenService:Create(InnerCheck, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = goalPos}):Play()
-                            TweenService:Create(CheckBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = goalColor}):Play()
+                            pcall(function()
+                                TweenService:Create(InnerCheck, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = goalPos}):Play()
+                                TweenService:Create(CheckBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = goalColor}):Play()
+                            end)
                         end
                         if checkCallback then checkCallback(state) end
                     end
@@ -1392,7 +1413,9 @@ PopupContainer.Visible = true
                     end
                     function ColorCheckboxObj:SetColor(c)
                         currentColor = c
-                        ColorBox.BackgroundColor3 = currentColor
+                        pcall(function()
+                            ColorBox.BackgroundColor3 = currentColor
+                        end)
                         if colorCallback then colorCallback(c) end
                     end
                     return ColorCheckboxObj
@@ -1474,11 +1497,15 @@ PopupContainer.Visible = true
                         local goalPos = state and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
                         local goalColor = state and Theme.Accent or Theme.InputBg
                         if instant then
-                            InnerCheck.Position = goalPos
-                            CheckBtn.BackgroundColor3 = goalColor
+                            pcall(function()
+                                InnerCheck.Position = goalPos
+                                CheckBtn.BackgroundColor3 = goalColor
+                            end)
                         else
-                            TweenService:Create(InnerCheck, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = goalPos}):Play()
-                            TweenService:Create(CheckBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = goalColor}):Play()
+                            pcall(function()
+                                TweenService:Create(InnerCheck, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = goalPos}):Play()
+                                TweenService:Create(CheckBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = goalColor}):Play()
+                            end)
                         end
                         if checkCallback then checkCallback(state) end
                     end
@@ -2517,11 +2544,15 @@ PopupContainer.Visible = true
                         local goalPos = state and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
                         local goalColor = state and Theme.Accent or Theme.InputBg
                         if instant then
-                            InnerCheck.Position = goalPos
-                            CheckBtn.BackgroundColor3 = goalColor
+                            pcall(function()
+                                InnerCheck.Position = goalPos
+                                CheckBtn.BackgroundColor3 = goalColor
+                            end)
                         else
-                            TweenService:Create(InnerCheck, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = goalPos}):Play()
-                            TweenService:Create(CheckBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = goalColor}):Play()
+                            pcall(function()
+                                TweenService:Create(InnerCheck, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = goalPos}):Play()
+                                TweenService:Create(CheckBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = goalColor}):Play()
+                            end)
                         end
                         if callback then callback(state) end
                     end
